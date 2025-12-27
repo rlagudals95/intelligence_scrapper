@@ -76,30 +76,36 @@ phone_scrapper_v2/
 - [x] State Manager (`core/state.py`)
 - [x] Logger 설정 (`utils/logger.py`)
 
-### Phase 2: 리스팅 크롤러 🔜
-- [ ] ListingCrawler 구현
-- [ ] 페이지네이션/무한 스크롤 처리
-- [ ] URL 전수 수집
+### Phase 2: LLM 통합 ✅
+- [x] LLM Client (`core/llm_client.py`) - OpenAI/Anthropic 지원
+- [x] Page Analyzer (`utils/page_analyzer.py`) - LLM 기반 페이지 분석
+- [x] Prompt Templates (`utils/prompts.py`) - 리스팅/옵션/가격 분석
+- [x] 테스트 작성 및 통과
 
-### Phase 3: 옵션 카탈로그 수집 🔜
-- [ ] OptionsCatalogExtractor 구현
-- [ ] 모든 옵션 UI 스캔
-- [ ] 비활성 옵션 처리
+### Phase 3: LLM 기반 리스팅 크롤러 🔜
+- [ ] ListingCrawler LLM 통합
+- [ ] 동적 셀렉터 추출
+- [ ] 페이지네이션 자동 감지
 
-### Phase 4: 옵션 순회 엔진 🔜
+### Phase 4: LLM 기반 옵션 카탈로그 🔜
+- [ ] OptionsCatalogExtractor LLM 통합
+- [ ] 자동 옵션 UI 식별
+- [ ] 옵션 의미 파악 및 정규화
+
+### Phase 5: 옵션 순회 엔진 🔜
 - [ ] VariantTraverser 구현
 - [ ] 가지치기 로직
-- [ ] PricingExtractor 구현
+- [ ] PricingExtractor LLM 통합
 
-### Phase 5: 출력 및 저장 🔜
+### Phase 6: 출력 및 저장 🔜
 - [ ] ResultSerializer 구현
 - [ ] JSON 출력
 
-### Phase 6: 메인 오케스트레이터 🔜
+### Phase 7: 메인 오케스트레이터 🔜
 - [ ] PhoneScraperAgent 구현
 - [ ] 에러 복구 로직
 
-### Phase 7: 테스트 및 검증 🔜
+### Phase 8: 테스트 및 검증 🔜
 - [ ] 단위 테스트
 - [ ] 통합 테스트
 

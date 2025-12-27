@@ -71,6 +71,36 @@ class Variant(BaseModel):
 
 
 # ============================================================================
+# 리스팅 스키마 (Phase 2)
+# ============================================================================
+
+class PhoneListingItem(BaseModel):
+    """리스팅 페이지에서 수집한 휴대폰 정보"""
+    model_name: str = Field(..., description="휴대폰 기종명 (예: 갤럭시 S24 Ultra)")
+    signup_type: Optional[str] = Field(None, description="변경유형 (번호이동, 기기변경, 신규가입 등)")
+    retail_price: Optional[str] = Field(None, description="출고가")
+    discount_price: Optional[str] = Field(None, description="할인가/최종가")
+    plan_name: Optional[str] = Field(None, description="요금제 (리스팅에 표시된 경우)")
+    detail_url: str = Field(..., description="상세 페이지 URL")
+    image_url: Optional[str] = Field(None, description="제품 이미지 URL")
+    list_url: Optional[str] = Field(None, description="리스팅 페이지 URL (출처)")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "model_name": "갤럭시 S24 Ultra",
+                "signup_type": "번호이동",
+                "retail_price": "1,698,400",
+                "discount_price": "567,000",
+                "plan_name": "5G 프리미어 에센셜",
+                "detail_url": "https://example.com/product/12345",
+                "image_url": "https://example.com/image.jpg",
+                "list_url": "https://example.com/list"
+            }
+        }
+
+
+# ============================================================================
 # 제품 스키마
 # ============================================================================
 

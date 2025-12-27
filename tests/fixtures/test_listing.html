@@ -1,0 +1,55 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Test Product Listing</title>
+        <style>
+            .product-card { margin: 10px; padding: 10px; border: 1px solid #ccc; }
+            .product-name { font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <h1>Product Listing</h1>
+        
+        <div class="product-list">
+            <div class="product-card">
+                <a href="/product/1" class="product-link">
+                    <h3 class="product-name">갤럭시 S24</h3>
+                </a>
+            </div>
+            
+            <div class="product-card">
+                <a href="/product/2" class="product-link">
+                    <h3 class="product-name">아이폰 15 Pro</h3>
+                </a>
+            </div>
+            
+            <div class="product-card">
+                <a href="/product/3" class="product-link">
+                    <h3 class="product-name">갤럭시 Z Fold 5</h3>
+                </a>
+            </div>
+            
+            <!-- 중복 링크 -->
+            <div class="product-card">
+                <a href="/product/1" class="product-link">
+                    <h3 class="product-name">갤럭시 S24 (중복)</h3>
+                </a>
+            </div>
+            
+            <!-- 유효하지 않은 링크 -->
+            <div class="product-card">
+                <a href="/cart" class="product-link">
+                    <h3 class="product-name">장바구니</h3>
+                </a>
+            </div>
+            
+            <div class="product-card">
+                <a href="/login" class="product-link">
+                    <h3 class="product-name">로그인</h3>
+                </a>
+            </div>
+        </div>
+    </body>
+    </html>
+    

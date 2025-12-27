@@ -96,7 +96,7 @@ class BrowserManager:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         reraise=True
     )
-    async def goto(self, url: str, wait_until: str = "networkidle") -> Page:
+    async def goto(self, url: str, wait_until: str = "domcontentloaded") -> Page:
         """URL로 이동 (재시도 포함)"""
         page = await self.get_page()
         

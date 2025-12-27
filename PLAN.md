@@ -2,9 +2,51 @@
 
 ## 🎯 프로젝트 개요
 
-웹 자동화 기반 휴대폰 기종/요금제 데이터 수집 에이전트
+**LLM 기반 지능형 휴대폰 기종/정책 데이터 수집 에이전트**
 
 - **목표**: 리스팅 페이지에서 상세 URL 전수 수집 → 각 상세페이지에서 옵션 카탈로그 100% 수집 → 가격/정책 영향 옵션 조합 순회 (가지치기 포함)
+- **핵심 차별점**: LLM이 페이지 맥락을 읽고 판단하여 사이트별 구조 차이를 자동으로 처리하는 지능형 스크래퍼
+
+대상 사이트
+
+하이폰
+https://hi-phone.kr/index.php?channel=list&cate=103001000000 (삼성전자)
+https://hi-phone.kr/index.php?channel=list&cate=103002000000 (아이폰)
+
+띵폰
+https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90 (삼성전자)
+https://ddingphone.com/list?sst=c&cid=APPLE (아이폰)
+
+
+딜리버리폰
+https://www.deliveryphone.co.kr/phone/list/2 (삼성전자)
+https://www.deliveryphone.co.kr/phone/list/3 (아이폰)
+
+
+성지폰
+https://sungjiphone.com/phone/list/2 (삼성전자)
+https://sungjiphone.com/phone/list/3 (아이폰)
+
+폰슐랭
+https://phonechelin.shop/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90 (삼성전자)
+https://phonechelin.shop/mshop/list?sst=c&cid=APPLE (아이폰)
+
+엘지티샵
+https://lgtshop.co.kr/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90 (삼성전자)
+https://lgtshop.co.kr/mshop/list?sst=c&cid=APPLE (아이폰)
+
+유플러스투게더몰
+https://uplustogethermall.com/section/samsung (삼성전자)
+https://uplustogethermall.com/section/apple (아이폰)
+
+
+케이티 마트
+
+https://ktmarket.co.kr/phone/samsung (삼성전자)
+https://ktmarket.co.kr/phone/apple (아이폰)
+
+
+
 - **출력**: 구조화된 JSON
 
 ---
@@ -14,13 +56,16 @@
 - **언어**: Python 3.11+
 - **패키지 관리**: uv
 - **웹 자동화**: Playwright (SSR/CSR 모두 대응)
+- **LLM**: OpenAI API (GPT-4o 또는 Claude API via Anthropic)
 - **데이터 구조**: Pydantic (타입 안전 JSON 스키마)
 - **로깅**: structlog
-- **유틸리티**: httpx (robots.txt 체크), tenacity (재시도)
+- **유틸리티**: tenacity (재시도)
 
 ---
 
 ## 📝 단계별 구현 계획
+
+각 단계마다 테스트도 필수로 구현
 
 ### **Phase 0: 프로젝트 초기화**
 
@@ -75,78 +120,255 @@ class SiteConfig:
 
 ---
 
-### **Phase 2: 리스팅 페이지 크롤러 (100% 전수)**
+### **Phase 2: LLM 기반 리스팅 페이지 데이터 수집**
 
-#### 2-1. ListingCrawler 클래스 (`crawlers/listing.py`)
+**목표**: 리스팅 페이지에서 휴대폰 기종 정보를 LLM이 맥락을 파악하여 전수 수집
 
-**입력**: 랜딩 페이지 URL  
-**출력**: `List[Dict[str, str]]` - detail_url 목록
+#### 2-1. LLM Client (`core/llm_client.py`)
+- OpenAI API 또는 Anthropic API 클라이언트
+- 재시도 로직 (rate limit 처리)
+- 토큰 사용량 추적
+- 비용 모니터링
+- Vision API 지원 (스크린샷 분석)
 
-**기능**:
+#### 2-2. 리스팅 페이지 Prompt Templates (`utils/prompts.py`)
+- 리스팅 페이지 구조 분석 프롬프트
+- 상품 카드 셀렉터 추출 가이드
+- **리스팅에서 보이는 정보 추출 가이드**:
+  * 휴대폰 기종명
+  * 변경유형 (통신사이동, 번호이동, 기기변경, 신규가입 등)
+  * 출고가
+  * 할인가/최종가
+  * 요금제 정보 (리스팅에 표시된 경우)
+  * 상세 URL
+- 페이지네이션 감지 프롬프트
+- 시스템 메시지 (리스팅 분석 전문가 역할)
 
-1. 페이지네이션 처리
-   - "다음 페이지" 혹은 페이지네이션을 의미하는 버튼 클릭
-   - 마지막 페이지 판단
+#### 2-3. Listing Page Analyzer (`utils/page_analyzer.py`)
+- LLM을 활용한 리스팅 페이지 구조 분석
+- HTML + 스크린샷을 LLM에 제공
+- LLM 응답에서 JSON 추출 및 파싱
+- **1차 분석: 페이지 구조 파악**
+  * 상품 카드 셀렉터 (`product_card_selector`)
+  * 각 정보의 셀렉터 추출:
+    - 기종명 셀렉터
+    - 변경유형 셀렉터
+    - 출고가 셀렉터
+    - 할인가/최종가 셀렉터
+    - 요금제 셀렉터
+    - 상세 URL 셀렉터
+  * 페이지네이션 타입 (`pagination_type`)
+  * 다음 버튼 셀렉터 (`next_button_selector`)
+- **2차 분석: 데이터 추출**
+  * LLM이 제공한 셀렉터로 각 상품 카드에서 정보 추출
+  * 텍스트 정규화 (가격, 요금제명 등)
 
-2. 무한 스크롤 처리
-   - 스크롤 끝까지 반복
-   - 새 컨텐츠 로딩 대기
-   - 더 이상 로드되지 않으면 종료
+#### 2-4. ListingCrawler 클래스 (`crawlers/listing.py`)
 
-3. 상품 카드에서 추출
-   - `product_name`: 상품명
-   - `list_url`: 리스팅 페이지 URL
-   - `detail_url`: 상세 페이지 URL
+**입력**: 리스팅 페이지 URL  
+**출력**: `List[PhoneListingItem]` - 리스팅에서 수집한 휴대폰 정보
 
-#### 2-2. URL 중복 제거
-- `detail_url` 유니크 집합 생성
-- 누락 검증 로직 (리스트 카운트 vs 수집 카운트)
+```python
+class PhoneListingItem:
+    model_name: str              # 휴대폰 기종명 (예: "갤럭시 S24 Ultra")
+    signup_type: Optional[str]   # 변경유형 (예: "번호이동", "기기변경", "신규가입")
+    retail_price: Optional[str]  # 출고가
+    discount_price: Optional[str] # 할인가/최종가
+    plan_name: Optional[str]     # 요금제 (리스팅에 표시된 경우)
+    detail_url: str              # 상세 페이지 URL
+    image_url: Optional[str]     # 제품 이미지
+```
 
-#### 2-3. 에러 핸들링
-- 접근 불가 페이지는 `errors` 리스트에 기록
-- 로그인 필요 시 `"login_required"` 기록 후 중단
+**동작 방식**:
+
+1. **LLM으로 페이지 구조 분석 (1회)**
+   - 페이지 로드 후 스크린샷 + HTML 추출
+   - PageAnalyzer를 통해 LLM에 분석 요청
+   - 동적으로 각 정보의 셀렉터 획득
+   - 페이지네이션 방식 파악
+
+2. **모든 페이지 순회하며 데이터 수집**
+   ```python
+   all_items = []
+   current_page = 1
+   
+   while True:
+       # 2-1. 현재 페이지의 상품 카드 선택
+       cards = await page.query_selector_all(product_card_selector)
+       
+       # 2-2. 각 카드에서 정보 추출
+       for card in cards:
+           item = PhoneListingItem(
+               model_name=await extract_text(card, model_name_selector),
+               signup_type=await extract_text(card, signup_type_selector),
+               retail_price=await extract_text(card, retail_price_selector),
+               discount_price=await extract_text(card, discount_price_selector),
+               plan_name=await extract_text(card, plan_selector),
+               detail_url=await extract_link(card, detail_url_selector),
+               image_url=await extract_image(card, image_selector)
+           )
+           all_items.append(item)
+       
+       # 2-3. 페이지네이션 처리
+       if pagination_type == "pagination":
+           has_next = await click_next_button()
+           if not has_next:
+               break
+       elif pagination_type == "infinite_scroll":
+           has_more = await scroll_and_wait()
+           if not has_more:
+               break
+       else:
+           break  # 단일 페이지
+       
+       current_page += 1
+   ```
+
+3. **데이터 정제 및 검증**
+   - 가격 정규화 (쉼표 제거, 숫자 변환)
+   - 중복 제거 (detail_url 기준)
+   - 필수 필드 검증 (model_name, detail_url)
+
+#### 2-5. 테스트 전략
+
+**단위 테스트** (`tests/test_phase2_unit.py`):
+- LLM Client 초기화 및 호출
+- Prompt Templates 생성
+- JSON 파싱 및 추출
+- 토큰 추적, 비용 모니터링
+
+**통합 테스트** (`tests/test_phase2_integration.py`):
+실제 대상 사이트에서 데이터 수집 검증
+
+1. **하이폰 리스팅 페이지 테스트**
+   ```python
+   async def test_hiphone_listing_collection():
+       url = "https://hi-phone.kr/index.php?channel=list&cate=103001000000"
+       crawler = ListingCrawler(llm_client, browser_manager)
+       items = await crawler.crawl(url)
+       
+       # 검증
+       assert len(items) >= 10, "최소 10개 이상의 상품 수집"
+       
+       # 첫 번째 상품 검증
+       first_item = items[0]
+       assert first_item.model_name, "기종명이 있어야 함"
+       assert first_item.detail_url, "상세 URL이 있어야 함"
+       assert "http" in first_item.detail_url, "절대 URL이어야 함"
+       
+       # 가격 정보 검증 (리스팅에 표시된 경우)
+       if first_item.discount_price:
+           assert first_item.discount_price.replace(",", "").isdigit()
+       
+       # 출력 확인
+       print(f"✅ 수집된 상품 수: {len(items)}")
+       for i, item in enumerate(items[:3], 1):
+           print(f"  {i}. {item.model_name}")
+           print(f"     변경유형: {item.signup_type or 'N/A'}")
+           print(f"     출고가: {item.retail_price or 'N/A'}")
+           print(f"     할인가: {item.discount_price or 'N/A'}")
+           print(f"     요금제: {item.plan_name or 'N/A'}")
+           print(f"     상세: {item.detail_url[:50]}...")
+   ```
+
+2. **띵폰 리스팅 페이지 테스트**
+   ```python
+   async def test_ddingphone_listing_collection():
+       url = "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90"
+       # 동일한 검증 로직
+   ```
+
+3. **페이지네이션 테스트**
+   - 다음 페이지 버튼 감지 확인
+   - 여러 페이지에서 데이터 수집 확인
+   - 중복 제거 확인
+
+4. **데이터 품질 검증**
+   - 모든 항목에 model_name과 detail_url이 있는지
+   - 가격 정보가 숫자로 파싱 가능한지
+   - URL이 유효한 형식인지
+
+**성공 기준**:
+- ✅ 하이폰, 띵폰에서 각각 10개 이상의 상품 정보 수집
+- ✅ LLM이 사이트별로 다른 구조를 자동으로 파악
+- ✅ 기종명, 가격, 상세 URL이 정확히 추출됨
+- ✅ 페이지네이션이 올바르게 작동
+- ✅ 데이터 품질 검증 통과
 
 ---
 
-### **Phase 3: 상세페이지 옵션 카탈로그 수집 (100% 전수)**
+### **Phase 3: LLM 기반 상세 페이지 옵션 분석**
 
-#### 3-1. OptionsCatalogExtractor 클래스 (`crawlers/catalog.py`)
+**전제 조건**: Phase 2에서 수집한 `PhoneListingItem`의 `detail_url` 사용
 
-**입력**: detail_url  
+**목표**: 상세 페이지에서 모든 선택 가능한 옵션 카탈로그를 100% 수집
+
+#### 3-1. 상세 페이지 Prompt Templates (`utils/prompts.py` 확장)
+- 옵션 추출 프롬프트
+  * 통신사, 가입유형, 요금제, 할부, 용량, 색상 등
+  * 각 옵션의 UI 타입 (드롭다운/버튼/라디오) 식별
+- 가격/정책 영역 식별 프롬프트
+  * 최종 가격 표시 영역
+  * 할인 정보 영역
+  * 약정 정보 영역
+
+#### 3-2. Detail Page Analyzer (`utils/page_analyzer.py` 확장)
+- LLM을 활용한 상세 페이지 분석
+- 옵션 구조 분석:
+  * 각 옵션의 셀렉터 추출
+  * 옵션 값 목록 추출
+  * 비활성 옵션 감지
+- 가격/정책 영역 식별:
+  * 가격 표시 셀렉터
+  * 할인 정보 셀렉터
+  * 업데이트 감지 방법
+
+#### 3-3. OptionsCatalogExtractor 클래스 (`crawlers/catalog.py`)
+
+**입력**: Phase 2에서 수집한 detail_url  
 **출력**: `OptionsCatalog` (모든 옵션 목록)
 
-**기능**:
-1. 모든 옵션 UI 스캔 (클릭 없이 DOM 분석)
-   - `<select>` 드롭다운
-   - `<input type="radio">` 라디오 버튼
-   - 체크박스
-   - 커스텀 버튼 그룹 (data-* 속성 기반)
+**LLM 기반 동작 방식**:
 
-2. 각 옵션별 수집
-   - 통신사 (SKT/KT/LGU+)
-   - 가입유형 (번호이동/기기변경/신규가입)
-   - 요금제 목록 (이름/월정액/혜택 설명)
-   - 할부/약정 기간
-   - 용량 (64GB, 128GB, 256GB 등)
-   - 색상
-   - 기타 옵션 (사은품, 부가서비스)
+1. **LLM으로 옵션 UI 자동 식별**
+   - 상세 페이지 로드 후 스크린샷 + HTML 추출
+   - DetailPageAnalyzer를 통해 LLM에 분석 요청
+   - 각 옵션(통신사, 가입유형 등)의 셀렉터와 타입 획득
 
-3. 비활성(disabled) 옵션 처리
-   - 목록에 포함
-   - `disabled: true` + `reason: "..."` 기록
+2. **동적으로 옵션 값 추출**
+   - LLM이 제공한 셀렉터로 옵션 UI 접근
+   - UI 타입에 따라 값 추출:
+     * `<select>`: option 태그 수집
+     * `<input type="radio">`: label 또는 value 수집
+     * 커스텀 버튼: data-* 또는 텍스트 수집
+   - 사이트마다 다른 구조에 자동 적응
 
-#### 3-2. 옵션 정규화 (`utils/normalizer.py`)
-- 텍스트 트림, 공백 정리
-- 가격 숫자 파싱 (정규표현식: `\d{1,3}(,\d{3})*`)
-- 단위 통일 (원, 만원 → 숫자)
+3. **LLM으로 옵션 의미 파악 및 정규화**
+   - 추출한 텍스트를 LLM이 분류/정규화
+   - 예: "SKT", "SK텔레콤", "에스케이텔레콤" → 모두 "SKT"
+   - 비활성 옵션 사유 추출 (품절, 선택불가 등)
+
+4. **가격/정책 영역 식별**
+   - LLM이 제공한 셀렉터로 가격 표시 영역 파악
+   - 업데이트 감지 방법 (요소 변화, 로딩 표시 등)
+
+#### 3-4. 테스트 전략
+- **단위 테스트**: 상세 페이지 프롬프트, JSON 파싱
+- **통합 테스트**: Phase 2에서 추출한 실제 URL 사용
+  * 하이폰, 띵폰 등의 실제 상세 페이지 분석
+  * LLM이 옵션 셀렉터를 올바르게 추출하는지 검증
+  * 추출된 옵션 카탈로그 구조 확인
+  * 최소 5개 이상의 옵션 카테고리 추출 확인
 
 ---
 
 ### **Phase 4: 옵션 조합 순회 엔진 (가지치기 포함)**
 
+**전제 조건**: Phase 3에서 추출한 옵션 카탈로그 사용
+
 #### 4-1. VariantTraverser 클래스 (`crawlers/traverser.py`)
 
-**입력**: detail_url + OptionsCatalog  
+**입력**: detail_url + Phase 3의 OptionsCatalog  
 **출력**: `List[Variant]`
 
 **알고리즘**:
@@ -206,15 +428,26 @@ def traverse(current_options, axis_index, previous_state):
   - 최고 요금제 (인덱스 -1)
   - 가격 변화 지점 발견 시 인접 요금제 추가
 
-#### 4-3. PricingExtractor (`crawlers/pricing.py`)
-페이지에서 가격/정책 영역 파싱:
-- `final_price`: 최종가
-- `installment_principal`: 할부원금
-- `monthly_payment`: 월 납부금
-- `subsidy_official`: 공시지원금
-- `subsidy_additional`: 추가지원금
-- `plan_combination`: 요금제 결합 조건
-- `policy_text`: 정책/면책/주의사항 텍스트
+#### 4-3. PricingExtractor (`crawlers/pricing.py`) - LLM 기반
+
+**페이지에서 가격/정책 영역 동적 파싱:**
+
+1. **LLM이 가격 영역 식별**
+   - 스크린샷을 보고 어디에 가격 정보가 있는지 파악
+   - CSS 셀렉터 제공
+
+2. **LLM이 가격 의미 분류**
+   - 추출된 숫자들이 무엇을 의미하는지 판단:
+     * `final_price`: 최종가
+     * `installment_principal`: 할부원금
+     * `monthly_payment`: 월 납부금
+     * `subsidy_official`: 공시지원금
+     * `subsidy_additional`: 추가지원금
+
+3. **LLM이 정책 텍스트 추출**
+   - 요금제 결합 조건
+   - 정책/면책/주의사항 텍스트
+   - 사이트마다 다른 위치/표현 자동 처리
 
 #### 4-4. State Hasher (`utils/hasher.py`)
 - 옵션 조합 해시 생성 (중복 방지)
@@ -222,7 +455,7 @@ def traverse(current_options, axis_index, previous_state):
 
 ---
 
-### **Phase 5: 출력 및 저장**
+### **Phase 5: 전체 통합 및 출력**
 
 #### 5-1. ResultSerializer (`utils/serializer.py`)
 - Pydantic 모델 → JSON 변환
@@ -300,30 +533,26 @@ class PhoneScraperAgent:
     
     async def run(self):
         """메인 실행 플로우"""
-        # 1. robots.txt 체크
-        if not check_robots_txt(self.config.target_url):
-            raise PermissionError("robots.txt 위반")
-        
-        # 2. 리스팅 크롤러로 detail_url 전수 수집
+        # 1. 리스팅 크롤러로 detail_url 전수 수집
         listing_crawler = ListingCrawler(self.browser_manager)
         detail_urls = await listing_crawler.crawl(self.config.listing_url)
         self.logger.info(f"수집된 detail_url 개수: {len(detail_urls)}")
         
-        # 3. 각 detail_url 처리
+        # 2. 각 detail_url 처리
         results = []
         for idx, detail_url in enumerate(detail_urls):
             self.logger.info(f"[{idx+1}/{len(detail_urls)}] 처리 중: {detail_url}")
             
             try:
-                # 3-a. 옵션 카탈로그 추출
+                # 2-a. 옵션 카탈로그 추출
                 catalog_extractor = OptionsCatalogExtractor(self.browser_manager)
                 options_catalog = await catalog_extractor.extract(detail_url)
                 
-                # 3-b. 옵션 순회 (Variant 수집)
+                # 2-b. 옵션 순회 (Variant 수집)
                 traverser = VariantTraverser(self.browser_manager, self.config)
                 variants = await traverser.traverse(detail_url, options_catalog)
                 
-                # 3-c. 결과 저장
+                # 2-c. 결과 저장
                 results.append({
                     "detail_url": detail_url,
                     "options_catalog": options_catalog,
@@ -342,11 +571,11 @@ class PhoneScraperAgent:
                     "errors": [str(e)]
                 })
         
-        # 4. JSON 파일 출력
+        # 3. JSON 파일 출력
         serializer = ResultSerializer()
         serializer.save(results, f"output/result_{timestamp()}.json")
         
-        # 5. 통계 로그
+        # 4. 통계 로그
         self.logger.info(f"완료 - 제품: {len(results)}, Variants: {sum(len(r['variants']) for r in results)}")
 ```
 
@@ -435,12 +664,17 @@ phone_scrapper_v2/
 
 1. ✅ **Phase 0** → 프로젝트 초기화 + 스키마 정의
 2. ✅ **Phase 1** → 핵심 인프라 (Config, Browser, State, Logger)
-3. ✅ **Phase 2** → 리스팅 크롤러 구현 + 테스트
-4. ✅ **Phase 3** → 옵션 카탈로그 추출 구현 + 테스트
-5. ✅ **Phase 4** → 옵션 순회 엔진 구현 + 테스트
-6. ✅ **Phase 5** → 출력/저장 로직
-7. ✅ **Phase 6** → 메인 오케스트레이터 통합
-8. ✅ **Phase 7** → 전체 테스트 및 검증
+3. 🔄 **Phase 2** → LLM 기반 리스팅 페이지 데이터 수집
+   - LLM Client 구축
+   - 리스팅 페이지 구조 분석
+   - 휴대폰 기종, 가격, 요금제 정보 수집
+   - 페이지네이션 처리
+   - 실제 대상 사이트 테스트
+4. 🔜 **Phase 3** → LLM 기반 상세 페이지 옵션 카탈로그 추출
+5. 🔜 **Phase 4** → LLM 기반 옵션 조합 순회 엔진 (가지치기)
+6. 🔜 **Phase 5** → 전체 통합 및 출력
+7. 🔜 **Phase 6** → 메인 오케스트레이터
+8. 🔜 **Phase 7** → 전체 테스트 및 검증
 
 ---
 
@@ -459,11 +693,17 @@ phone_scrapper_v2/
 - detail_url + 옵션 상태 해시 추적
 - 동일 조합은 재방문하지 않음
 
+### 🤖 LLM 기반 지능형 처리
+- 하드코딩된 셀렉터 없음 - LLM이 페이지 구조 분석
+- 사이트별 구조 차이 자동 적응
+- 동적으로 변하는 UI에도 대응
+- 옵션 의미 파악 및 정규화 (예: "SKT" ≈ "SK텔레콤")
+
 ### 🛡️ 준수사항
-- robots.txt 체크
-- 1~3초 랜덤 딜레이
+- 1~3초 랜덤 딜레이 (서버 부하 방지)
 - 로그인 필요 시 즉시 중단
 - 에러 발생 시 다음으로 진행
+- LLM API 사용량 추적 및 제한
 
 ---
 

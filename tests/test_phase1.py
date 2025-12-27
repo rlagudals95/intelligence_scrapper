@@ -288,10 +288,116 @@ async def test_phase1_integration():
 
 
 # ============================================================================
+# 실제 대상 사이트 테스트 (LLM 없이 기본 검증만)
+# ============================================================================
+
+@pytest.mark.asyncio
+async def test_target_site_hiphone():
+    """하이폰 사이트 - 휴대폰 리스트 페이지 검증"""
+    print("\n" + "="*60)
+    print("하이폰 사이트 검증")
+    print("="*60)
+    
+    target_url = "https://hi-phone.kr/index.php?channel=list&cate=103001000000"
+    
+    config = SiteConfig(
+        target_url=target_url,
+        delay_min=1.0,
+        delay_max=2.0,
+        headless=False,
+        timeout=60000
+    )
+    print(f"✅ 1. Config 생성: {target_url}")
+    
+    async with BrowserManager(config) as browser:
+        await browser.goto(target_url, wait_until="domcontentloaded")
+        page = await browser.get_page()
+        
+        # 페이지 렌더링 대기
+        await asyncio.sleep(3)
+        
+        # 2. 페이지 로드 확인
+        title = await page.title()
+        print(f"✅ 2. 페이지 로드 완료: {title}")
+        
+        # 3. HTML 내용 확인
+        html = await page.content()
+        
+        # 4. 휴대폰 관련 키워드 확인
+        phone_keywords = ["갤럭시", "아이폰", "Galaxy", "iPhone", "휴대폰", "스마트폰"]
+        found_keywords = [kw for kw in phone_keywords if kw in html or kw in title]
+        print(f"✅ 3. 휴대폰 관련 키워드 발견: {found_keywords}")
+        
+        # 5. 링크 개수 확인 (리스트 페이지인지)
+        links = await page.query_selector_all("a")
+        print(f"✅ 4. 페이지 내 링크 수: {len(links)}개")
+        
+        # 6. 검증
+        assert len(found_keywords) > 0, "휴대폰 관련 키워드를 찾을 수 없습니다"
+        assert len(links) > 10, "리스트 페이지로 보이지 않습니다 (링크 수 부족)"
+        
+        print("\n" + "="*60)
+        print("✅ 하이폰 사이트 검증 완료 - 휴대폰 리스트 페이지 확인")
+        print("="*60)
+
+
+@pytest.mark.asyncio
+async def test_target_site_ddingphone():
+    """띵폰 사이트 - 휴대폰 리스트 페이지 검증"""
+    print("\n" + "="*60)
+    print("띵폰 사이트 검증")
+    print("="*60)
+    
+    target_url = "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90"
+    
+    config = SiteConfig(
+        target_url=target_url,
+        delay_min=1.0,
+        delay_max=2.0,
+        headless=False,
+        timeout=60000
+    )
+    print(f"✅ 1. Config 생성: {target_url}")
+    
+    async with BrowserManager(config) as browser:
+        await browser.goto(target_url, wait_until="domcontentloaded")
+        page = await browser.get_page()
+        
+        # 페이지 렌더링 대기
+        await asyncio.sleep(3)
+        
+        # 2. 페이지 로드 확인
+        title = await page.title()
+        print(f"✅ 2. 페이지 로드 완료: {title}")
+        
+        # 3. HTML 내용 확인
+        html = await page.content()
+        
+        # 4. 휴대폰 관련 키워드 확인
+        phone_keywords = ["갤럭시", "아이폰", "Galaxy", "iPhone", "휴대폰", "스마트폰", "삼성"]
+        found_keywords = [kw for kw in phone_keywords if kw in html or kw in title]
+        print(f"✅ 3. 휴대폰 관련 키워드 발견: {found_keywords}")
+        
+        # 5. 링크 개수 확인 (리스트 페이지인지)
+        links = await page.query_selector_all("a")
+        print(f"✅ 4. 페이지 내 링크 수: {len(links)}개")
+        
+        # 6. 검증
+        assert len(found_keywords) > 0, "휴대폰 관련 키워드를 찾을 수 없습니다"
+        assert len(links) > 10, "리스트 페이지로 보이지 않습니다 (링크 수 부족)"
+        
+        print("\n" + "="*60)
+        print("✅ 띵폰 사이트 검증 완료 - 휴대폰 리스트 페이지 확인")
+        print("="*60)
+
+
+# ============================================================================
 # 메인 실행
 # ============================================================================
 
 if __name__ == "__main__":
+    import sys
+    
     print("\n🧪 Phase 1 테스트 실행\n")
     
     # 동기 테스트
@@ -311,6 +417,12 @@ if __name__ == "__main__":
     
     # 통합 테스트
     asyncio.run(test_phase1_integration())
+    
+    # 실제 대상 사이트 테스트 (선택적)
+    if "--real-sites" in sys.argv:
+        print("\n🌐 실제 대상 사이트 테스트 시작\n")
+        asyncio.run(test_target_site_hiphone())
+        asyncio.run(test_target_site_ddingphone())
     
     print("\n✅ 모든 Phase 1 테스트 통과!\n")
 
