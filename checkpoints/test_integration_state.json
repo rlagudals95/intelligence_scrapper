@@ -1,0 +1,12 @@
+{
+  "visited_urls": [
+    "https://example.com"
+  ],
+  "visited_states": [],
+  "stats": {
+    "total_urls": 1,
+    "total_states": 0,
+    "started_at": "2025-12-27T23:29:08.705296",
+    "last_updated": "2025-12-27T23:31:20.935034"
+  }
+}
