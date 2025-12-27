@@ -34,7 +34,7 @@ LISTING_PAGE_ANALYSIS_PROMPT = """
 
 **페이지네이션:**
 9. **pagination_type**: "pagination" (버튼 있음) | "infinite_scroll" (무한 스크롤) | "none" (단일 페이지)
-10. **next_button_selector**: 다음 페이지 버튼의 CSS 셀렉터 (pagination인 경우만)
+10. **next_button_selector**: 다음 페이지 버튼 또는 "더보기" 버튼의 CSS 셀렉터 (pagination인 경우만)
 
 # 응답 형식 (JSON)
 
@@ -58,7 +58,10 @@ LISTING_PAGE_ANALYSIS_PROMPT = """
 - CSS 셀렉터는 가능한 한 구체적이고 안정적으로 (id, class, data-* 속성 사용)
 - 상대 셀렉터를 사용할 수 있음 (예: ".card > .title")
 - 리스팅에 표시되지 않은 정보는 null 또는 빈 문자열("")로 설정
-- 페이지네이션 버튼이 없으면 "pagination_type": "none" 또는 "infinite_scroll"
+- **페이지네이션 타입 판단:**
+  - "다음", "Next", ">" 버튼 또는 "더보기", "Load More" 버튼이 있으면 → "pagination"
+  - 스크롤 시 자동으로 로딩되면 → "infinite_scroll"
+  - 모든 상품이 한 페이지에 있으면 → "none"
 - 셀렉터가 여러 개 가능하면 가장 안정적인 것 선택
 
 # HTML

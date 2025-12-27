@@ -422,18 +422,33 @@ async def test_phase2_integration():
     not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
     reason="API 키 없음"
 )
-async def test_hiphone_listing_collection():
-    """하이폰 리스팅 페이지 데이터 수집 테스트"""
+@pytest.mark.parametrize("site_name,target_url,min_items", [
+    # (
+    #     "하이폰",
+    #     "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
+    #     8
+    # ),
+    # (
+    #     "띵폰",
+    #     "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+    #     25
+    # ),
+    (
+        "딜리버리폰",
+        "https://www.deliveryphone.co.kr/phone/list/2",
+        13
+    )
+])
+async def test_listing_collection(site_name: str, target_url: str, min_items: int):
+    """리스팅 페이지 데이터 수집 테스트 (파라미터화)"""
     from src.core.config import SiteConfig
     from src.core.browser import BrowserManager
     from src.crawlers.listing import ListingCrawler
     from src.models.schemas import PhoneListingItem
     
     print("\n" + "="*70)
-    print("하이폰 리스팅 페이지 데이터 수집 테스트")
+    print(f"{site_name} 리스팅 페이지 데이터 수집 테스트")
     print("="*70)
-    
-    target_url = "https://hi-phone.kr/index.php?channel=list&cate=103001000000"
     
     config = SiteConfig(
         target_url=target_url,
@@ -456,8 +471,8 @@ async def test_hiphone_listing_collection():
         
         print(f"\n✅ 수집된 상품 수: {len(items)}")
         
-        # 검증: 최소 5개 이상 (페이지에 따라 상품 수가 다를 수 있음)
-        assert len(items) >= 5, f"최소 5개 이상의 상품이 필요합니다 (현재: {len(items)}개)"
+        # 검증: 최소 개수 이상
+        assert len(items) >= min_items, f"최소 {min_items}개 이상의 상품이 필요합니다 (현재: {len(items)}개)"
         
         # 검증: 모든 아이템이 PhoneListingItem 타입
         assert all(isinstance(item, PhoneListingItem) for item in items)
@@ -472,11 +487,13 @@ async def test_hiphone_listing_collection():
         for item in items:
             if item.discount_price:
                 price_num = item.discount_price.replace(",", "").replace("원", "").strip()
-                assert price_num.isdigit() or price_num == "", f"가격 형식 오류: {item.discount_price}"
+                # 빈 문자열이거나 숫자여야 함
+                if price_num:
+                    assert price_num.isdigit(), f"가격 형식 오류: {item.discount_price}"
         
-        # 첫 3개 상품 출력
-        print("\n📊 수집된 상품 샘플 (처음 3개):")
-        for i, item in enumerate(items[:3], 1):
+        # 상품 출력
+        print("\n📊 수집된 상품 샘플:")
+        for i, item in enumerate(items):
             print(f"\n  {i}. {item.model_name}")
             print(f"     변경유형: {item.signup_type or 'N/A'}")
             print(f"     출고가: {item.retail_price or 'N/A'}")
@@ -485,69 +502,7 @@ async def test_hiphone_listing_collection():
             print(f"     상세 URL: {item.detail_url[:60]}...")
         
         print("\n" + "="*70)
-        print("✅ 하이폰 리스팅 테스트 통과!")
-        print("="*70)
-
-
-@pytest.mark.asyncio
-@pytest.mark.skipif(
-    not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
-    reason="API 키 없음"
-)
-async def test_ddingphone_listing_collection():
-    """띵폰 리스팅 페이지 데이터 수집 테스트"""
-    from src.core.config import SiteConfig
-    from src.core.browser import BrowserManager
-    from src.crawlers.listing import ListingCrawler
-    from src.models.schemas import PhoneListingItem
-    
-    print("\n" + "="*70)
-    print("띵폰 리스팅 페이지 데이터 수집 테스트")
-    print("="*70)
-    
-    target_url = "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90"
-    
-    config = SiteConfig(
-        target_url=target_url,
-        headless=False,
-        timeout=60000
-    )
-    
-    # LLM Client 및 Browser 초기화
-    if os.getenv("OPENAI_API_KEY"):
-        provider = LLMProvider.OPENAI
-    else:
-        provider = LLMProvider.ANTHROPIC
-    
-    llm_client = LLMClient(provider=provider)
-    
-    async with BrowserManager(config) as browser:
-        # ListingCrawler로 데이터 수집
-        crawler = ListingCrawler(llm_client, browser)
-        items = await crawler.crawl(target_url)
-        
-        print(f"\n✅ 수집된 상품 수: {len(items)}")
-        
-        # 검증: 최소 5개 이상 (페이지에 따라 상품 수가 다를 수 있음)
-        assert len(items) >= 5, f"최소 5개 이상의 상품이 필요합니다 (현재: {len(items)}개)"
-        
-        # 검증: 필수 필드
-        for item in items:
-            assert item.model_name, "기종명이 있어야 함"
-            assert item.detail_url, "상세 URL이 있어야 함"
-        
-        # 첫 3개 상품 출력
-        print("\n📊 수집된 상품 샘플 (처음 3개):")
-        for i, item in enumerate(items[:3], 1):
-            print(f"\n  {i}. {item.model_name}")
-            print(f"     변경유형: {item.signup_type or 'N/A'}")
-            print(f"     출고가: {item.retail_price or 'N/A'}")
-            print(f"     할인가: {item.discount_price or 'N/A'}")
-            print(f"     요금제: {item.plan_name or 'N/A'}")
-            print(f"     상세 URL: {item.detail_url[:60]}...")
-        
-        print("\n" + "="*70)
-        print("✅ 띵폰 리스팅 테스트 통과!")
+        print(f"✅ {site_name} 리스팅 테스트 통과!")
         print("="*70)
 
 

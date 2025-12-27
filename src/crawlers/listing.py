@@ -67,9 +67,13 @@ class ListingCrawler:
         # 2. 모든 페이지 순회하며 데이터 수집
         all_items = []
         current_page = 1
+        no_new_items_count = 0
+        max_no_new_items = 3  # 3번 연속 새 상품이 없으면 중단
         
         while True:
             logger.info(f"페이지 {current_page} 수집 중...")
+            
+            previous_total = len(all_items)
             
             # 현재 페이지에서 데이터 추출
             items = await self._extract_items_from_page(
@@ -79,7 +83,18 @@ class ListingCrawler:
             )
             
             all_items.extend(items)
-            logger.info(f"페이지 {current_page}에서 {len(items)}개 상품 수집")
+            new_items_count = len(all_items) - previous_total
+            
+            logger.info(f"페이지 {current_page}에서 {len(items)}개 상품 발견, {new_items_count}개 신규")
+            
+            # 새 상품이 없으면 카운트 증가
+            if new_items_count == 0:
+                no_new_items_count += 1
+                if no_new_items_count >= max_no_new_items:
+                    logger.info(f"{max_no_new_items}번 연속 새 상품 없음, 수집 중단")
+                    break
+            else:
+                no_new_items_count = 0
             
             # 페이지네이션 처리
             pagination_type = page_structure.get("pagination_type", "none")
@@ -90,10 +105,12 @@ class ListingCrawler:
                     page_structure.get("next_button_selector")
                 )
                 if not has_next:
+                    logger.info("다음 버튼 없음 또는 클릭 실패, 수집 중단")
                     break
             elif pagination_type == "infinite_scroll":
                 has_more = await self._scroll_and_wait(page)
                 if not has_more:
+                    logger.info("더 이상 스크롤할 컨텐츠 없음, 수집 중단")
                     break
             else:
                 # 단일 페이지
@@ -276,10 +293,10 @@ class ListingCrawler:
         next_button_selector: Optional[str]
     ) -> bool:
         """
-        다음 페이지 버튼 클릭
+        다음 페이지 버튼 또는 "더보기" 버튼 클릭
         
         Returns:
-            bool: 성공 여부
+            bool: 성공 여부 (새 컨텐츠가 로드되었는지)
         """
         if not next_button_selector:
             return False
@@ -287,20 +304,56 @@ class ListingCrawler:
         try:
             button = await page.query_selector(next_button_selector)
             if not button:
+                logger.debug(f"버튼을 찾을 수 없음: {next_button_selector}")
+                return False
+            
+            # 버튼이 보이는지 확인
+            is_visible = await button.is_visible()
+            if not is_visible:
+                logger.debug("버튼이 보이지 않음")
                 return False
             
             # 버튼이 비활성화되어 있는지 확인
             is_disabled = await button.is_disabled()
             if is_disabled:
+                logger.debug("버튼이 비활성화됨")
                 return False
             
-            # 클릭
-            await button.click()
-            await asyncio.sleep(2)  # 페이지 로딩 대기
+            # 클릭 전 상품 수 확인
+            try:
+                previous_count = await page.evaluate("""
+                    () => document.querySelectorAll('*').length
+                """)
+            except:
+                previous_count = 0
             
-            return True
+            # 버튼 클릭
+            logger.debug(f"버튼 클릭: {next_button_selector}")
+            await button.click()
+            
+            # 새 컨텐츠 로딩 대기 (최대 5초)
+            for i in range(10):
+                await asyncio.sleep(0.5)
+                
+                try:
+                    current_count = await page.evaluate("""
+                        () => document.querySelectorAll('*').length
+                    """)
+                    
+                    # DOM 요소가 증가했으면 새 컨텐츠가 로드됨
+                    if current_count > previous_count:
+                        logger.debug(f"새 컨텐츠 로드됨 ({previous_count} → {current_count} 요소)")
+                        await asyncio.sleep(1)  # 추가 안정화 대기
+                        return True
+                except:
+                    pass
+            
+            # 타임아웃: 새 컨텐츠가 로드되지 않음
+            logger.debug("새 컨텐츠가 로드되지 않음 (타임아웃)")
+            return False
+            
         except Exception as e:
-            logger.debug(f"다음 버튼 클릭 실패: {e}")
+            logger.debug(f"버튼 클릭 실패: {e}")
             return False
     
     async def _scroll_and_wait(self, page: Page) -> bool:
