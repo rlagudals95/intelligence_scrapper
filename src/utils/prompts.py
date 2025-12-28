@@ -12,9 +12,26 @@ LISTING_PAGE_ANALYSIS_SYSTEM = """
 당신은 웹 페이지 구조 분석 전문가입니다.
 휴대폰 판매 리스팅 페이지의 HTML 구조를 분석하여 상품 카드를 찾고, 
 각 정보(기종명, 가격, 요금제 등)의 CSS 셀렉터를 정확하게 추출해야 합니다.
+
+📸 스크린샷 기반 분석 우선:
+1. 스크린샷 이미지를 보고 지원금 금액(숫자)이 시각적으로 어디에 위치하는지 먼저 파악
+2. 해당 위치의 HTML 요소를 찾아 셀렉터 생성
+3. 반드시 숫자가 보이는 요소를 선택
+
+🚨 CRITICAL 규칙: 
+- 지원금 셀렉터는 반드시 숫자(0-9)를 포함한 요소를 선택해야 합니다.
+- "원", "공시지원 :", "추가 지원금 :" 같은 레이블이나 단위만 있는 요소는 절대 선택 금지!
+- 형제 요소로 분리된 경우: 숫자가 있는 요소만 선택 (레이블이나 단위 요소 X)
 """
 
 LISTING_PAGE_ANALYSIS_PROMPT = """
+📸 이미지와 HTML을 함께 분석하세요:
+1. **스크린샷 이미지를 먼저 확인**: 지원금 금액이 시각적으로 어디에 표시되는지 파악
+2. **HTML에서 해당 위치 찾기**: 이미지에서 본 숫자가 어떤 HTML 요소에 있는지 확인
+3. **셀렉터 생성**: 그 숫자를 포함한 요소의 CSS 셀렉터 작성
+
+⚠️ 주의: 지원금 셀렉터는 반드시 숫자가 포함된 요소를 선택해야 합니다. "원"만 있는 요소는 절대 선택 금지!
+
 다음 HTML은 휴대폰 판매 리스팅 페이지입니다.
 이 페이지를 분석하여 아래 정보를 JSON 형식으로 추출해주세요.
 
@@ -26,15 +43,67 @@ LISTING_PAGE_ANALYSIS_PROMPT = """
 3. **detail_link_selector**: 상세 페이지로 가는 링크 요소의 CSS 셀렉터 (카드 내부 기준)
 
 **선택 정보 (리스팅에 표시된 경우만):**
-4. **signup_type_selector**: 변경유형(번호이동, 기기변경, 신규가입 등)의 CSS 셀렉터
-5. **retail_price_selector**: 출고가의 CSS 셀렉터
-6. **discount_price_selector**: 할인가/최종가의 CSS 셀렉터
-7. **plan_name_selector**: 요금제명의 CSS 셀렉터
-8. **image_selector**: 제품 이미지의 CSS 셀렉터 (보통 "img")
+4. **carrier_selector**: 통신사(SKT, KT, LGU+ 등)의 CSS 셀렉터
+   - SKT, KT, LGU+ 중 하나를 선택
+5. **signup_type_selector**: 변경유형(번호이동, 기기변경, 신규가입 등)의 CSS 셀렉터
+6. **retail_price_selector**: 출고가의 CSS 셀렉터
+7. **discount_price_selector**: 할인가/최종가의 CSS 셀렉터
+
+**지원금 정보 (매우 중요! 반드시 숫자를 포함한 요소를 선택!):**
+8. **subsidy_type_selector**: 지원금 타입 레이블의 CSS 셀렉터
+   - 예: "공시지원", "선택약정"
+   - 공시지원 혹은 선택 약정 중 하나를 선택
+   
+9. **public_subsidy_selector**: 공시지원금 금액이 들어있는 요소의 CSS 셀렉터
+   - 📸 **이미지 분석 필수**: 스크린샷에서 "공시지원", "공통지원금", "통신사지원금" 레이블 근처에 표시된 **숫자**를 찾으세요
+   - 🎯 **반드시 그 숫자를 포함한 HTML 요소를 선택!**
+   - 📋 **HTML 패턴 분석 (이미지에서 확인한 숫자의 위치를 HTML에서 찾기)**:
+     ```html
+     <!-- 패턴 A: 레이블, 숫자, 단위가 형제 요소로 분리 -->
+     <li>
+       <span class="label">공시지원 :</span>
+       <span class="value">600,000</span>  ← 이미지에서 본 숫자가 여기 있음! 선택! ✅
+       <span class="unit">원</span>  ← 이건 단위만! 선택 금지! ❌
+     </li>
+     셀렉터 예: li > span.value 또는 li > span:nth-child(2)
+     
+     <!-- 패턴 B: 레이블+숫자+단위가 하나의 요소 -->
+     <p>공통지원금 : 500,000원</p>  ← 이 요소 선택 ✅
+     ```
+   - ⚠️ **검증**: 선택한 요소의 `textContent`에 숫자가 있는지 확인 (예: "600,000" ✅, "원" ❌)
+   - ❌ **절대 선택 금지**: "원", "공시지원 :", "공통지원금 :" 같은 레이블/단위만 있는 요소
+    
+10. **additional_subsidy_selector**: 추가지원금 금액이 들어있는 요소의 CSS 셀렉터
+   - 📸 **이미지 분석 필수**: 스크린샷에서 "추가 지원금", "제휴할인", "판매점 할인" 레이블 근처에 표시된 **숫자**를 찾으세요
+   - 🎯 **반드시 그 숫자를 포함한 HTML 요소를 선택!**
+   - 📋 **HTML 패턴 분석 (이미지에서 확인한 숫자의 위치를 HTML에서 찾기)**:
+     ```html
+     <!-- 패턴 A: 레이블, 숫자, 단위가 형제 요소로 분리 -->
+     <li>
+       <span class="label">추가 지원금 :</span>
+       <span class="amount">739,300</span>  ← 이미지에서 본 숫자가 여기 있음! 선택! ✅
+       <span class="unit">원</span>  ← 이건 단위만! 선택 금지! ❌
+     </li>
+     셀렉터 예: li > span.amount 또는 li > span:nth-child(2)
+     
+     <!-- 패턴 B: 레이블+숫자+단위가 하나의 요소 -->
+     <p>판매점 제휴할인 : 820,000원</p>  ← 이 요소 선택 ✅
+     ```
+   - ⚠️ **검증**: 선택한 요소의 `textContent`에 숫자가 있는지 확인 (예: "739,300" ✅, "원" ❌)
+   - ❌ **절대 선택 금지**: "원", "추가 지원금 :", "제휴할인" 같은 레이블/단위만 있는 요소
+
+**요금제 정보 (지원금 타입과 혼동하지 말 것!):**
+11. **plan_name_selector**: 실제 통신 요금제명과 요금의 CSS 셀렉터
+   - 예: "5G 프리미어 에센셜", "ZEM플랜 스마트 (만 13세 미만)", "프리미엄(OTT 택1)"
+   - "공시지원", "선택약정"은 요금제가 아님! 지원금 타입임
+
+**기타 정보:**
+12. **benefits_selector**: 혜택/사은품/프로모션의 CSS 셀렉터
+13. **image_selector**: 제품 이미지의 CSS 셀렉터 (보통 "img")
 
 **페이지네이션:**
-9. **pagination_type**: "pagination" (버튼 있음) | "infinite_scroll" (무한 스크롤) | "none" (단일 페이지)
-10. **next_button_selector**: 다음 페이지 버튼 또는 "더보기" 버튼의 CSS 셀렉터 (pagination인 경우만)
+14. **pagination_type**: "pagination" (버튼 있음) | "infinite_scroll" (무한 스크롤) | "none" (단일 페이지)
+15. **next_button_selector**: 다음 페이지 버튼 또는 "더보기" 버튼의 CSS 셀렉터 (pagination인 경우만)
 
 # 응답 형식 (JSON)
 
@@ -43,10 +112,15 @@ LISTING_PAGE_ANALYSIS_PROMPT = """
   "product_card_selector": ".product-item",
   "product_name_selector": ".product-title",
   "detail_link_selector": "a.detail-link",
+  "carrier_selector": ".carrier-badge",
   "signup_type_selector": ".signup-type",
   "retail_price_selector": ".retail-price",
   "discount_price_selector": ".final-price",
-  "plan_name_selector": ".plan-name",
+  "subsidy_type_selector": ".subsidy-type-label",
+  "public_subsidy_selector": ".subsidy-amount.public",
+  "additional_subsidy_selector": ".subsidy-amount.additional",
+  "plan_name_selector": ".plan-info .plan-name",
+  "benefits_selector": ".promotion-text",
   "image_selector": "img.product-image",
   "pagination_type": "pagination",
   "next_button_selector": ".pagination .next"
@@ -58,15 +132,91 @@ LISTING_PAGE_ANALYSIS_PROMPT = """
 - CSS 셀렉터는 가능한 한 구체적이고 안정적으로 (id, class, data-* 속성 사용)
 - 상대 셀렉터를 사용할 수 있음 (예: ".card > .title")
 - 리스팅에 표시되지 않은 정보는 null 또는 빈 문자열("")로 설정
-- **페이지네이션 타입 판단:**
-  - "다음", "Next", ">" 버튼 또는 "더보기", "Load More" 버튼이 있으면 → "pagination"
-  - 스크롤 시 자동으로 로딩되면 → "infinite_scroll"
-  - 모든 상품이 한 페이지에 있으면 → "none"
+
+**🚨 매우 중요한 구분 (반드시 지켜야 함!):**
+
+1. **요금제 (plan_name)**: 통신사 요금제 이름
+   - ✓ 올바른 예: "5G 프리미어 에센셜", "ZEM플랜 스마트", "5G 초이스 스페셜"
+   - ✗ 잘못된 예: "공시지원", "선택약정" (이건 지원금 타입!)
+  
+2. **지원금 타입 (subsidy_type)**: 지원금 방식 (레이블만)
+   - ✓ 올바른 예: "공시지원", "선택약정"
+   - ✗ 잘못된 예: "500,000원", "원" (이건 금액이거나 단위!)
+  
+3. **공시지원금 (public_subsidy)**: 숫자를 포함한 요소 (레이블이 함께 있어도 OK)
+   - ✅ 셀렉터가 선택하는 값 예시:
+     - "500,000" ✅ (숫자만)
+     - "152,000원" ✅ (숫자+단위)
+     - "공통지원금 : 600,000원" ✅ (레이블+숫자+단위)
+   - ❌ 선택하면 안 되는 값: "원", "공시지원 :", "공시지원" (숫자 없음!)
+   - 💡 전략: 숫자가 분리되어 있으면 숫자만, 함께 있으면 함께 선택
+  
+4. **추가지원금 (additional_subsidy)**: 숫자를 포함한 요소 (레이블이 함께 있어도 OK)
+   - ✅ 셀렉터가 선택하는 값 예시:
+     - "739,300" ✅ (숫자만)
+     - "820,000원" ✅ (숫자+단위)
+     - "판매점 제휴할인 : 820,000원" ✅ (레이블+숫자+단위)
+   - ❌ 선택하면 안 되는 값: "원", "추가 지원금 :", "제휴할인" (숫자 없음!)
+   - 💡 전략: 숫자가 분리되어 있으면 숫자만, 함께 있으면 함께 선택
+
+**🎯 셀렉터 선택 원칙 (모든 사이트 공통):**
+
+1. **핵심 규칙**: 반드시 숫자(0-9)를 포함한 요소를 선택
+   - 숫자가 있다면 레이블이나 단위가 함께 있어도 OK
+   - 숫자가 없다면 절대 선택 금지
+
+2. **우선순위 A**: 숫자만 분리되어 있으면 → 숫자 요소만 선택 (최선)
+   ```html
+   <li>
+     <span class="label">추가 지원금 :</span>
+     <span class="value">739,300</span>  ← 선택 ✅
+     <span class="unit">원</span>  ← 선택 금지 ❌
+   </li>
+   ✅ 셀렉터: li > span.value 또는 li > span:nth-child(2)
+   ```
+
+3. **우선순위 B**: 레이블+숫자가 함께 있으면 → 그 요소 선택 (차선, 후처리에서 숫자 추출)
+   ```html
+   <p>판매점 제휴할인 : 820,000원</p>  ← 선택 ✅
+   ✅ 셀렉터: p → "판매점 제휴할인 : 820,000원" (후처리: "820,000")
+   ```
+
+4. **절대 금지**: 숫자가 없는 요소
+   ```html
+   <span class="label">공시지원 :</span>  ← 숫자 없음 ❌
+   <span class="unit">원</span>           ← 숫자 없음 ❌
+   ```
+   ❗️ **실수 사례**: `li > span.unit`이나 `li > span:last-child`를 선택하면 "원"만 추출됨 → 잘못된 선택!
+
+5. **판단 기준**: 선택한 요소의 텍스트에 0~9 숫자가 최소 1개 이상 있어야 함
+   - 브라우저 DevTools에서 셀렉터를 실행했을 때 숫자가 보이는지 확인
+   - 예: `document.querySelector('li > span.value').textContent` → "739,300" ✅
+   - 예: `document.querySelector('li > span.unit').textContent` → "원" ❌
+
+**페이지네이션 타입 판단:**
+- "다음", "Next", ">" 버튼 또는 "더보기", "Load More" 버튼이 있으면 → "pagination"
+- 스크롤 시 자동으로 로딩되면 → "infinite_scroll"
+- 모든 상품이 한 페이지에 있으면 → "none"
+
 - 셀렉터가 여러 개 가능하면 가장 안정적인 것 선택
+
+**⚡ 지원금 셀렉터 핵심 요약:**
+- 반드시 숫자(0-9)를 포함한 요소를 선택
+- 숫자가 분리되어 있으면 → 숫자만 (우선)
+- 숫자가 레이블과 함께 있으면 → 함께 선택도 OK (후처리에서 정리됨)
+- 숫자가 없는 요소는 절대 선택 금지 ("원", "공시지원 :", "제휴할인" 등)
 
 # HTML
 
 {html_content}
+
+**🚨 최종 확인 (지원금 셀렉터만!):**
+1. **스크린샷을 다시 보세요**: 지원금 금액(숫자)이 어디에 표시되는지 시각적으로 확인
+2. **HTML에서 그 위치를 찾으세요**: 이미지에서 본 숫자가 있는 HTML 요소 확인
+3. **셀렉터가 그 요소를 가리키는지 검증**:
+   - `public_subsidy_selector` → 숫자 포함 요소? (예: "600,000" ✅, "원" ❌)
+   - `additional_subsidy_selector` → 숫자 포함 요소? (예: "739,300" ✅, "원" ❌)
+4. **잘못된 선택 사례**: `span.kw`, `span.unit`, `span:last-child` 등은 보통 "원"만 있음 → 피하기!
 
 위 HTML을 분석하여 JSON만 출력하세요. 추가 설명 없이 JSON만 반환하세요.
 """

@@ -423,16 +423,16 @@ async def test_phase2_integration():
     reason="API 키 없음"
 )
 @pytest.mark.parametrize("site_name,target_url,min_items", [
-    # (
-    #     "하이폰",
-    #     "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
-    #     8
-    # ),
-    # (
-    #     "띵폰",
-    #     "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
-    #     25
-    # ),
+    (
+        "하이폰",
+        "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
+        8
+    ),
+    (
+        "띵폰",
+        "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+        25
+    ),
     (
         "딜리버리폰",
         "https://www.deliveryphone.co.kr/phone/list/2",
@@ -452,7 +452,7 @@ async def test_listing_collection(site_name: str, target_url: str, min_items: in
     
     config = SiteConfig(
         target_url=target_url,
-        headless=False,
+        headless=True,
         timeout=60000
     )
     
@@ -491,14 +491,19 @@ async def test_listing_collection(site_name: str, target_url: str, min_items: in
                 if price_num:
                     assert price_num.isdigit(), f"가격 형식 오류: {item.discount_price}"
         
-        # 상품 출력
-        print("\n📊 수집된 상품 샘플:")
-        for i, item in enumerate(items):
+        # 상품 출력 (처음 3개)
+        print("\n📊 수집된 상품 샘플 (처음 3개):")
+        for i, item in enumerate(items[:1], 1):
             print(f"\n  {i}. {item.model_name}")
+            print(f"     통신사: {item.carrier or 'N/A'}")
             print(f"     변경유형: {item.signup_type or 'N/A'}")
             print(f"     출고가: {item.retail_price or 'N/A'}")
             print(f"     할인가: {item.discount_price or 'N/A'}")
+            print(f"     지원금타입: {item.subsidy_type or 'N/A'}")
+            print(f"     공시지원금: {item.public_subsidy or 'N/A'}")
+            print(f"     추가지원금: {item.additional_subsidy or 'N/A'}")
             print(f"     요금제: {item.plan_name or 'N/A'}")
+            print(f"     혜택: {item.benefits or 'N/A'}")
             print(f"     상세 URL: {item.detail_url[:60]}...")
         
         print("\n" + "="*70)

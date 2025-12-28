@@ -61,7 +61,9 @@ class ListingCrawler:
         logger.info(
             "페이지 구조 분석 완료",
             product_card_selector=page_structure.get("product_card_selector"),
-            pagination_type=page_structure.get("pagination_type")
+            pagination_type=page_structure.get("pagination_type"),
+            public_subsidy_selector=page_structure.get("public_subsidy_selector"),
+            additional_subsidy_selector=page_structure.get("additional_subsidy_selector")
         )
         
         # 2. 모든 페이지 순회하며 데이터 수집
@@ -203,6 +205,12 @@ class ListingCrawler:
             # 절대 URL 변환
             detail_url = urljoin(base_url, detail_url)
             
+            # 선택: 통신사
+            carrier = await self._extract_text(
+                card,
+                page_structure.get("carrier_selector", "")
+            )
+            
             # 선택: 변경유형
             signup_type = await self._extract_text(
                 card,
@@ -221,10 +229,46 @@ class ListingCrawler:
                 page_structure.get("discount_price_selector", "")
             )
             
+            # 선택: 지원금 타입 (공시지원, 선택약정)
+            subsidy_type = await self._extract_text(
+                card,
+                page_structure.get("subsidy_type_selector", "")
+            )
+            
+            # 선택: 공시지원금
+            public_subsidy_selector = page_structure.get("public_subsidy_selector", "")
+            public_subsidy = await self._extract_text(card, public_subsidy_selector)
+            
+            # 지원금은 반드시 유효한 금액 형식이어야 함 (4자리 이상 숫자 또는 콤마 포함)
+            if public_subsidy:
+                if self._is_valid_subsidy_amount(public_subsidy):
+                    # 레이블과 단위 제거, 숫자와 콤마만 추출
+                    public_subsidy = self._clean_subsidy_amount(public_subsidy)
+                else:
+                    public_subsidy = None
+            
+            # 선택: 추가지원금
+            additional_subsidy_selector = page_structure.get("additional_subsidy_selector", "")
+            additional_subsidy = await self._extract_text(card, additional_subsidy_selector)
+            
+            # 지원금은 반드시 유효한 금액 형식이어야 함 (4자리 이상 숫자 또는 콤마 포함)
+            if additional_subsidy:
+                if self._is_valid_subsidy_amount(additional_subsidy):
+                    # 레이블과 단위 제거, 숫자와 콤마만 추출
+                    additional_subsidy = self._clean_subsidy_amount(additional_subsidy)
+                else:
+                    additional_subsidy = None
+            
             # 선택: 요금제
             plan_name = await self._extract_text(
                 card,
                 page_structure.get("plan_name_selector", "")
+            )
+            
+            # 선택: 혜택
+            benefits = await self._extract_text(
+                card,
+                page_structure.get("benefits_selector", "")
             )
             
             # 선택: 이미지
@@ -237,10 +281,15 @@ class ListingCrawler:
             
             return PhoneListingItem(
                 model_name=model_name.strip(),
+                carrier=carrier.strip() if carrier else None,
                 signup_type=signup_type.strip() if signup_type else None,
                 retail_price=retail_price.strip() if retail_price else None,
                 discount_price=discount_price.strip() if discount_price else None,
+                subsidy_type=subsidy_type.strip() if subsidy_type else None,
+                public_subsidy=public_subsidy.strip() if public_subsidy else None,
+                additional_subsidy=additional_subsidy.strip() if additional_subsidy else None,
                 plan_name=plan_name.strip() if plan_name else None,
+                benefits=benefits.strip() if benefits else None,
                 detail_url=detail_url,
                 image_url=image_url,
                 list_url=base_url
@@ -250,8 +299,75 @@ class ListingCrawler:
             logger.debug(f"아이템 추출 실패: {e}")
             return None
     
+    def _is_valid_subsidy_amount(self, text: str) -> bool:
+        """
+        지원금 금액이 유효한지 확인
+        - 최소 4자리 이상의 숫자가 있어야 함
+        - 또는 콤마(,)가 포함되어 있어야 함 (예: "600,000")
+        - "5G", "4G" 같은 것은 제외
+        """
+        if not text:
+            return False
+        
+        # 콤마가 있으면 금액일 가능성이 높음
+        if ',' in text:
+            return True
+        
+        # 연속된 숫자가 4자리 이상인지 확인
+        digit_count = 0
+        max_consecutive_digits = 0
+        
+        for char in text:
+            if char.isdigit():
+                digit_count += 1
+                max_consecutive_digits = max(max_consecutive_digits, digit_count)
+            else:
+                digit_count = 0
+        
+        # 4자리 이상 연속된 숫자가 있으면 금액으로 간주
+        return max_consecutive_digits >= 4
+    
+    def _clean_subsidy_amount(self, text: str) -> Optional[str]:
+        """
+        지원금 금액에서 숫자와 콤마만 추출
+        예: "공통지원금 : 600,000원" → "600,000"
+        예: "배달의폰 제휴할인 : 820,000원" → "820,000"
+        예: "739,300" → "739,300"
+        
+        Returns:
+            정리된 금액 문자열, 유효하지 않으면 None
+        """
+        if not text:
+            return None
+        
+        # 숫자와 콤마만 추출
+        cleaned = ''.join(char for char in text if char.isdigit() or char == ',')
+        
+        if not cleaned:
+            return None
+        
+        # 숫자만 추출 (콤마 제거)
+        digits_only = cleaned.replace(',', '')
+        
+        # 너무 길면 (15자리 이상) 잘못 추출된 것으로 간주
+        # 일반적인 지원금: 100,000 ~ 2,000,000 (6~7자리)
+        if len(digits_only) > 10:
+            return None
+        
+        # 너무 짧으면 (3자리 이하) 무효
+        if len(digits_only) < 4:
+            return None
+        
+        return cleaned
+    
     async def _extract_text(self, element, selector: str) -> Optional[str]:
-        """요소에서 텍스트 추출"""
+        """
+        요소에서 텍스트 추출
+        
+        LLM이 태그명을 잘못 선택한 경우를 대비해 fallback 로직 포함:
+        1. 원래 셀렉터로 시도
+        2. 실패하면 태그명을 제거하고 클래스명만으로 시도
+        """
         if not selector:
             # 셀렉터가 없으면 요소 자체의 텍스트
             try:
@@ -259,12 +375,33 @@ class ListingCrawler:
             except:
                 return None
         
+        # 1차 시도: 원래 셀렉터
         try:
             target = await element.query_selector(selector)
             if target:
                 return await target.inner_text()
         except:
             pass
+        
+        # 2차 시도: 태그명 제거하고 클래스명만으로 시도
+        # 예: "b.icp" → ".icp", "div.list-sale > ul > li:nth-child(2) b.icp" → "div.list-sale > ul > li:nth-child(2) .icp"
+        if selector and (' ' in selector or '>' in selector):
+            # 복잡한 셀렉터: 마지막 부분만 태그명 제거
+            parts = selector.split()
+            if len(parts) > 0:
+                last_part = parts[-1]
+                if '.' in last_part and not last_part.startswith('.'):
+                    # 태그명.클래스명 형태
+                    class_only = '.' + last_part.split('.', 1)[1]
+                    fallback_selector = ' '.join(parts[:-1] + [class_only])
+                    try:
+                        target = await element.query_selector(fallback_selector)
+                        if target:
+                            logger.debug(f"셀렉터 fallback 성공: {selector} → {fallback_selector}")
+                            return await target.inner_text()
+                    except:
+                        pass
+        
         return None
     
     async def _extract_link(self, element, selector: str) -> Optional[str]:

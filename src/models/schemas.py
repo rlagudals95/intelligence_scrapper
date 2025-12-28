@@ -77,10 +77,23 @@ class Variant(BaseModel):
 class PhoneListingItem(BaseModel):
     """리스팅 페이지에서 수집한 휴대폰 정보"""
     model_name: str = Field(..., description="휴대폰 기종명 (예: 갤럭시 S24 Ultra)")
+    
+    # 통신사 정보
+    carrier: Optional[str] = Field(None, description="통신사 (SKT, KT, LGU+ 등)")
     signup_type: Optional[str] = Field(None, description="변경유형 (번호이동, 기기변경, 신규가입 등)")
+    
+    # 가격 정보
     retail_price: Optional[str] = Field(None, description="출고가")
     discount_price: Optional[str] = Field(None, description="할인가/최종가")
+    subsidy_type: Optional[str] = Field(None, description="지원금 타입 (공시지원(공통지원), 선택약정)")
+    public_subsidy: Optional[str] = Field(None, description="공시지원금 (공통지원금 + 통신사지원금 합계)")
+    additional_subsidy: Optional[str] = Field(None, description="추가지원금 (판매점 제휴할인)")
+    
+    # 요금제 및 혜택
     plan_name: Optional[str] = Field(None, description="요금제 (리스팅에 표시된 경우)")
+    benefits: Optional[str] = Field(None, description="혜택/사은품/프로모션")
+    
+    # URL 정보
     detail_url: str = Field(..., description="상세 페이지 URL")
     image_url: Optional[str] = Field(None, description="제품 이미지 URL")
     list_url: Optional[str] = Field(None, description="리스팅 페이지 URL (출처)")
@@ -89,10 +102,15 @@ class PhoneListingItem(BaseModel):
         json_schema_extra = {
             "example": {
                 "model_name": "갤럭시 S24 Ultra",
+                "carrier": "SKT",
                 "signup_type": "번호이동",
                 "retail_price": "1,698,400",
                 "discount_price": "567,000",
+                "subsidy_type": "공시지원",
+                "public_subsidy": "400,000",
+                "additional_subsidy": "100,000",
                 "plan_name": "5G 프리미어 에센셜",
+                "benefits": "워치 증정",
                 "detail_url": "https://example.com/product/12345",
                 "image_url": "https://example.com/image.jpg",
                 "list_url": "https://example.com/list"
