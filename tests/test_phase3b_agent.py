@@ -15,29 +15,54 @@ load_dotenv()
 from src.core.config import SiteConfig
 from src.core.browser import BrowserManager
 from src.core.llm_client import LLMClient, LLMProvider
-from src.crawlers.llm_agent_extractor import LLMAgentExtractor
+from src.crawlers.simple_detail_extractor import SimpleDetailExtractor
 
 
 # 다양한 사이트 테스트 URL
 TEST_URLS = {
+    "띵폰_갤럭시S25": "https://ddingphone.com/view/116?tid=KT&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=K1596089921",
     "띵폰_아이폰17": "https://ddingphone.com/view/143?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1738389813",
-    "띵폰_갤럭시S25": "https://ddingphone.com/view/138?tid=SKT&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=2&code=S1714617302",  # 실제로는 아이폰17
+   
     "하이폰_갤럭시S25": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337",
-    "하이폰": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337",
-    "폰슐랭": "https://phonechelin.shop/mshop/view/53?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
-    "배달의폰": "https://www.deliveryphone.co.kr/phone/detail/136/0000412381",
+    "하이폰_아이폰17": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10381",
     
-    "성지폰": "https://sungjiphone.com/phone/detail/166/0000700659",
-    "엘지티샵" : "https://lgtshop.co.kr/mshop/view/47?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
-    "투게더몰" : "https://uplustogethermall.com/mshop/view/84?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
-    "케이티마트" : "https://ktmarket.co.kr/phone/sm-s931nk", # 이거 페이지 구조 조금 별나네
-    "아정당":"https://ajdphone.co.kr/phone/mno/deals/50660?carrier=SKT&subsidyType=PUBLIC&policy=202691&storageType=SIZE_256GB&requestCarrier=KT&phoneDeviceSn=50671"
+    "폰슐랭_갤럭시S25": "https://phonechelin.shop/mshop/view/53?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
+    "폰슐랭_아이폰17": "https://phonechelin.shop/mshop/view/74?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100686",
+    
+    "배달의폰_갤럭시S25": "https://www.deliveryphone.co.kr/phone/detail/136/0000412381",
+    "배달의폰_아이폰17": "https://www.deliveryphone.co.kr/phone/detail/146/0000412381",
+    
+    "성지폰_갤럭시S25": "https://sungjiphone.com/phone/detail/166/0000700659",
+    "성지폰_아이폰17": "https://sungjiphone.com/phone/detail/186/0000700659",
+
+    "엘지티샵_갤럭시S25" : "https://lgtshop.co.kr/mshop/view/47?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
+    "엘지티샵_아이폰17" : "https://lgtshop.co.kr/mshop/view/64?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100686",
+
+    "투게더몰_갤럭시S25" : "https://lgtshop.co.kr/mshop/view/47?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
+    "투게더몰_아이폰17" : "https://uplustogethermall.com/mshop/view/84?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
+    
+
+    "케이티마트_갤럭시S25" : "https://ktmarket.co.kr/phone/sm-s931nk", # 이거 페이지 구조 조금 별나네
+    "케이티마트_아이폰17" : "https://ktmarket.co.kr/phone/aip17-256", # 이거 페이지 구조 조금 별나네
 }
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("배달의폰", TEST_URLS["배달의폰"]),
+    # ("배달의폰_갤럭시S25", TEST_URLS["배달의폰_갤럭시S25"]),
+    # ("배달의폰_아이폰17", TEST_URLS["배달의폰_아이폰17"]),
+    # ("하이폰_갤럭시S25", TEST_URLS["하이폰_갤럭시S25"]),
+    # ("하이폰_아이폰17", TEST_URLS["하이폰_아이폰17"]),
+    ("폰슐랭_갤럭시S25", TEST_URLS["폰슐랭_갤럭시S25"]),
+    # ("폰슐랭_아이폰17", TEST_URLS["폰슐랭_아이폰17"]),
+    # ("성지폰_갤럭시S25", TEST_URLS["성지폰_갤럭시S25"]),
+    # ("성지폰_아이폰17", TEST_URLS["성지폰_아이폰17"]),
+    # ("엘지티샵_갤럭시S25", TEST_URLS["엘지티샵_갤럭시S25"]),
+    # ("엘지티샵_아이폰17", TEST_URLS["엘지티샵_아이폰17"]),
+    # ("투게더몰_갤럭시S25", TEST_URLS["투게더몰_갤럭시S25"]),
+    # ("투게더몰_아이폰17", TEST_URLS["투게더몰_아이폰17"]),
+    # ("케이티마트_갤럭시S25", TEST_URLS["케이티마트_갤럭시S25"]),
+    # ("케이티마트_아이폰17", TEST_URLS["케이티마트_아이폰17"]),
 ])
 async def test_llm_agent_collect_policies(site_name: str, test_url: str):
     """
@@ -111,14 +136,14 @@ async def test_llm_agent_collect_policies(site_name: str, test_url: str):
         
         print(f"   기종 감지: {model_name}\n")
         
-        extractor = LLMAgentExtractor(llm_client, model_name=model_name)
+        # SimpleDetailExtractor + VisionPlanAgent 사용
+        extractor = SimpleDetailExtractor(llm_client, model_name=model_name)
         
-        # 최대 20개 조합 테스트 (용량1 × 색상1 × 통신사3 × 가입2 × 요금3 = 18개)
+        # 정책 수집 (모든 조합 시도)
         result = await extractor.collect_all_policies(
             page=page,
             url=test_url,
-            site_name=site_name,
-            max_combinations=20
+            site_name=site_name
         )
         
         # 결과 출력

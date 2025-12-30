@@ -2,6 +2,7 @@
 .PHONY: test-hiphone test-ddingphone test-deliveryphone debug-ddingphone
 .PHONY: test-phase3-step1 test-phase3-step2 test-phase3-step3 test-phase3-step4
 .PHONY: test-phase3b-step1 test-phase3b-step2 test-ddingphone-api test-ddingphone-api3
+.PHONY: test-integration test-integration-quick
 
 # 기본 타겟
 help:
@@ -27,6 +28,15 @@ help:
 	@echo "  make test-hiphone         - 하이폰 리스팅 수집 테스트"
 	@echo "  make test-ddingphone      - 띵폰 리스팅 수집 테스트"
 	@echo "  make test-deliveryphone   - 딜리버리폰 리스팅 수집 테스트"
+	@echo ""
+	@echo "  === 통합 테스트 ==="
+	@echo "  make collect-urls               - Phase 2: 모든 사이트에서 상세 URL 수집 📋"
+	@echo "  make test-integration-from-urls - Phase 3: 수집된 URL로 전체 정책 수집 (추천!) 🎯"
+	@echo "  make test-integration           - 전체 파이프라인 통합 테스트 (리스팅→상세→정책) 🔄"
+	@echo "  make test-integration-quick     - 빠른 통합 테스트 (1개 상품만) ⚡"
+	@echo "  make test-integration-simple    - 간소화 통합 테스트 (1개 사이트) 🎯"
+	@echo "  make test-integration-multi     - 다중 사이트 통합 테스트 (2개 사이트) 🚀"
+	@echo "  make test-integration-all       - 전체 사이트 통합 테스트 (모든 사이트) 🌐"
 	@echo ""
 	@echo "  make debug-ddingphone     - 띵폰 페이지 디버깅"
 	@echo "  make clean                - 캐시 및 임시 파일 정리"
@@ -108,6 +118,10 @@ test-phase3b-agent:
 	@echo "🤖 Phase 3B Agent: LLM 추론 기반 정책 수집 (범용)"
 	uv run pytest tests/test_phase3b_agent.py -v -s --tb=short
 
+test-simple-extractor:
+	@echo "⚡ Simple Extractor: 단순 명확한 추출기"
+	uv run pytest tests/test_simple_extractor.py -v -s --tb=short
+
 # 특정 사이트 테스트
 test-hiphone:
 	@echo "🧪 하이폰 리스팅 수집 테스트..."
@@ -133,6 +147,36 @@ test: test-all
 debug-ddingphone:
 	@echo "🔍 띵폰 페이지 디버깅 중..."
 	uv run python debug_ddingphone.py
+
+# Phase 2: 상세 URL 수집
+collect-urls:
+	@echo "📋 Phase 2: 모든 사이트에서 갤럭시S25/아이폰17 상세 URL 수집"
+	uv run python collect_detail_urls.py
+
+# 통합 테스트
+test-integration:
+	@echo "🔄 통합 테스트: 리스팅 → 필터링 → 상세 정책 수집"
+	uv run pytest tests/test_integration.py::test_full_pipeline -v -s --tb=short
+
+test-integration-quick:
+	@echo "⚡ 빠른 통합 테스트 (1개 상품)"
+	uv run pytest tests/test_integration.py::test_single_site_quick -v -s --tb=short
+
+test-integration-simple:
+	@echo "🎯 간소화 통합 테스트: 상세 URL 직접 사용 (1개 사이트)"
+	uv run pytest tests/test_integration_simple.py::test_collect_policies_from_urls -v -s --tb=short
+
+test-integration-multi:
+	@echo "🚀 다중 사이트 통합 테스트 (2개 사이트)"
+	uv run pytest tests/test_integration_simple.py::test_collect_multiple_sites -v -s --tb=short
+
+test-integration-all:
+	@echo "🌐 전체 사이트 통합 테스트 (모든 사이트)"
+	uv run pytest tests/test_integration_simple.py::test_collect_all_sites -v -s --tb=short
+
+test-integration-from-urls:
+	@echo "🎯 수집된 17개 URL로 전체 정책 수집"
+	uv run pytest tests/test_integration_from_urls.py::test_collect_all_from_urls -v -s --tb=short
 
 # 정리
 clean:

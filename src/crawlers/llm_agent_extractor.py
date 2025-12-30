@@ -140,49 +140,101 @@ class LLMAgentExtractor:
         logger.info("📊 LLM Agent: 옵션 분석 시작")
         logger.info("="*70)
         
-        # Phase 0: 요금제 드롭다운 열기 (확실하게!)
+        # Phase 0: 요금제 드롭다운 열기 (모든 패턴 지원)
         logger.info("\n[Phase 0] 요금제 드롭다운 열기")
         print("\n[Phase 0] 요금제 드롭다운 열기")
         
-        # 전략 1: "월" + 숫자 패턴이 있는 모든 요소 클릭
-        try:
-            plan_boxes = page.locator('*:has-text("월"):has-text("원")')
-            count = await plan_boxes.count()
-            print(f"   '월'+'원' 요소: {count}개")
-            logger.info(f"   '월'+'원' 요소: {count}개")
-            
-            for i in range(min(count, 10)):
-                try:
-                    elem = plan_boxes.nth(i)
-                    text = await elem.text_content(timeout=500)
-                    
-                    # "월 109,000원" 같은 패턴이 있으면 클릭
-                    if "월" in text and "원" in text and len(text) < 300:
-                        await elem.click(force=True, timeout=500)
-                        await asyncio.sleep(0.2)
-                        print(f"   ✅ 클릭 {i+1}: {text[:30]}...")
-                except:
-                    pass
-        except Exception as e:
-            logger.debug(f"   전략 1 실패: {e}")
+        clicked_count = 0
         
-        # 전략 2: ▼ 버튼 클릭
+        # 전략 1: button.bill-view (띵폰)
         try:
-            dropdown_btns = page.locator('*:has-text("▼")')
-            count = await dropdown_btns.count()
-            print(f"   ▼ 버튼: {count}개")
-            
-            for i in range(min(count, 5)):
+            btns = page.locator('button.bill-view, .bill-view')
+            count = await btns.count()
+            if count > 0:
+                # JavaScript click으로 확실하게
+                await btns.first.evaluate("el => el.click()")
+                await asyncio.sleep(1)
+                print(f"   ✅ bill-view 클릭 (JavaScript)")
+                clicked_count += 1
+                
+                # 추가 클릭 시도
                 try:
-                    await dropdown_btns.nth(i).click(force=True, timeout=500)
-                    await asyncio.sleep(0.2)
+                    await btns.first.click(force=True, timeout=500)
                 except:
                     pass
         except:
             pass
         
-        # 충분한 대기 (드롭다운이 완전히 열릴 때까지)
-        await asyncio.sleep(2)
+        # 전략 2: button.bill-view-more (투게더몰, 폰슐랭, 엘지티샵)
+        try:
+            btns = page.locator('button.bill-view-more, .bill-view-more')
+            count = await btns.count()
+            if count > 0:
+                await btns.first.click(force=True, timeout=1000)
+                await asyncio.sleep(0.5)
+                print(f"   ✅ bill-view-more 클릭")
+                clicked_count += 1
+        except:
+            pass
+        
+        # 전략 3: button.bill-layer-view (엘지티샵 "전체 요금제 보기")
+        try:
+            btns = page.locator('button.bill-layer-view, .bill-layer-view')
+            count = await btns.count()
+            if count > 0:
+                await btns.first.click(force=True, timeout=1000)
+                await asyncio.sleep(0.5)
+                print(f"   ✅ bill-layer-view 클릭")
+                clicked_count += 1
+        except:
+            pass
+        
+        # 전략 4: popup 링크 (배달의폰, 성지폰)
+        try:
+            links = page.locator('a[onclick*="popup"], a[onclick*="price"]')
+            count = await links.count()
+            if count > 0:
+                await links.first.click(force=True, timeout=1000)
+                await asyncio.sleep(2)  # popup 로딩 충분한 시간
+                print(f"   ✅ popup 링크 클릭 (2초 대기)")
+                
+                # popup 확인
+                popup_count = await page.locator('.popup:visible, .modal:visible').count()
+                if popup_count > 0:
+                    print(f"   📄 popup 모달: {popup_count}개 감지")
+                
+                clicked_count += 1
+        except:
+            pass
+        
+        # 전략 5: .plan_mod (하이폰)
+        try:
+            mods = page.locator('.plan_mod, .plan-mod')
+            count = await mods.count()
+            if count > 0:
+                await mods.first.click(force=True, timeout=1000)
+                await asyncio.sleep(0.5)
+                print(f"   ✅ plan_mod 클릭")
+                clicked_count += 1
+        except:
+            pass
+        
+        # 전략 6: "요금제변경" 버튼
+        try:
+            btns = page.get_by_text("요금제변경", exact=False)
+            count = await btns.count()
+            if count > 0:
+                await btns.first.click(force=True, timeout=1000)
+                await asyncio.sleep(0.5)
+                print(f"   ✅ 요금제변경 버튼 클릭")
+                clicked_count += 1
+        except:
+            pass
+        
+        print(f"   📊 총 {clicked_count}개 버튼 클릭 완료")
+        
+        # 드롭다운/popup 로딩 대기 (너무 길면 popup 닫힐 수 있음)
+        await asyncio.sleep(2)  # 4초 → 2초 (popup 닫히기 전에 추출)
         print("   ⏸️  드롭다운 대기 완료\n")
         
         # Phase 1: 기본 옵션 분석
@@ -333,65 +385,124 @@ class LLMAgentExtractor:
             traceback.print_exc()
             options = {}
         
-        # Phase 2: SmartPlanExtractor로 요금제 추출
-        logger.info("\n[Phase 2] 요금제 추출 (Smart)")
-        print("\n[Phase 2] 요금제 추출 (Smart)")
+        # Phase 2: 요금제 추출 (Smart → JavaScript fallback)
+        logger.info("\n[Phase 2] 요금제 추출")
+        print("\n[Phase 2] 요금제 추출")
         
         plans_with_fees = []
         
+        # 먼저 SmartPlanExtractor (Vision) 시도
         try:
             smart_extractor = SmartPlanExtractor(self.llm)
             plans_with_fees = await smart_extractor.extract_all_plans(page)
             
+            # 최소 3개 이상 추출되어야 성공으로 간주
+            if plans_with_fees and len(plans_with_fees) >= 3:
+                logger.info(f"   ✅ Vision 추출 성공: {len(plans_with_fees)}개, JavaScript skip")
+                print(f"   ✅ Vision 추출 충분, JavaScript skip")
+            else:
+                raise Exception(f"Vision 추출 부족 ({len(plans_with_fees)}개), JavaScript로 재시도")
+                
         except Exception as e:
-            logger.error(f"   ❌ Smart 추출 실패: {e}")
+            logger.warning(f"   ⚠️ Vision 추출 실패, JavaScript fallback: {e}")
+            print(f"   🔄 Fallback: JavaScript (힌트 기반)")
             
-            # Fallback: JavaScript로 시도
-            logger.info(f"   🔄 Fallback: JavaScript")
-            
+            # Fallback: 힌트 기반 JavaScript
             try:
                 plans_with_fees = await page.evaluate("""
                 () => {
                     const plans = [];
                     
-                    // 모든 li, option 요소에서 요금제 찾기 (visible 체크 제거!)
-                    const planElements = document.querySelectorAll('li, option, tr');
-                    
-                    planElements.forEach(elem => {
-                        const text = elem.textContent.trim();
-                        
-                        // 요금제 패턴: 짧고 + "월" + 숫자 + 키워드
-                        if (text.length < 300 && text.includes('월') &&
-                            text.match(/프리미|프라임|레귤러|레규러|스페셜|베이직|심플|슬림|에센셜/i)) {
+                    // 패턴 0: popup 내부 table (배달의폰, 성지폰)
+                    const popupTables = document.querySelectorAll('.popup table, .modal table');
+                    popupTables.forEach(table => {
+                        const rows = table.querySelectorAll('tr');
+                        rows.forEach(row => {
+                            const nameCell = row.querySelector('td.name');
+                            const priceB = row.querySelector('b');
                             
-                            // 월요금 패턴
-                            const feeMatch = text.match(/(\\d{1,3}),?(\\d{3})\\s*원/);
-                            
-                            if (feeMatch) {
-                                const fee = parseInt(feeMatch[1].replace(',', '') + feeMatch[2]);
+                            if (nameCell && priceB) {
+                                const planName = nameCell.textContent.trim();
+                                const feeText = priceB.textContent.replace(/,/g, '').replace(/[^0-9]/g, '');
+                                const fee = parseInt(feeText);
                                 
-                                // 범위 체크
-                                if (fee < 40000 || fee > 150000) return;
-                                
-                                // 요금제명 추출
-                                let planName = text.split(/월\\s*(\\d{1,3}),?(\\d{3})\\s*원/)[0]
-                                    .replace(/\\(.*?\\)/g, '')  // 괄호 제거
-                                    .trim();
-                                
-                                if (planName.length >= 2 && planName.length < 30) {
+                                if (planName && fee >= 40000 && fee <= 150000) {
                                     plans.push({
-                                        name: planName,
+                                        name: planName.replace(/\\(.*?\\)/g, '').trim(),
                                         monthly_fee: fee
                                     });
+                                }
+                            }
+                        });
+                    });
+                    
+                    // 패턴 1: .bn + .unit-w (투게더몰, 폰슐랭, 엘지티샵)
+                    const bnElements = document.querySelectorAll('.bn, .bill-basic span');
+                    bnElements.forEach(bn => {
+                        const planName = bn.textContent.trim();
+                        if (planName.match(/프리미|프라임|레귤러|스페셜|베이직|심플|에센셜/i)) {
+                            const parent = bn.closest('li, tr');
+                            if (parent) {
+                                const unitW = parent.querySelector('.unit-w, strong');
+                                if (unitW) {
+                                    const fee = parseInt(unitW.textContent.replace(/,/g, '').replace(/[^0-9]/g, ''));
+                                    if (fee >= 40000 && fee <= 150000) {
+                                        plans.push({name: planName.replace(/\\(.*?\\)/g, '').trim(), monthly_fee: fee});
+                                    }
                                 }
                             }
                         }
                     });
                     
+                    // 패턴 2: .plan_title + .plan_price (하이폰)
+                    // .plan_list 안의 동적 요소도 포함
+                    const planContainers = document.querySelectorAll('.plan, .plan_list, .bill-layer-box');
+                    planContainers.forEach(container => {
+                        const titles = container.querySelectorAll('.plan_title, .plan-title, div[class*="title"]');
+                        titles.forEach(title => {
+                            const planName = title.textContent.trim();
+                            if (planName.match(/프리미|프라임|레귤러|스페셜|베이직|심플|에센셜/i)) {
+                                const parent = title.closest('.plan, li, div');
+                                if (parent) {
+                                    const price = parent.querySelector('.plan_price, .plan-price, [class*="price"]');
+                                    if (price) {
+                                        const feeMatch = price.textContent.match(/(\\d{1,3}),?(\\d{3})/);
+                                        if (feeMatch) {
+                                            const fee = parseInt(feeMatch[0].replace(/,/g, ''));
+                                            if (fee >= 40000 && fee <= 150000) {
+                                                plans.push({name: planName.replace(/\\(.*?\\)/g, '').trim(), monthly_fee: fee});
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    });
+                    
+                    // 패턴 3: 일반 텍스트 파싱 (배달의폰 + fallback)
+                    if (plans.length === 0) {
+                        const allElements = document.querySelectorAll('li, option, tr, a, div');
+                        allElements.forEach(elem => {
+                            const text = elem.textContent.trim();
+                            if (text.length < 300 && text.includes('월') &&
+                                text.match(/프리미|프라임|레귤러|스페셜|베이직|심플|에센셜/i)) {
+                                const feeMatch = text.match(/(\\d{1,3}),?(\\d{3})\\s*원/);
+                                if (feeMatch) {
+                                    const fee = parseInt(feeMatch[1] + feeMatch[2]);
+                                    if (fee >= 40000 && fee <= 150000) {
+                                        let planName = text.split(/월/)[0].replace(/\\(.*?\\)/g, '').trim();
+                                        if (planName.length >= 2 && planName.length < 30) {
+                                            plans.push({name: planName, monthly_fee: fee});
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    
                     // 중복 제거
                     const uniquePlans = [];
                     const seen = new Set();
-                    
                     plans.forEach(plan => {
                         const key = plan.name + '_' + plan.monthly_fee;
                         if (!seen.has(key)) {
@@ -405,9 +516,15 @@ class LLMAgentExtractor:
                 """)
                 
                 logger.info(f"   ✅ JavaScript 추출: {len(plans_with_fees)}개")
+                print(f"   ✅ JavaScript 추출: {len(plans_with_fees)}개")
                 
+                for plan in plans_with_fees[:10]:
+                    print(f"      • {plan['name']} ({plan['monthly_fee']:,}원/월)")
+                    
             except Exception as e2:
                 logger.error(f"   ❌ JavaScript도 실패: {e2}")
+                import traceback
+                traceback.print_exc()
         
         # 최종 요금제 저장
         if plans_with_fees:
@@ -458,35 +575,88 @@ class LLMAgentExtractor:
             return True
         
         try:
-            # 요금제 클릭은 더 세심하게 (핵심 키워드만 사용)
+            # 요금제 클릭 (popup/드롭다운 우선)
             if option_type == "plan":
-                # 요금제명에서 핵심 키워드 추출
-                # "5GX 레귤러플러스" → "레귤러플러스"
-                # "5G 프리미어 에센셜" → "프리미어"
-                keywords = []
-                for word in option_value.split():
-                    if word not in ["5GX", "5G", "LTE"] and len(word) > 1:
-                        keywords.append(word)
+                logger.info(f"     요금제 클릭: '{option_value}'")
+                print(f"     🎯 요금제 클릭: '{option_value}'")
                 
-                # 핵심 키워드로 검색
-                search_text = keywords[-1] if keywords else option_value  # 마지막 단어 우선
+                # popup이 닫혀있으면 다시 열기
+                popup_count = await page.locator('.popup:visible, .modal:visible').count()
+                if popup_count == 0:
+                    print(f"     popup 닫혀있음, 재열기 시도...")
+                    try:
+                        await page.locator('a[onclick*="popup"], a[onclick*="price"]').first.click(force=True, timeout=1000)
+                        await asyncio.sleep(1.5)
+                        print(f"     popup 재열기 완료")
+                    except:
+                        pass
                 
-                logger.info(f"     요금제 검색 키워드: '{search_text}'")
+                # 전략 1: popup 내부 tr (배달의폰, 성지폰)
+                try:
+                    popups = page.locator('.popup:visible, .modal:visible')
+                    popup_count = await popups.count()
+                    
+                    if popup_count > 0:
+                        print(f"     popup {popup_count}개에서 검색")
+                        rows = await page.locator('.popup:visible tr, .modal:visible tr').all()
+                        
+                        for row in rows:
+                            text = await row.text_content()
+                            # 유연한 매칭
+                            if option_value in text or any(k in text for k in option_value.split() if len(k) > 2):
+                                await row.click(force=True, timeout=1000)
+                                await asyncio.sleep(1)
+                                print(f"     ✅ popup tr 클릭")
+                                
+                                # popup 닫기
+                                try:
+                                    await page.locator('.popup_close, .close, [class*="close"]').first.click(timeout=800)
+                                    await asyncio.sleep(0.5)
+                                except:
+                                    pass
+                                
+                                return True
+                except Exception as e:
+                    logger.debug(f"     popup tr 실패: {e}")
                 
-                # 부분 매칭으로 찾기
-                locator = page.get_by_text(search_text, exact=False)
-                count = await locator.count()
+                # 전략 2: 드롭다운 li/div (띵폰, 투게더몰)
+                try:
+                    layer_count = await page.locator('.bill-layer-box:visible, .plan_list:visible').count()
+                    
+                    if layer_count > 0:
+                        print(f"     드롭다운 {layer_count}개에서 검색")
+                        items = await page.locator('.bill-layer-box:visible li, .plan_list:visible div').all()
+                        
+                        for item in items:
+                            text = await item.text_content()
+                            if option_value in text:
+                                await item.click(force=True, timeout=1000)
+                                await asyncio.sleep(0.5)
+                                print(f"     ✅ 드롭다운 li 클릭")
+                                return True
+                except Exception as e:
+                    logger.debug(f"     드롭다운 li 실패: {e}")
                 
-                if count > 0:
-                    logger.info(f"     요금제 발견: {count}개")
-                    # 첫 번째 클릭 가능한 요소 찾기
-                    for i in range(min(count, 5)):
-                        try:
-                            await locator.nth(i).click(force=True, timeout=2000)
-                            logger.info(f"     ✅ 요금제 클릭 성공")
-                            return True
-                        except:
-                            continue
+                # 전략 3: 일반 텍스트 검색
+                try:
+                    locator = page.get_by_text(option_value, exact=False)
+                    count = await locator.count()
+                    
+                    if count > 0:
+                        for i in range(min(count, 5)):
+                            try:
+                                elem = locator.nth(i)
+                                await elem.click(force=True, timeout=1000)
+                                await asyncio.sleep(0.5)
+                                print(f"     ✅ 일반 클릭 성공")
+                                return True
+                            except:
+                                continue
+                except:
+                    pass
+                
+                print(f"     ⚠️  요금제 클릭 실패")
+                return False
             
             # 일반 옵션 클릭
             # 전략 1: 정확한 텍스트 매칭
@@ -1255,26 +1425,39 @@ HTML에서 실제 값을 추출하세요. JSON만 출력.
                 else:
                     join_type = JoinType.DEVICE_CHANGE
                 
-                # Carrier 정규화
+                # Carrier 정규화 (enum: SKT, KT, LGU)
                 carrier_str = combo.get("carrier", "Unknown")
-                if "LG" in carrier_str.upper():
+                carrier_upper = carrier_str.upper().replace(" ", "").replace("+", "")
+                
+                if "LG" in carrier_upper or "LGU" in carrier_upper:
                     carrier = "LGU"
+                elif "SKT" in carrier_upper:
+                    carrier = "SKT"
+                elif "KT" in carrier_upper:
+                    carrier = "KT"
                 else:
-                    carrier = carrier_str.upper()
+                    carrier = carrier_upper
+                
+                # 지원금/할인은 양수로 변환 (절댓값)
+                public_subsidy = pricing.get("public_subsidy")
+                public_subsidy = abs(public_subsidy) if public_subsidy else None
+                
+                additional_subsidy = pricing.get("additional_subsidy")
+                additional_subsidy = abs(additional_subsidy) if additional_subsidy else None
                 
                 policy = Policy(
                     policy_id=policy_id,
-                    carrier=carrier,
-                    mno_join_type=join_type,
+                    carrier=carrier,  # enum: SKT, KT, LGU
+                    mno_join_type=join_type,  # enum: DEVICE_CHANGE, NUMBER_TRANSFER
                     mobile_plan=MobilePlan(
                         name=pricing.get("plan_name", "알 수 없음"),
                         monthly_fee=pricing.get("plan_monthly_fee", 0) or 0
                     ),
-                    discount_type=DiscountType.PUBLIC_SUBSIDY,
+                    discount_type=DiscountType.PUBLIC_SUBSIDY,  # enum: PUBLIC_SUBSIDY
                     pricing=PricingDetails(
                         mno_retail_price=pricing.get("retail_price"),
-                        public_subsidy=pricing.get("public_subsidy"),
-                        discount=pricing.get("additional_subsidy"),
+                        public_subsidy=public_subsidy,  # 양수
+                        discount=additional_subsidy,  # 양수
                         sku_installment_fee=pricing.get("installment_principal"),
                         monthly_payment=pricing.get("monthly_payment")
                     )

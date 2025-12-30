@@ -1,0 +1,75 @@
+{
+  "captured_at": "2025-12-31T04:33:14.070093",
+  "source": {
+    "site": "배달의폰_갤럭시S25",
+    "url": "https://www.deliveryphone.co.kr/phone/detail/136/0000412381"
+  },
+  "products": [
+    {
+      "product_id": "bbc2413886fa174e",
+      "sku_code": "GALAXY_S25",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "a5b7e12ddd6362b8",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "프리미엄(OTT택1)",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 190000,
+            "sku_installment_fee": 465000,
+            "monthly_payment": 129586
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "8382b023f01baecf",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "프리미엄 (OTT 택1)",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 190000,
+            "sku_installment_fee": 465000,
+            "monthly_payment": 19375
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "f871177b064b8999",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "프리미엄 (OTT 택1)",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 190000,
+            "sku_installment_fee": 465000,
+            "monthly_payment": 129586
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}

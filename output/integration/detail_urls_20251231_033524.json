@@ -1,0 +1,193 @@
+{
+  "collected_at": "2025-12-31T03:35:24.278174",
+  "total_sites": 16,
+  "total_products": 17,
+  "sites": {
+    "하이폰_삼성": {
+      "listing_url": "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
+      "count": 4,
+      "products": [
+        {
+          "model_name": "갤럭시 S25",
+          "detail_url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337",
+          "carrier": "5G\n   \n갤럭시 S25\n\n1,155,000원\n0원\n통신사이동 공시지원 5G 프리미어 에센셜",
+          "signup_type": "통신사이동"
+        },
+        {
+          "model_name": "갤럭시 S25플러스",
+          "detail_url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10336",
+          "carrier": "5G\n  \n인기 강력 추천\n갤럭시 S25플러스\n\n1,353,000원\n283,000원\n통신사이동 공시지원 5G 프리미어 슈퍼",
+          "signup_type": "통신사이동"
+        },
+        {
+          "model_name": "갤럭시 S25 Edge",
+          "detail_url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10289",
+          "carrier": "5G\n  \n마지막 한정 특가\n갤럭시 S25 Edge\n\n1,496,000원\n0원\n통신사이동 공시지원 5G 프리미어 에센셜",
+          "signup_type": "통신사이동"
+        },
+        {
+          "model_name": "갤럭시 S25울트라",
+          "detail_url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10335",
+          "carrier": "5G\n   \n강력 추천\n갤럭시 S25울트라\n\n1,698,400원\n298,400원\n통신사이동 공시지원 5G 프리미어 에센셜",
+          "signup_type": "통신사이동"
+        }
+      ]
+    },
+    "띵폰_삼성": {
+      "listing_url": "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+      "count": 5,
+      "products": [
+        {
+          "model_name": "갤럭시 S25 엣지",
+          "detail_url": "https://ddingphone.com/view/125?tid=SKT&oid=번호이동&sales=1&code=S1714617302",
+          "carrier": "SKT",
+          "signup_type": "번호이동"
+        },
+        {
+          "model_name": "갤럭시 S25 Ultra",
+          "detail_url": "https://ddingphone.com/view/118?tid=KT&oid=번호이동&sales=1&code=K1596089921",
+          "carrier": "KT",
+          "signup_type": "번호이동"
+        },
+        {
+          "model_name": "갤럭시 S25 Plus",
+          "detail_url": "https://ddingphone.com/view/117?tid=SKT&oid=번호이동&sales=1&code=S1714617302",
+          "carrier": "SKT",
+          "signup_type": "번호이동"
+        },
+        {
+          "model_name": "갤럭시 S25",
+          "detail_url": "https://ddingphone.com/view/116?tid=KT&oid=번호이동&sales=1&code=K1596089921",
+          "carrier": "KT",
+          "signup_type": "번호이동"
+        },
+        {
+          "model_name": "갤럭시 S25 FE",
+          "detail_url": "https://ddingphone.com/view/144?tid=SKT&oid=번호이동&sales=1&code=S1714617302",
+          "carrier": "SKT",
+          "signup_type": "번호이동"
+        }
+      ]
+    },
+    "배달의폰_삼성": {
+      "listing_url": "https://www.deliveryphone.co.kr/phone/list/2",
+      "count": 0,
+      "products": []
+    },
+    "성지폰_삼성": {
+      "listing_url": "https://sungjiphone.com/phone/list/2",
+      "count": 4,
+      "products": [
+        {
+          "model_name": "[BIG 세일] 갤럭시S25 엣지",
+          "detail_url": "https://sungjiphone.com/phone/detail/177",
+          "carrier": "LG",
+          "signup_type": "통신사 이동"
+        },
+        {
+          "model_name": "[추천] 갤럭시S25+",
+          "detail_url": "https://sungjiphone.com/phone/detail/166",
+          "carrier": "LG",
+          "signup_type": "통신사 이동"
+        },
+        {
+          "model_name": "[베스트] 갤럭시S25 Ultra",
+          "detail_url": "https://sungjiphone.com/phone/detail/167",
+          "carrier": "LG",
+          "signup_type": "통신사 이동"
+        },
+        {
+          "model_name": "S25 + 워치8, 그냥 완성",
+          "detail_url": "https://sungjiphone.com/phone/detail/165",
+          "carrier": "LG",
+          "signup_type": "통신사 이동"
+        }
+      ]
+    },
+    "폰슐랭_삼성": {
+      "listing_url": "https://phonechelin.shop/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+      "count": 0,
+      "products": []
+    },
+    "엘지티샵_삼성": {
+      "listing_url": "https://lgtshop.co.kr/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+      "count": 0,
+      "products": []
+    },
+    "투게더몰_삼성": {
+      "listing_url": "https://uplustogethermall.com/section/samsung",
+      "count": 0,
+      "products": []
+    },
+    "KT마켓_삼성": {
+      "listing_url": "https://ktmarket.co.kr/phone/samsung",
+      "count": 0,
+      "products": []
+    },
+    "하이폰_아이폰": {
+      "listing_url": "https://hi-phone.kr/index.php?channel=list&cate=103002000000",
+      "count": 0,
+      "products": []
+    },
+    "띵폰_아이폰": {
+      "listing_url": "https://ddingphone.com/list?sst=c&cid=APPLE",
+      "count": 0,
+      "products": []
+    },
+    "배달의폰_아이폰": {
+      "listing_url": "https://www.deliveryphone.co.kr/phone/list/3",
+      "count": 0,
+      "products": []
+    },
+    "성지폰_아이폰": {
+      "listing_url": "https://sungjiphone.com/phone/list/3",
+      "count": 4,
+      "products": [
+        {
+          "model_name": "아이폰17 + 현금페이백,",
+          "detail_url": "https://sungjiphone.com/phone/detail/186",
+          "carrier": "LG",
+          "signup_type": "통신사 이동"
+        },
+        {
+          "model_name": "빠른배송 | 아이폰17프로",
+          "detail_url": "https://sungjiphone.com/phone/detail/187",
+          "carrier": "SKT",
+          "signup_type": "통신사 이동"
+        },
+        {
+          "model_name": "안심배송 | 아이폰17에어",
+          "detail_url": "https://sungjiphone.com/phone/detail/188",
+          "carrier": "LG",
+          "signup_type": "통신사 이동"
+        },
+        {
+          "model_name": "고성능 | 아이폰17프로맥스",
+          "detail_url": "https://sungjiphone.com/phone/detail/189",
+          "carrier": "LG",
+          "signup_type": "통신사 이동"
+        }
+      ]
+    },
+    "폰슐랭_아이폰": {
+      "listing_url": "https://phonechelin.shop/mshop/list?sst=c&cid=APPLE",
+      "count": 0,
+      "products": []
+    },
+    "엘지티샵_아이폰": {
+      "listing_url": "https://lgtshop.co.kr/mshop/list?sst=c&cid=APPLE",
+      "count": 0,
+      "products": []
+    },
+    "투게더몰_아이폰": {
+      "listing_url": "https://uplustogethermall.com/section/apple",
+      "count": 0,
+      "products": []
+    },
+    "KT마켓_아이폰": {
+      "listing_url": "https://ktmarket.co.kr/phone/apple",
+      "count": 0,
+      "products": []
+    }
+  }
+}

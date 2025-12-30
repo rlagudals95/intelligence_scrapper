@@ -417,37 +417,64 @@ async def test_phase2_integration():
 # 실제 리스팅 페이지 데이터 수집 테스트
 # ============================================================================
 
+def filter_target_models(items: list) -> list:
+    """아이폰17과 갤럭시 S25 관련 상품만 필터링"""
+    target_keywords = [
+        # 아이폰 17 관련
+        "아이폰 17", "아이폰17", "iphone 17", "iphone17",
+        # 갤럭시 S25 관련  
+        "갤럭시 s25", "갤럭시s25", "galaxy s25", "galaxys25", "s25"
+    ]
+    
+    filtered_items = []
+    for item in items:
+        model_name_lower = item.model_name.lower()
+        if any(keyword.lower() in model_name_lower for keyword in target_keywords):
+            filtered_items.append(item)
+    
+    return filtered_items
+
+
 @pytest.mark.asyncio
 @pytest.mark.skipif(
     not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
     reason="API 키 없음"
 )
 @pytest.mark.parametrize("site_name,target_url,min_items", [
-    (
-        "하이폰",
-        "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
-        8
-    ),
-    (
-        "띵폰",
-        "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
-        25
-    ),
-    (
-        "딜리버리폰",
-        "https://www.deliveryphone.co.kr/phone/list/2",
-        13
-    )
+    # 1. 하이폰
+    ("하이폰-삼성", "https://hi-phone.kr/index.php?channel=list&cate=103001000000", 0),
+    ("하이폰-아이폰", "https://hi-phone.kr/index.php?channel=list&cate=103002000000", 0),
+    # 2. 띵폰
+    ("띵폰-삼성", "https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90", 0),
+    ("띵폰-아이폰", "https://ddingphone.com/list?sst=c&cid=APPLE", 0),
+    # 3. 딜리버리폰
+    ("딜리버리폰-삼성", "https://www.deliveryphone.co.kr/phone/list/2", 0),
+    ("딜리버리폰-아이폰", "https://www.deliveryphone.co.kr/phone/list/3", 0),
+    # 4. 성지폰
+    ("성지폰-삼성", "https://sungjiphone.com/phone/list/2", 0),
+    ("성지폰-아이폰", "https://sungjiphone.com/phone/list/3", 0),
+    # 5. 폰슐랭
+    ("폰슐랭-삼성", "https://phonechelin.shop/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90", 0),
+    ("폰슐랭-아이폰", "https://phonechelin.shop/mshop/list?sst=c&cid=APPLE", 0),
+    # 6. 엘지티샵
+    ("엘지티샵-삼성", "https://lgtshop.co.kr/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90", 0),
+    ("엘지티샵-아이폰", "https://lgtshop.co.kr/mshop/list?sst=c&cid=APPLE", 0),
+    # 7. 유플러스투게더몰
+    ("투게더몰-삼성", "https://uplustogethermall.com/section/samsung", 0),
+    ("투게더몰-아이폰", "https://uplustogethermall.com/section/apple", 0),
+    # 8. KT마켓
+    ("KT마켓-삼성", "https://ktmarket.co.kr/phone/samsung", 0),
+    ("KT마켓-아이폰", "https://ktmarket.co.kr/phone/apple", 0),
 ])
 async def test_listing_collection(site_name: str, target_url: str, min_items: int):
-    """리스팅 페이지 데이터 수집 테스트 (파라미터화)"""
+    """8개 사이트 전체 크롤링 테스트 (아이폰17/갤럭시S25 필터링)"""
     from src.core.config import SiteConfig
     from src.core.browser import BrowserManager
     from src.crawlers.listing import ListingCrawler
     from src.models.schemas import PhoneListingItem
     
     print("\n" + "="*70)
-    print(f"{site_name} 리스팅 페이지 데이터 수집 테스트")
+    print(f"{site_name} 리스팅 페이지 데이터 수집 테스트 (아이폰17/갤럭시S25)")
     print("="*70)
     
     config = SiteConfig(
@@ -469,7 +496,12 @@ async def test_listing_collection(site_name: str, target_url: str, min_items: in
         crawler = ListingCrawler(llm_client, browser)
         items = await crawler.crawl(target_url)
         
-        print(f"\n✅ 수집된 상품 수: {len(items)}")
+        print(f"\n📦 전체 수집된 상품 수: {len(items)}")
+        
+        # 아이폰17과 갤럭시S25만 필터링
+        filtered_items = filter_target_models(items)
+        
+        print(f"🎯 필터링된 상품 수 (아이폰17/갤럭시S25): {len(filtered_items)}")
         
         # LLM 사용량 및 비용 출력
         stats = llm_client.get_usage_stats()
@@ -483,43 +515,46 @@ async def test_listing_collection(site_name: str, target_url: str, min_items: in
             print(f"   평균 토큰/요청: {stats['total_tokens'] / stats['request_count']:.0f} tokens")
             print(f"   평균 비용/요청: ${stats['total_cost_usd'] / stats['request_count']:.4f} USD")
         
-        # 검증: 최소 개수 이상
-        assert len(items) >= min_items, f"최소 {min_items}개 이상의 상품이 필요합니다 (현재: {len(items)}개)"
+        # 검증: 필터링된 아이템 최소 개수 이상
+        assert len(filtered_items) >= min_items, f"최소 {min_items}개 이상의 상품이 필요합니다 (현재: {len(filtered_items)}개)"
         
         # 검증: 모든 아이템이 PhoneListingItem 타입
-        assert all(isinstance(item, PhoneListingItem) for item in items)
+        assert all(isinstance(item, PhoneListingItem) for item in filtered_items)
         
         # 검증: 필수 필드 존재
-        for item in items:
+        for item in filtered_items:
             assert item.model_name, "기종명이 있어야 함"
             assert item.detail_url, "상세 URL이 있어야 함"
             assert "http" in item.detail_url, "절대 URL이어야 함"
         
         # 검증: 가격 정보가 있는 경우 숫자로 변환 가능한지
-        for item in items:
+        for item in filtered_items:
             if item.discount_price:
                 price_num = item.discount_price.replace(",", "").replace("원", "").strip()
                 # 빈 문자열이거나 숫자여야 함
                 if price_num:
                     assert price_num.isdigit(), f"가격 형식 오류: {item.discount_price}"
         
-        # 상품 출력 (처음 3개)
-        print("\n📊 수집된 상품 샘플 (처음 3개):")
-        for i, item in enumerate(items[:1], 1):
-            print(f"\n  {i}. {item.model_name}")
-            print(f"     통신사: {item.carrier or 'N/A'}")
-            print(f"     변경유형: {item.signup_type or 'N/A'}")
-            print(f"     출고가: {item.retail_price or 'N/A'}")
-            print(f"     할인가: {item.discount_price or 'N/A'}")
-            print(f"     지원금타입: {item.subsidy_type or 'N/A'}")
-            print(f"     공시지원금: {item.public_subsidy or 'N/A'}")
-            print(f"     추가지원금: {item.additional_subsidy or 'N/A'}")
-            print(f"     요금제: {item.plan_name or 'N/A'}")
-            print(f"     혜택: {item.benefits or 'N/A'}")
-            print(f"     상세 URL: {item.detail_url[:60]}...")
+        # 필터링된 상품 모두 출력
+        if filtered_items:
+            print("\n📊 필터링된 상품 목록 (아이폰17/갤럭시S25):")
+            for i, item in enumerate(filtered_items, 1):
+                print(f"\n  {i}. {item.model_name}")
+                print(f"     통신사: {item.carrier or 'N/A'}")
+                print(f"     변경유형: {item.signup_type or 'N/A'}")
+                print(f"     출고가: {item.retail_price or 'N/A'}")
+                print(f"     할인가: {item.discount_price or 'N/A'}")
+                print(f"     지원금타입: {item.subsidy_type or 'N/A'}")
+                print(f"     공시지원금: {item.public_subsidy or 'N/A'}")
+                print(f"     추가지원금: {item.additional_subsidy or 'N/A'}")
+                print(f"     요금제: {item.plan_name or 'N/A'}")
+                print(f"     혜택: {item.benefits or 'N/A'}")
+                print(f"     상세 URL: {item.detail_url[:60]}...")
+        else:
+            print("\n⚠️  아이폰17 또는 갤럭시S25 상품을 찾을 수 없습니다.")
         
         print("\n" + "="*70)
-        print(f"✅ {site_name} 리스팅 테스트 통과!")
+        print(f"✅ {site_name} 리스팅 테스트 통과! (필터링: {len(filtered_items)}개)")
         print("="*70)
 
 

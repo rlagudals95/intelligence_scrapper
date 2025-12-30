@@ -1,0 +1,56 @@
+{
+  "captured_at": "2025-12-31T05:02:14.004677",
+  "source": {
+    "site": "폰슐랭_갤럭시S25",
+    "url": "https://phonechelin.shop/mshop/view/53?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804"
+  },
+  "products": [
+    {
+      "product_id": "6847d4fa908d7d61",
+      "sku_code": "GALAXY_S25",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "50b7b7c226123bf3",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미어 에센셜",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 550000,
+            "sku_installment_fee": 105000,
+            "monthly_payment": 4649
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "8009ca88962d9189",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 350000,
+            "sku_installment_fee": 305000,
+            "monthly_payment": 13504
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}

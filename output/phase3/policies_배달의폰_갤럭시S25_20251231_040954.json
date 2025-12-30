@@ -1,0 +1,113 @@
+{
+  "captured_at": "2025-12-31T04:09:54.535124",
+  "source": {
+    "site": "배달의폰_갤럭시S25",
+    "url": "https://www.deliveryphone.co.kr/phone/detail/136/0000412381"
+  },
+  "products": [
+    {
+      "product_id": "5504d7a762f1c0fd",
+      "sku_code": "GALAXY_S25",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "9e68d4f50a8ac582",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄(OTT 덱1)",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 190000,
+            "sku_installment_fee": 465000,
+            "monthly_payment": 19375
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "ff0bfb63e3089408",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄(OTT텍1)",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 190000,
+            "sku_installment_fee": 465000,
+            "monthly_payment": 129586
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "fe88a0783b24aa58",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄(OTT 덱1)",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 190000,
+            "sku_installment_fee": 465000,
+            "monthly_payment": 19375
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "c1ad5e9232be9b78",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄(OTT 택1)",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 190000,
+            "sku_installment_fee": 465000,
+            "monthly_payment": 20586
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "4e50291daf9720eb",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 190000,
+            "sku_installment_fee": 403000,
+            "monthly_payment": 129586
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}
