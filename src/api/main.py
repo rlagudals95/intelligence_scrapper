@@ -40,6 +40,17 @@ async def scrape_policies(request: ScrapeRequest):
         if not results:
             raise HTTPException(status_code=404, detail="해당 사이트에서 목표 모델 정책을 찾을 수 없습니다.")
             
+        # [로그 추가] 최종 응답 JSON 출력
+        print(f"\n" + "="*70)
+        print(f"📦 [ 최종 응답 데이터 로그 ]")
+        print("="*70)
+        
+        # Pydantic 모델 리스트를 JSON 리스트로 변환
+        json_results = [res.model_dump(mode='json') for res in results]
+        print(json.dumps(json_results, indent=2, ensure_ascii=False))
+        
+        print("="*70 + "\n")
+            
         return results
         
     except Exception as e:
