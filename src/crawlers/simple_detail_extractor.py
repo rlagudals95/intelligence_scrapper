@@ -170,54 +170,76 @@ class SimpleDetailExtractor:
         return result
     
     async def _click_by_text(self, page: Page, text: str) -> bool:
-        """텍스트 또는 alt 속성으로 요소 찾아서 클릭"""
-        try:
+        """텍스트, 이미지, 다양한 표기로 요소 찾아서 클릭"""
+        
+        # 가입유형 매핑
+        text_variants = [text]
+        if text == "번호이동":
+            text_variants = ["번호이동", "통신사이동", "번이", "통신사 이동"]
+        elif text == "기기변경":
+            text_variants = ["기기변경", "기변", "기기 변경"]
+        elif text == "LGU":
+            text_variants = ["LGU", "LG U+", "U+", "LG"]
+        
+        # 모든 변형 시도
+        for variant in text_variants:
             # 전략 1: 텍스트
-            await page.get_by_text(text, exact=False).first.click(force=True, timeout=1000)
-            return True
-        except:
-            pass
-        
-        try:
-            # 전략 2: alt 속성 (이미지 버튼)
-            await page.locator(f'img[alt*="{text}"], img[src*="{text.lower()}"]').first.click(force=True, timeout=1000)
-            return True
-        except:
-            pass
-        
-        try:
-            # 전략 3: aria-label
-            await page.locator(f'[aria-label*="{text}"]').first.click(force=True, timeout=1000)
-            return True
-        except:
-            pass
-        
-        # 전략 4: JavaScript로 부모 요소 클릭 (이미지의 부모)
-        try:
-            result = await page.evaluate(f"""
-                const text = "{text}";
-                const imgs = document.querySelectorAll('img');
-                
-                for (const img of imgs) {{
-                    const alt = img.alt || '';
-                    const src = img.src || '';
-                    
-                    if (alt.includes(text) || src.toLowerCase().includes(text.toLowerCase())) {{
-                        // 이미지의 클릭 가능한 부모 찾기
-                        const clickable = img.closest('button, a, div[onclick], label');
-                        if (clickable) {{
-                            clickable.click();
-                            return true;
+            try:
+                await page.get_by_text(variant, exact=False).first.click(force=True, timeout=500)
+                return True
+            except:
+                pass
+            
+            # 전략 2: 이미지 (alt, src)
+            try:
+                await page.locator(f'img[alt*="{variant}"], img[src*="{variant.lower()}"]').first.click(force=True, timeout=500)
+                return True
+            except:
+                pass
+            
+            # 전략 3: JavaScript로 이미지 또는 텍스트 찾기
+            try:
+                result = await page.evaluate(f"""
+                    () => {{
+                        const searchText = "{variant}";
+                        
+                        // 이미지 검색
+                        const imgs = document.querySelectorAll('img');
+                        for (const img of imgs) {{
+                            const alt = (img.alt || '').toLowerCase();
+                            const src = (img.src || '').toLowerCase();
+                            const searchLower = searchText.toLowerCase();
+                            
+                            if (alt.includes(searchLower) || src.includes(searchLower)) {{
+                                const parent = img.closest('button, a, div[onclick], label, div[class*="btn"]');
+                                if (parent) {{
+                                    parent.click();
+                                    return true;
+                                }}
+                                img.click();
+                                return true;
+                            }}
                         }}
-                        img.click();
-                        return true;
+                        
+                        // 텍스트 검색
+                        const all = document.querySelectorAll('button, a, div, span, label');
+                        for (const elem of all) {{
+                            if (elem.textContent.includes(searchText)) {{
+                                elem.click();
+                                return true;
+                            }}
+                        }}
+                        
+                        return false;
                     }}
-                }}
-                return false;
-            """)
-            return result
-        except:
-            return False
+                """)
+                
+                if result:
+                    return True
+            except:
+                pass
+        
+        return False
     
     async def _get_available_fees(self, page: Page) -> List[int]:
         """화면에 있는 모든 요금제의 월요금 추출 (Vision 1회)"""
@@ -396,33 +418,28 @@ class SimpleDetailExtractor:
             return False
     
     async def _extract_pricing(self, page: Page) -> Dict[str, Any]:
-        """Vision으로 가격 추출"""
+        """Vision으로 가격 추출 (간소화)"""
         try:
-            screenshot = await page.screenshot(full_page=False, quality=50, type='jpeg', timeout=8000)
+            screenshot = await page.screenshot(
+                full_page=False,
+                quality=50,
+                type='jpeg',
+                timeout=5000  # 8초 → 5초
+            )
             screenshot_b64 = base64.b64encode(screenshot).decode()
             img_url = f"data:image/jpeg;base64,{screenshot_b64}"
             
             prompt = """
-화면의 가격 정보를 추출하세요:
+가격:
+{"retail_price": 1155000, "installment_principal": 465000, "monthly_payment": 20586, "plan_name": "프리미엄", "plan_monthly_fee": 85000}
 
-{
-  "retail_price": 1155000,
-  "public_subsidy": 500000,
-  "additional_subsidy": 190000,
-  "installment_principal": 465000,
-  "monthly_payment": 20586,
-  "final_price": 129586,
-  "plan_name": "프리미엄",
-  "plan_monthly_fee": 109000
-}
-
-**JSON만 출력하세요.**
+JSON만.
 """
             
             resp = await self.llm.complete_with_vision(
                 prompt=prompt,
                 image_url=img_url,
-                system_message="가격 정보를 정확히 추출하세요."
+                system_message="가격 추출"
             )
             
             resp = resp.strip()
@@ -430,10 +447,16 @@ class SimpleDetailExtractor:
                 resp = resp.split("```")[1] if "```json" not in resp else resp.split("```json")[1].split("```")[0]
             resp = resp.strip()
             
-            return json.loads(resp)
+            pricing = json.loads(resp)
+            
+            # 최소 검증
+            if not pricing.get('retail_price') and not pricing.get('installment_principal'):
+                return {}
+            
+            return pricing
             
         except Exception as e:
-            logger.error(f"가격 추출 실패: {e}")
+            print(f"        가격 추출 실패: {str(e)[:50]}")
             return {}
     
     def _convert_to_schema(
