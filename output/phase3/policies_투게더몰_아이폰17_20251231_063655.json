@@ -1,0 +1,132 @@
+{
+  "captured_at": "2025-12-31T06:36:55.290813",
+  "source": {
+    "site": "투게더몰_아이폰17",
+    "url": "https://uplustogethermall.com/mshop/view/84?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804"
+  },
+  "products": [
+    {
+      "product_id": "febd7eef984dd15a",
+      "sku_code": "IPHONE17",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "598302f60afc948e",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 187000,
+            "monthly_payment": 93280
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "cbb8635b7b2bdc2c",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 427000,
+            "monthly_payment": 18906
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "20d9ac6050adf1a1",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미엄 에센셜",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 187000,
+            "monthly_payment": 8280
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "16928293d2de797f",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 427000,
+            "monthly_payment": 18906
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "fa4536e837a2031a",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 187000,
+            "monthly_payment": 19992
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "8bfdb5c0dda12d56",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 427000,
+            "monthly_payment": 18906
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}
