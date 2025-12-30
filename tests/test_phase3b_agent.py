@@ -20,15 +20,24 @@ from src.crawlers.llm_agent_extractor import LLMAgentExtractor
 
 # 다양한 사이트 테스트 URL
 TEST_URLS = {
-    "띵폰": "https://ddingphone.com/view/143?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1738389813",
+    "띵폰_아이폰17": "https://ddingphone.com/view/143?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1738389813",
+    "띵폰_갤럭시S25": "https://ddingphone.com/view/138?tid=SKT&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=2&code=S1714617302",  # 실제로는 아이폰17
+    "하이폰_갤럭시S25": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337",
     "하이폰": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337",
-    "폰슐랭": "https://phonechelin.shop/mshop/view/53?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804"
+    "폰슐랭": "https://phonechelin.shop/mshop/view/53?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
+    "배달의폰": "https://www.deliveryphone.co.kr/phone/detail/136/0000412381",
+    
+    "성지폰": "https://sungjiphone.com/phone/detail/166/0000700659",
+    "엘지티샵" : "https://lgtshop.co.kr/mshop/view/47?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
+    "투게더몰" : "https://uplustogethermall.com/mshop/view/84?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
+    "케이티마트" : "https://ktmarket.co.kr/phone/sm-s931nk", # 이거 페이지 구조 조금 별나네
+    "아정당":"https://ajdphone.co.kr/phone/mno/deals/50660?carrier=SKT&subsidyType=PUBLIC&policy=202691&storageType=SIZE_256GB&requestCarrier=KT&phoneDeviceSn=50671"
 }
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("폰슐랭", TEST_URLS["폰슐랭"]),
+    ("배달의폰", TEST_URLS["배달의폰"]),
 ])
 async def test_llm_agent_collect_policies(site_name: str, test_url: str):
     """
@@ -79,12 +88,26 @@ async def test_llm_agent_collect_policies(site_name: str, test_url: str):
         
         # 기종명 판단 (URL 또는 페이지 타이틀에서)
         title = await page.title()
-        if "갤럭시" in title or "Galaxy" in title.upper() or "S25" in title:
-            model_name = "GALAXY_S25"
-        elif "아이폰" in title or "iPhone" in title or "17" in title:
-            model_name = "IPHONE17"
+        title_upper = title.upper()
+        
+        # 갤럭시 체크 (우선)
+        if "갤럭시" in title or "GALAXY" in title_upper or "S25" in title_upper or "S24" in title_upper:
+            if "S25" in title_upper or "S 25" in title_upper:
+                model_name = "GALAXY_S25"
+            elif "S24" in title_upper or "S 24" in title_upper:
+                model_name = "GALAXY_S24"
+            else:
+                model_name = "GALAXY_S25"  # 기본값
+        # 아이폰 체크
+        elif "아이폰" in title or "IPHONE" in title_upper:
+            if "17" in title:
+                model_name = "IPHONE17"
+            elif "16" in title:
+                model_name = "IPHONE16"
+            else:
+                model_name = "IPHONE17"  # 기본값
         else:
-            model_name = "IPHONE17"  # 기본값
+            model_name = "UNKNOWN_MODEL"
         
         print(f"   기종 감지: {model_name}\n")
         

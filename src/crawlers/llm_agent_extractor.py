@@ -142,14 +142,21 @@ class LLMAgentExtractor:
         # Phase 1: 기본 옵션 분석
         logger.info("\n[Phase 1] 기본 옵션 분석")
         
-        # 저해상도 스크린샷 (최적화)
-        screenshot_bytes = await page.screenshot(
-            full_page=False,
-            quality=60,  # JPEG 품질 60%
-            type='jpeg'
-        )
-        screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
-        image_url = f"data:image/jpeg;base64,{screenshot_base64}"
+        # 스크린샷 (타임아웃 처리)
+        screenshot_base64 = None
+        try:
+            screenshot_bytes = await page.screenshot(
+                full_page=False,
+                quality=60,
+                type='jpeg',
+                timeout=10000  # 10초 타임아웃
+            )
+            screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
+            logger.info(f"   📸 스크린샷 캡처 성공")
+        except Exception as e:
+            logger.warning(f"   ⚠️ 스크린샷 실패 (HTML만 사용): {e}")
+        
+        image_url = f"data:image/jpeg;base64,{screenshot_base64}" if screenshot_base64 else None
         
         # 옵션 관련 HTML만 추출 (범용적)
         html = await page.evaluate("""
@@ -173,7 +180,10 @@ class LLMAgentExtractor:
             }
         """)
         
-        logger.info(f"   스크린샷: {len(screenshot_base64)} bytes (JPEG 60%)")
+        if screenshot_base64:
+            logger.info(f"   스크린샷: {len(screenshot_base64)} bytes (JPEG 60%)")
+        else:
+            logger.info(f"   스크린샷: 실패 (HTML만 사용)")
         logger.info(f"   HTML: {len(html)} bytes")
         
         # LLM 프롬프트
@@ -243,11 +253,20 @@ class LLMAgentExtractor:
         try:
             logger.info("   🤖 LLM 기본 옵션 분석 중...")
             
-            response = await self.llm.complete_with_vision(
-                prompt=prompt,
-                image_url=image_url,
-                system_message="당신은 UI 분석 전문가입니다. 이미지를 보고 선택 가능한 옵션을 파악합니다."
-            )
+            if image_url:
+                # Vision API 사용
+                response = await self.llm.complete_with_vision(
+                    prompt=prompt,
+                    image_url=image_url,
+                    system_message="당신은 UI 분석 전문가입니다. 이미지를 보고 선택 가능한 옵션을 파악합니다."
+                )
+            else:
+                # HTML만 사용
+                response = await self.llm.complete(
+                    prompt=prompt,
+                    system_message="당신은 UI 분석 전문가입니다. HTML을 분석하여 선택 가능한 옵션을 파악합니다.",
+                    response_format={"type": "json_object"}
+                )
             
             # JSON 추출
             response = response.strip()
@@ -266,58 +285,149 @@ class LLMAgentExtractor:
             logger.error(f"기본 옵션 분석 실패: {e}")
             options = {}
         
-        # Phase 2: 요금제 드롭다운 열고 요금제 추출
-        logger.info("\n[Phase 2] 요금제 분석")
+        # Phase 2: 요금제 드롭다운 열고 LLM으로 요금제 추출
+        logger.info("\n[Phase 2] 요금제 분석 (LLM)")
         
-        plans_extracted = []
+        plans_with_fees = []
         try:
-            # 요금제 드롭다운 버튼 찾기
-            bill_view_btn = page.locator('.bill-view, button.bill-view, .plan-dropdown-btn')
-            count = await bill_view_btn.count()
+            # 드롭다운 열기 시도 (여러 전략)
+            logger.info(f"   🔽 요금제 드롭다운 열기 시도...")
             
-            if count > 0:
-                logger.info(f"   🔽 요금제 드롭다운 버튼 발견")
-                try:
-                    await bill_view_btn.first.click(force=True, timeout=2000)
-                    await asyncio.sleep(0.3)  # 1초 → 0.3초
-                    logger.info(f"   ✅ 드롭다운 열림")
-                except Exception as e:
-                    logger.debug(f"   드롭다운 클릭 실패: {e}")
+            # 전략 1: "요금제" 텍스트 클릭
+            try:
+                await page.get_by_text("요금제", exact=False).first.click(force=True, timeout=1000)
+                await asyncio.sleep(0.5)
+                logger.info(f"   ✅ '요금제' 클릭 완료")
+            except:
+                pass
             
-            # JavaScript로 요금제 + 월요금 추출 (범용적, 키워드 기반)
-            plans_with_fees = await page.evaluate("""
+            # 전략 2: ▼ 아이콘 클릭
+            try:
+                dropdown_btns = page.locator('button:has-text("▼"), [class*="dropdown"]')
+                count = await dropdown_btns.count()
+                for i in range(min(count, 3)):
+                    try:
+                        await dropdown_btns.nth(i).click(force=True, timeout=1000)
+                        await asyncio.sleep(0.3)
+                    except:
+                        pass
+            except:
+                pass
+            
+            # 최종 대기 (드롭다운이 완전히 열릴 때까지)
+            await asyncio.sleep(1)
+            
+            # LLM이 화면을 보고 모든 요금제 추출
+            logger.info(f"   🤖 LLM으로 요금제 추출 중...")
+            
+            screenshot_bytes = await page.screenshot(
+                full_page=False,
+                quality=60,
+                type='jpeg',
+                timeout=10000  # 10초 타임아웃
+            )
+            screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
+            image_url = f"data:image/jpeg;base64,{screenshot_base64}"
+            
+            plan_prompt = """
+이 화면에서 모든 요금제를 추출하세요.
+
+요금제 형식:
+- 요금제명 + 월요금이 함께 표시됨
+- 예: "프라임 월 89,000원", "레귤러 플러스 79,000원"
+
+모든 요금제를 찾아서 JSON으로 반환:
+[
+  {"name": "프라임", "monthly_fee": 89000},
+  {"name": "레귤러 플러스", "monthly_fee": 79000},
+  {"name": "레귤러", "monthly_fee": 69000}
+]
+
+**주의:**
+- 요금제명에서 "5GX", "5G" 접두어는 포함해도 되고 빼도 됨
+- 월요금은 정수로 (콤마 제거)
+- 화면에 보이는 모든 요금제를 추출
+
+**JSON 배열만 출력하세요.**
+"""
+            
+            response = await self.llm.complete_with_vision(
+                prompt=plan_prompt,
+                image_url=image_url,
+                system_message="화면에서 모든 요금제와 월요금을 정확히 추출하세요."
+            )
+            
+            # JSON 파싱
+            response = response.strip()
+            if "```json" in response:
+                response = response.split("```json")[1].split("```")[0]
+            elif "```" in response:
+                response = response.split("```")[1].split("```")[0]
+            response = response.strip()
+            
+            plans_with_fees = json.loads(response)
+            logger.info(f"   ✅ LLM 요금제 추출 완료: {len(plans_with_fees)}개")
+        except Exception as e:
+            logger.error(f"   ❌ LLM 요금제 추출 실패: {e}")
+            
+            # Fallback: JavaScript로 추출
+            logger.info(f"   🔄 Fallback: JavaScript로 요금제 추출")
+            
+            try:
+                plans_with_fees = await page.evaluate("""
                 () => {
                     const plans = [];
                     
-                    // 모든 요소에서 요금제 패턴 찾기
-                    const allElements = document.querySelectorAll('li, option, div, span, p');
-                    
-                    allElements.forEach(elem => {
-                        const text = elem.textContent.trim();
+                    // 패턴 1: 테이블 행 단위로 요금제 찾기 (가장 정확)
+                    const rows = document.querySelectorAll('tr, li, .plan-item, .bill-item');
+                    rows.forEach(row => {
+                        const text = row.textContent;
                         
-                        // 요금제명 패턴 (5GX, 5G, LTE 등)
-                        if (text.match(/5GX|5G|LTE|프리미|슈퍼|레귤러|초이스|스페셜|베이직|에센셜/) && 
-                            text.length < 100) {  // 너무 긴 텍스트 제외
+                        // 요금제명 패턴
+                        const planMatch = text.match(/(프리미엄|프리미어|프라임|레귤러|레규러|초이스|스페셜|베이직|에센셜|슈퍼|심플|스마트|슬림)[^\\d]*/i);
+                        // 월요금 패턴 (앞에 "월"이 있을 수 있음)
+                        const feeMatch = text.match(/월?\\s*(\\d{1,3}),?(\\d{3})\\s*원/);
+                        
+                        if (planMatch && feeMatch) {
+                            const planName = planMatch[0].trim();
+                            const fee = parseInt(feeMatch[1].replace(',', '') + feeMatch[2]);
                             
-                            // 월요금 패턴 찾기 (콤마 있거나 없거나)
-                            const feeMatch = text.match(/(\\d{1,3}),?(\\d{3})\\s*원/);
-                            
-                            if (feeMatch) {
-                                // 요금제명 추출
-                                const planName = text.split(/\\d{1,3},?\\d{3}\\s*원/)[0]
-                                    .replace(/월/g, '')
-                                    .trim();
-                                
-                                if (planName.length > 2 && planName.length < 30) {
-                                    const fee = parseInt(feeMatch[1].replace(',', '') + feeMatch[2]);
-                                    plans.push({
-                                        name: planName,
-                                        monthly_fee: fee
-                                    });
-                                }
+                            if (planName.length >= 2 && planName.length < 30) {
+                                plans.push({
+                                    name: planName,
+                                    monthly_fee: fee
+                                });
                             }
                         }
                     });
+                    
+                    // 패턴 2: 개별 span/div에서 추출
+                    if (plans.length === 0) {
+                        const allElements = document.querySelectorAll('div, span, p');
+                        
+                        allElements.forEach(elem => {
+                            const text = elem.textContent.trim();
+                            
+                            // 짧은 텍스트만 (요금제 라인)
+                            if (text.length > 5 && text.length < 100 && 
+                                text.match(/프리미|프라임|레귤러|베이직|심플|슬림/i)) {
+                                
+                                const feeMatch = text.match(/월?\\s*(\\d{1,3}),?(\\d{3})\\s*원/);
+                                
+                                if (feeMatch) {
+                                    const planName = text.split(/월?\\s*\\d{1,3},?\\d{3}\\s*원/)[0].trim();
+                                    const fee = parseInt(feeMatch[1].replace(',', '') + feeMatch[2]);
+                                    
+                                    if (planName.length >= 2 && planName.length < 30) {
+                                        plans.push({
+                                            name: planName,
+                                            monthly_fee: fee
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                    }
                     
                     // 중복 제거
                     const uniquePlans = [];
@@ -334,23 +444,26 @@ class LLMAgentExtractor:
                     return uniquePlans;
                 }
             """)
+                
+                if plans_with_fees:
+                    logger.info(f"   📋 JavaScript 추출 성공: {len(plans_with_fees)}개")
+            except Exception as e2:
+                logger.error(f"   ❌ JavaScript 추출도 실패: {e2}")
+        
+        # 최종 요금제 저장
+        if plans_with_fees:
+            # 요금제명 리스트로 변환
+            options["plan"] = [p["name"] for p in plans_with_fees]
+            # 월요금 정보도 저장
+            self.available_plans = plans_with_fees
             
-            if plans_with_fees:
-                # 요금제명 리스트로 변환 (기존 호환성)
-                options["plan"] = [p["name"] for p in plans_with_fees]
-                # 월요금 정보도 저장
-                self.available_plans = plans_with_fees
-                
-                logger.info(f"   📋 추출된 요금제 (월요금 포함): {len(plans_with_fees)}개")
-                for plan in plans_with_fees[:5]:
-                    logger.info(f"      • {plan['name']} ({plan['monthly_fee']:,}원/월)")
-            else:
-                logger.info(f"   ⚠️  요금제를 찾을 수 없음")
-                options["plan"] = []
-                self.available_plans = []
-                
-        except Exception as e:
-            logger.debug(f"   요금제 추출 실패: {e}")
+            logger.info(f"   📋 최종 추출된 요금제: {len(plans_with_fees)}개")
+            for plan in plans_with_fees[:10]:
+                logger.info(f"      • {plan['name']} ({plan['monthly_fee']:,}원/월)")
+        else:
+            logger.warning(f"   ⚠️  요금제를 찾을 수 없음")
+            options["plan"] = []
+            self.available_plans = []
         
         # 결과 요약
         logger.info("\n✅ 전체 옵션 분석 완료")
@@ -373,30 +486,62 @@ class LLMAgentExtractor:
         
         Args:
             page: Playwright Page 객체
-            option_type: 옵션 타입 (예: "storage")
-            option_value: 클릭할 값 (예: "512GB")
+            option_type: 옵션 타입 (예: "storage", "plan")
+            option_value: 클릭할 값 (예: "512GB", "5GX 프라임")
             
         Returns:
             성공 여부
         """
         logger.info(f"  🎯 클릭 시도: {option_type} = {option_value}")
         
+        # plan_fee는 클릭하지 않음 (디버깅 정보일 뿐)
+        if option_type == "plan_fee":
+            return True
+        
         try:
-            # 텍스트로 요소 찾기 (Playwright 내장 기능)
-            # 여러 전략 시도
+            # 요금제 클릭은 더 세심하게 (핵심 키워드만 사용)
+            if option_type == "plan":
+                # 요금제명에서 핵심 키워드 추출
+                # "5GX 레귤러플러스" → "레귤러플러스"
+                # "5G 프리미어 에센셜" → "프리미어"
+                keywords = []
+                for word in option_value.split():
+                    if word not in ["5GX", "5G", "LTE"] and len(word) > 1:
+                        keywords.append(word)
+                
+                # 핵심 키워드로 검색
+                search_text = keywords[-1] if keywords else option_value  # 마지막 단어 우선
+                
+                logger.info(f"     요금제 검색 키워드: '{search_text}'")
+                
+                # 부분 매칭으로 찾기
+                locator = page.get_by_text(search_text, exact=False)
+                count = await locator.count()
+                
+                if count > 0:
+                    logger.info(f"     요금제 발견: {count}개")
+                    # 첫 번째 클릭 가능한 요소 찾기
+                    for i in range(min(count, 5)):
+                        try:
+                            await locator.nth(i).click(force=True, timeout=2000)
+                            logger.info(f"     ✅ 요금제 클릭 성공")
+                            return True
+                        except:
+                            continue
             
+            # 일반 옵션 클릭
             # 전략 1: 정확한 텍스트 매칭
             locator = page.get_by_text(option_value, exact=True)
             count = await locator.count()
             
             if count > 0:
                 logger.info(f"     전략 1: 정확한 텍스트 매칭 ({count}개 발견)")
-                # 클릭 가능한 요소 찾기 (버튼, 라벨 등)
-                for i in range(count):
+                # 클릭 가능한 요소 찾기
+                for i in range(min(count, 3)):
                     elem = locator.nth(i)
                     tag = await elem.evaluate("el => el.tagName.toLowerCase()")
                     
-                    if tag in ["button", "a", "label", "div"]:
+                    if tag in ["button", "a", "label", "div", "li"]:
                         try:
                             await elem.click(force=True, timeout=3000)
                             logger.info(f"     ✅ 클릭 성공: {tag}")
@@ -411,27 +556,13 @@ class LLMAgentExtractor:
             if count > 0:
                 logger.info(f"     전략 2: 부분 텍스트 매칭 ({count}개 발견)")
                 elem = locator.first
-                tag = await elem.evaluate("el => el.tagName.toLowerCase()")
                 
                 try:
                     await elem.click(force=True, timeout=3000)
-                    logger.info(f"     ✅ 클릭 성공: {tag}")
+                    logger.info(f"     ✅ 클릭 성공")
                     return True
                 except:
                     pass
-            
-            # 전략 3: Role 기반 (버튼, 라디오 등)
-            for role in ["button", "radio", "tab", "option"]:
-                try:
-                    locator = page.get_by_role(role, name=option_value)
-                    count = await locator.count()
-                    if count > 0:
-                        logger.info(f"     전략 3: Role '{role}' ({count}개 발견)")
-                        await locator.first.click(force=True, timeout=3000)
-                        logger.info(f"     ✅ 클릭 성공")
-                        return True
-                except:
-                    continue
             
             logger.warning(f"     ⚠️  클릭 실패: {option_value}를 찾을 수 없음")
             return False
@@ -454,16 +585,21 @@ class LLMAgentExtractor:
         Returns:
             가격 정보 dict
         """
-        # 전체 화면 스크린샷 (저해상도로 최적화)
-        screenshot_bytes = await page.screenshot(
-            full_page=False,
-            quality=50,  # JPEG 품질 50% (파일 크기 대폭 감소)
-            type='jpeg'  # PNG 대신 JPEG 사용
-        )
-        screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
-        image_url = f"data:image/jpeg;base64,{screenshot_base64}"
-        
-        logger.debug(f"   📸 스크린샷: {len(screenshot_base64)} bytes (JPEG 50%)")
+        # 전체 화면 스크린샷 (저해상도로 최적화, 타임아웃 처리)
+        try:
+            screenshot_bytes = await page.screenshot(
+                full_page=False,
+                quality=50,  # JPEG 품질 50%
+                type='jpeg',
+                timeout=10000  # 10초 타임아웃
+            )
+            screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
+            image_url = f"data:image/jpeg;base64,{screenshot_base64}"
+            logger.debug(f"   📸 스크린샷: {len(screenshot_base64)} bytes (JPEG 50%)")
+        except Exception as e:
+            logger.warning(f"   ⚠️ 스크린샷 실패, HTML만 사용: {e}")
+            # HTML 기반 추출로 fallback
+            return await self._extract_pricing_from_html_only(page)
         
         # 가격 관련 HTML만 추출 (범용적, 클래스명 사용 안 함)
         pricing_html = await page.evaluate("""
@@ -525,6 +661,8 @@ class LLMAgentExtractor:
                 system_message="가격 정보를 정확히 추출하세요."
             )
             
+            logger.debug(f"   Vision API 응답 길이: {len(response)} chars")
+            
             # JSON 추출
             response = response.strip()
             if "```json" in response:
@@ -545,9 +683,136 @@ class LLMAgentExtractor:
             
             return pricing
             
+        except json.JSONDecodeError as e:
+            logger.error(f"   ❌ JSON 파싱 실패: {e}")
+            logger.error(f"   응답 내용: {response[:300]}")
+            return {}
         except Exception as e:
             logger.error(f"   ❌ 가격 추출 실패: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return {}
+    
+    async def _extract_pricing_from_html_only(self, page: Page) -> Dict[str, Any]:
+        """HTML만 사용하여 가격 추출 (스크린샷 실패 시 fallback)"""
+        try:
+            pricing_html = await page.evaluate("""
+                () => {
+                    const dls = document.querySelectorAll('dl, div, table');
+                    let html = '';
+                    let count = 0;
+                    
+                    dls.forEach(elem => {
+                        const text = elem.textContent;
+                        if (text.includes('출고가') || text.includes('지원금') || 
+                            text.includes('할부') || text.includes('요금') || text.includes('납부')) {
+                            html += elem.outerHTML + '\\n';
+                            count++;
+                            if (count >= 15) return;
+                        }
+                    });
+                    return html.substring(0, 8000);
+                }
+            """)
+            
+            prompt = f"""
+HTML에서 가격 정보를 추출하세요:
+
+{pricing_html}
+
+출력 (JSON):
+{{
+  "retail_price": 1155000,
+  "public_subsidy": -500000,
+  "additional_subsidy": -190000,
+  "installment_principal": 465000,
+  "monthly_payment": 19375,
+  "final_price": 129586,
+  "plan_name": "프리미엄",
+  "plan_monthly_fee": 109000
+}}
+
+HTML에서 실제 값을 추출하세요. JSON만 출력.
+"""
+            
+            response = await self.llm.complete(
+                prompt=prompt,
+                system_message="HTML에서 가격 정보를 정확히 추출하세요.",
+                response_format={"type": "json_object"}
+            )
+            
+            return json.loads(response)
+            
+        except Exception as e:
+            logger.error(f"HTML 가격 추출 실패: {e}")
+            return {}
+    
+    async def extract_model_name(self, page: Page) -> str:
+        """
+        페이지에서 기종명 추출
+        
+        Returns:
+            "GALAXY_S25" 또는 "IPHONE_17" 형식
+        """
+        try:
+            # 페이지 제목과 HTML 텍스트에서 기종명 추출
+            title = await page.title()
+            
+            # 간단한 패턴 매칭
+            text_to_check = title.upper()
+            
+            # 갤럭시 패턴
+            if "S25" in text_to_check or "S 25" in text_to_check:
+                return "GALAXY_S25"
+            elif "S24" in text_to_check or "S 24" in text_to_check:
+                return "GALAXY_S24"
+            
+            # 아이폰 패턴
+            if "17" in text_to_check and ("IPHONE" in text_to_check or "아이폰" in title):
+                return "IPHONE_17"
+            elif "16" in text_to_check and ("IPHONE" in text_to_check or "아이폰" in title):
+                return "IPHONE_16"
+            
+            # LLM으로 추출 시도
+            logger.info("   🤖 LLM으로 기종명 추출 시도...")
+            
+            html_snippet = await page.evaluate("""
+                () => {
+                    const h1 = document.querySelector('h1, .product-title, .model-name');
+                    return h1 ? h1.textContent : document.title;
+                }
+            """)
+            
+            prompt = f"""
+다음 텍스트에서 휴대폰 기종명을 추출하세요:
+
+{title}
+{html_snippet}
+
+추출 규칙:
+- 갤럭시 S25 → "GALAXY_S25"
+- 아이폰 17 → "IPHONE_17"
+- 갤럭시 S24 → "GALAXY_S24"
+- 아이폰 16 → "IPHONE_16"
+
+형식: "GALAXY_S25" 또는 "IPHONE_17"만 출력하세요.
+"""
+            
+            response = await self.llm.complete(
+                prompt=prompt,
+                system_message="기종명을 정확히 추출하세요.",
+                max_tokens=20
+            )
+            
+            model_name = response.strip().replace('"', '').replace("'", "")
+            
+            if "GALAXY" in model_name or "IPHONE" in model_name:
+                return model_name
+            
+        except Exception as e:
+            logger.debug(f"기종명 추출 실패: {e}")
+        
+        return "UNKNOWN_MODEL"
     
     async def collect_all_policies(
         self,
@@ -576,6 +841,11 @@ class LLMAgentExtractor:
         logger.info(f"최대 조합: {max_combinations}")
         logger.info("="*70 + "\n")
         
+        # Step 0: 기종명 사용 (이미 초기화 시 설정됨)
+        logger.info("[Step 0] 기종명 확인")
+        sku_code = self.model_name  # 이미 __init__에서 설정된 값 사용
+        logger.info(f"   📱 기종명: {sku_code}\n")
+        
         # Step 1: 선택 가능한 옵션 분석
         logger.info("[Step 1] 옵션 분석")
         step1_start = time.time()
@@ -601,13 +871,20 @@ class LLMAgentExtractor:
         
         # Step 3: 요금제 필터링 (조건에 맞는 요금제만)
         logger.info("\n[Step 3] 요금제 필터링")
-        logger.info(f"   기종: {self.model_name}")
-        logger.info(f"   추출된 요금제: {len(self.available_plans)}개")
+        print(f"\n[Step 3] 요금제 필터링")
+        print(f"   기종: {self.model_name}")
+        print(f"   추출된 요금제: {len(self.available_plans)}개")
+        
+        for plan in self.available_plans[:8]:
+            print(f"      - {plan['name']} ({plan['monthly_fee']:,}원/월)")
         
         filtered_plans = self._filter_plans_by_model(available_options)
         
+        print(f"\n   ✂️ 필터링 후: {len(filtered_plans)}개")
         logger.info(f"   📋 조건에 맞는 요금제: {len(filtered_plans)}개")
-        for plan_info in filtered_plans[:5]:
+        
+        for plan_info in filtered_plans[:8]:
+            print(f"      ✅ {plan_info['name']} ({plan_info['monthly_fee']:,}원/월)")
             logger.info(f"      • {plan_info['name']} ({plan_info['monthly_fee']:,}원/월)")
         
         # Step 4: 가지치기 전략 적용
@@ -640,29 +917,35 @@ class LLMAgentExtractor:
             logger.warning("   ⚠️  유효한 옵션 없음")
             return ScrapingResult(source=SourceInfo(site=site_name, url=url), products=[])
         
-        # 각 기본 조합에 대해 요금제 추가
+        # 각 기본 조합에 대해 조건에 맞는 요금제만 추가
         for base_combo_values in itertools_product(*base_values):
             base_combo = dict(zip(base_keys, base_combo_values))
             
-            # 이 조합의 통신사와 가입유형에 맞는 요금제 필터링
+            # 이 조합의 통신사와 가입유형
             carrier = base_combo.get("carrier", "")
             join_type = base_combo.get("join_type", "")
             
+            # 알뜰폰은 제외
+            if "알뜰" in carrier:
+                continue
+            
             # 조건에 맞는 요금제 찾기
-            matching_plans = [
-                p for p in filtered_plans
-                if self._is_plan_valid_for_combo(p, carrier, join_type)
-            ]
+            matching_plans = []
+            for plan in filtered_plans:
+                if self._is_plan_valid_for_combo(plan, carrier, join_type):
+                    matching_plans.append(plan)
             
             if matching_plans:
-                # 각 요금제별로 조합 생성
-                for plan_info in matching_plans[:3]:  # 최대 3개
+                # 조건에 맞는 요금제만 조합 생성 (최대 3개)
+                for plan_info in matching_plans[:3]:
                     combo = base_combo.copy()
                     combo["plan"] = plan_info["name"]
+                    combo["plan_fee"] = plan_info["monthly_fee"]  # 디버깅용
                     combinations.append(combo)
             else:
-                # 요금제 정보 없으면 기본 조합만
-                combinations.append(base_combo)
+                # 조건에 맞는 요금제가 없으면 현재 요금제 사용
+                combo = base_combo.copy()
+                combinations.append(combo)
             
             if len(combinations) >= max_combinations:
                 break
@@ -714,17 +997,31 @@ class LLMAgentExtractor:
                 print(f"   ⏱️ 가격 추출: {pricing_time:.2f}초")
                 logger.info(f"   가격 추출: {pricing_time:.2f}초")
                 
-                if pricing and pricing.get('retail_price'):
-                    collected_data.append({
-                        "combo": combo,
-                        "pricing": pricing
-                    })
-                    combo_total = time.time() - combo_start
-                    print(f"   ✅ 정책 수집 완료 (총 {combo_total:.2f}초)\n")
-                    logger.info(f"   ✅ 정책 수집 완료 (총 {combo_total:.2f}초)")
+                # 가격 데이터 검증 (완화)
+                if pricing:
+                    # retail_price가 없어도 다른 필드가 있으면 수집
+                    has_data = any([
+                        pricing.get('retail_price'),
+                        pricing.get('installment_principal'),
+                        pricing.get('final_price'),
+                        pricing.get('plan_name')
+                    ])
+                    
+                    if has_data:
+                        collected_data.append({
+                            "combo": combo,
+                            "pricing": pricing
+                        })
+                        combo_total = time.time() - combo_start
+                        print(f"   ✅ 정책 수집 완료 (총 {combo_total:.2f}초)")
+                        logger.info(f"   ✅ 정책 수집 완료")
+                    else:
+                        print(f"   ⚠️  가격 데이터 없음")
+                        print(f"      추출된 데이터: {pricing}")
+                        logger.warning(f"   ⚠️  가격 데이터 없음: {pricing}")
                 else:
-                    print(f"   ⚠️  가격 추출 실패\n")
-                    logger.warning(f"   ⚠️  가격 추출 실패 또는 데이터 없음: {pricing}")
+                    print(f"   ❌ 가격 추출 완전 실패 (null)")
+                    logger.error(f"   ❌ 가격 추출 실패: pricing is None")
                 
             except Exception as e:
                 logger.error(f"   ❌ 조합 처리 실패: {e}")
@@ -738,7 +1035,7 @@ class LLMAgentExtractor:
         
         # Step 6: Phase 3 스키마로 변환
         logger.info("[Step 6] 스키마 변환")
-        result = self._convert_to_schema(collected_data, url, site_name)
+        result = self._convert_to_schema(collected_data, url, site_name, sku_code)
         
         logger.info(f"   ✅ 변환 완료: {len(result.products)}개 제품, {sum(len(p.policies) for p in result.products)}개 정책\n")
         
@@ -802,10 +1099,16 @@ class LLMAgentExtractor:
         join_type: str
     ) -> bool:
         """
-        요금제가 특정 조합에 유효한지 확인 (요금제명 + 월요금)
+        요금제가 특정 조합에 유효한지 확인 (월요금 우선, 이름은 유연하게)
+        
+        매칭 전략:
+        1. 월요금이 조건에 맞는지 확인 (필수)
+        2. 요금제 이름은 핵심 키워드만 확인 (유연)
+           - "5GX 레귤러플러스" ↔ "레귤러플러스" ✅
+           - "5G 프리미어 에센셜" ↔ "프리미어" ✅
         
         Args:
-            plan_info: 요금제 정보 {"name": "5GX 프라임", "monthly_fee": 89000}
+            plan_info: 요금제 정보 {"name": "레귤러플러스", "monthly_fee": 79000}
             carrier: 통신사 (SKT, KT, LGU)
             join_type: 가입유형 (번호이동, 기기변경)
             
@@ -813,15 +1116,16 @@ class LLMAgentExtractor:
             유효 여부
         """
         if self.model_name not in self.PLAN_FILTERS:
-            # 필터 조건 없으면 모두 허용
             return True
         
         model_filters = self.PLAN_FILTERS[self.model_name]
         
         # 통신사 정규화
         carrier_normalized = carrier.upper()
-        if "LG" in carrier_normalized:
+        if "LG" in carrier_normalized or "LGU" in carrier_normalized:
             carrier_normalized = "LGU"
+        if "알뜰" in carrier:
+            return False  # 알뜰폰 제외
         
         if carrier_normalized not in model_filters:
             return False
@@ -834,25 +1138,54 @@ class LLMAgentExtractor:
         if join_normalized not in carrier_filters:
             return False
         
-        # 허용된 요금제 리스트 (이름 + 월요금)
+        # 허용된 요금제 리스트
         allowed_plans = carrier_filters[join_normalized]
         
-        # 요금제 이름과 월요금 모두 확인
         plan_name = plan_info.get("name", "")
         plan_fee = plan_info.get("monthly_fee", 0)
         
-        # 이름 정규화 (공백, +, 특수문자 제거)
-        plan_name_clean = plan_name.replace(" ", "").replace("+", "").upper()
+        # 이름 정규화 (공백, 숫자, 특수문자, 5G/5GX 접두어 제거)
+        plan_name_clean = (plan_name
+                          .replace("5GX", "").replace("5G", "")
+                          .replace("LTE", "").replace(" ", "")
+                          .replace("+", "").replace("플러스", "플러스")
+                          .upper())
         
+        # 월요금 기준 필터링
         for allowed in allowed_plans:
-            allowed_name_clean = allowed["name"].replace(" ", "").replace("+", "").upper()
             allowed_fee = allowed["fee"]
             
-            # 월요금 일치 + 이름 부분 일치
-            if plan_fee == allowed_fee:
-                if (allowed_name_clean in plan_name_clean or 
-                    plan_name_clean in allowed_name_clean):
-                    return True
+            # 1차: 월요금 일치 확인 (필수)
+            if plan_fee != allowed_fee:
+                continue
+            
+            # 2차: 이름 유연 매칭 (선택)
+            allowed_name = allowed["name"]
+            allowed_name_clean = (allowed_name
+                                 .replace("5GX", "").replace("5G", "")
+                                 .replace("LTE", "").replace(" ", "")
+                                 .replace("+", "")
+                                 .upper())
+            
+            # 유연한 매칭:
+            # - "레귤러플러스" ↔ "레귤러플러스" ✅
+            # - "레귤러플러스" ↔ "레규러플러스" ✅ (오타)
+            # - "프라임" ↔ "프라임플러스" ✅
+            # - "레귤러" ↔ "레귤러플러스" ✅
+            
+            # 핵심 키워드만 추출 (플러스 제거)
+            plan_core = plan_name_clean.replace("플러스", "").replace("PLUS", "")
+            allowed_core = allowed_name_clean.replace("플러스", "").replace("PLUS", "")
+            
+            # 매칭 조건 (여러 전략)
+            if (allowed_name_clean == plan_name_clean or          # 완전 일치
+                allowed_name_clean in plan_name_clean or          # 부분 일치 1
+                plan_name_clean in allowed_name_clean or          # 부분 일치 2
+                allowed_core in plan_core or                      # 핵심 키워드 1
+                plan_core in allowed_core or                      # 핵심 키워드 2
+                (len(allowed_core) >= 2 and allowed_core in plan_name_clean) or  # 짧은 키워드
+                (len(plan_core) >= 2 and plan_core in allowed_name_clean)):      # 짧은 키워드 역방향
+                return True
         
         return False
     
@@ -919,7 +1252,8 @@ class LLMAgentExtractor:
         self,
         collected_data: List[Dict[str, Any]],
         url: str,
-        site_name: str
+        site_name: str,
+        sku_code: str = "UNKNOWN_MODEL"
     ) -> ScrapingResult:
         """수집 데이터를 Phase 3 스키마로 변환"""
         
@@ -984,11 +1318,11 @@ class LLMAgentExtractor:
                 policies.append(policy)
             
             # Product 생성
-            product_id = hashlib.md5(f"{site_name}_{storage}".encode()).hexdigest()[:16]
+            product_id = hashlib.md5(f"{site_name}_{sku_code}_{storage}".encode()).hexdigest()[:16]
             
             product = Product(
                 product_id=product_id,
-                sku_code="Unknown Model",  # TODO: 모델명 추출
+                sku_code=sku_code,  # 추출된 기종명 사용
                 sku_storage=parse_storage(storage),
                 policies=policies
             )

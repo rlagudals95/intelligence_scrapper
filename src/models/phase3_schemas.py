@@ -101,17 +101,42 @@ def parse_price(price_str: Optional[str]) -> Optional[int]:
 
 
 def parse_storage(storage_str: Optional[str]) -> Optional[StorageType]:
-    """저장 용량 문자열을 Enum으로 변환"""
+    """
+    저장 용량 문자열을 Enum으로 변환
+    
+    지원 형식:
+    - "256GB", "256G", "256", "256 GB", "256 G"
+    - "1TB", "1T", "1000GB"
+    """
     if not storage_str:
         return None
     
-    storage_map = {
-        "128GB": StorageType.STORAGE_128GB,
-        "256GB": StorageType.STORAGE_256GB,
-        "512GB": StorageType.STORAGE_512GB,
-        "1TB": StorageType.STORAGE_1TB,
-        "2TB": StorageType.STORAGE_2TB,
-    }
+    # 정규화: 공백 제거, 대문자 변환
+    storage_clean = storage_str.upper().replace(" ", "").strip()
     
-    return storage_map.get(storage_str.upper())
+    # 숫자만 추출
+    import re
+    numbers = re.findall(r'\d+', storage_clean)
+    if not numbers:
+        return None
+    
+    size_num = int(numbers[0])
+    
+    # TB 변환
+    if "TB" in storage_clean or "T" in storage_clean:
+        size_num = size_num * 1024  # GB로 변환
+    
+    # 매핑
+    if size_num <= 128:
+        return StorageType.STORAGE_128GB
+    elif size_num <= 256:
+        return StorageType.STORAGE_256GB
+    elif size_num <= 512:
+        return StorageType.STORAGE_512GB
+    elif size_num <= 1024:
+        return StorageType.STORAGE_1TB
+    elif size_num <= 2048:
+        return StorageType.STORAGE_2TB
+    
+    return None
 
