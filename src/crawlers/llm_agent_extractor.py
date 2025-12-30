@@ -290,71 +290,97 @@ class LLMAgentExtractor:
         
         plans_with_fees = []
         try:
-            # 드롭다운 열기 시도 (여러 전략)
+            # 드롭다운 열기 시도 (여러 전략, 더 공격적으로)
             logger.info(f"   🔽 요금제 드롭다운 열기 시도...")
             
-            # 전략 1: "요금제" 텍스트 클릭
+            # 전략 1: "요금제" + "월" + 숫자 패턴이 있는 요소 모두 클릭
             try:
-                await page.get_by_text("요금제", exact=False).first.click(force=True, timeout=1000)
-                await asyncio.sleep(0.5)
-                logger.info(f"   ✅ '요금제' 클릭 완료")
-            except:
-                pass
-            
-            # 전략 2: ▼ 아이콘 클릭
-            try:
-                dropdown_btns = page.locator('button:has-text("▼"), [class*="dropdown"]')
-                count = await dropdown_btns.count()
-                for i in range(min(count, 3)):
+                plan_elements = page.locator('div:has-text("요금제"), button:has-text("월"), [class*="plan"]')
+                count = await plan_elements.count()
+                logger.info(f"   요금제 관련 요소: {count}개 발견")
+                
+                for i in range(min(count, 5)):
                     try:
-                        await dropdown_btns.nth(i).click(force=True, timeout=1000)
+                        await plan_elements.nth(i).click(force=True, timeout=800)
                         await asyncio.sleep(0.3)
                     except:
                         pass
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"   전략 1 실패: {e}")
             
-            # 최종 대기 (드롭다운이 완전히 열릴 때까지)
-            await asyncio.sleep(1)
+            # 전략 2: ▼ 아이콘 모두 클릭
+            try:
+                dropdown_btns = page.locator('button:has-text("▼"), button:has-text("∨")')
+                count = await dropdown_btns.count()
+                logger.info(f"   드롭다운 버튼: {count}개")
+                
+                for i in range(min(count, 5)):
+                    try:
+                        await dropdown_btns.nth(i).click(force=True, timeout=800)
+                        await asyncio.sleep(0.2)
+                    except:
+                        pass
+            except Exception as e:
+                logger.debug(f"   전략 2 실패: {e}")
             
-            # LLM이 화면을 보고 모든 요금제 추출
-            logger.info(f"   🤖 LLM으로 요금제 추출 중...")
+            # 최종 대기 (드롭다운 DOM 업데이트)
+            await asyncio.sleep(1.5)
+            
+            # LLM Vision으로 요금제 추출 (스크린샷 기반)
+            logger.info(f"   🤖 LLM Vision으로 요금제 추출 중...")
             
             screenshot_bytes = await page.screenshot(
                 full_page=False,
-                quality=60,
+                quality=70,  # 품질 조금 올림 (텍스트 인식 개선)
                 type='jpeg',
-                timeout=10000  # 10초 타임아웃
+                timeout=10000
             )
             screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
             image_url = f"data:image/jpeg;base64,{screenshot_base64}"
             
             plan_prompt = """
-이 화면에서 모든 요금제를 추출하세요.
+이 이미지에서 **모든 요금제와 월요금**을 추출하세요.
 
-요금제 형식:
-- 요금제명 + 월요금이 함께 표시됨
-- 예: "프라임 월 89,000원", "레귤러 플러스 79,000원"
+# 분석 방법
 
-모든 요금제를 찾아서 JSON으로 반환:
+1. 요금제 드롭다운이나 리스트를 찾으세요
+2. 각 요금제의 이름과 월요금을 추출하세요
+
+# 요금제 패턴 예시
+
+```
+프리미엄(OTT 택1)      월 109,000원
+프라임 플러스          월 99,000원  
+프라임                 월 89,000원
+레귤러 플러스          월 79,000원
+레귤러                 월 69,000원
+```
+
+# 추출 규칙
+
+- 요금제명: "프라임", "레귤러 플러스", "프리미어 에센셜" 등
+- 괄호 내용은 제거해도 되고 포함해도 됨
+- "5GX", "5G" 접두어는 포함해도 되고 빼도 됨
+- 월요금: 콤마 제거하고 정수로 변환
+
+# 출력 형식 (JSON 배열)
+
 [
+  {"name": "프리미엄", "monthly_fee": 109000},
+  {"name": "프라임 플러스", "monthly_fee": 99000},
   {"name": "프라임", "monthly_fee": 89000},
   {"name": "레귤러 플러스", "monthly_fee": 79000},
   {"name": "레귤러", "monthly_fee": 69000}
 ]
 
-**주의:**
-- 요금제명에서 "5GX", "5G" 접두어는 포함해도 되고 빼도 됨
-- 월요금은 정수로 (콤마 제거)
-- 화면에 보이는 모든 요금제를 추출
-
-**JSON 배열만 출력하세요.**
+**이미지에서 보이는 모든 요금제를 추출하세요.**
+**JSON 배열만 출력하세요. 다른 설명 없이.**
 """
             
             response = await self.llm.complete_with_vision(
                 prompt=plan_prompt,
                 image_url=image_url,
-                system_message="화면에서 모든 요금제와 월요금을 정확히 추출하세요."
+                system_message="이미지를 보고 모든 요금제와 월요금을 정확히 추출하세요. 드롭다운이 닫혀있어도 보이는 모든 요금제를 찾으세요."
             )
             
             # JSON 파싱
@@ -378,63 +404,53 @@ class LLMAgentExtractor:
                 () => {
                     const plans = [];
                     
-                    // 패턴 1: 테이블 행 단위로 요금제 찾기 (가장 정확)
-                    const rows = document.querySelectorAll('tr, li, .plan-item, .bill-item');
-                    rows.forEach(row => {
-                        const text = row.textContent;
+                    // 모든 visible 요소에서 요금제 찾기 (드롭다운 열린 상태)
+                    const allElements = document.querySelectorAll('*');
+                    
+                    allElements.forEach(elem => {
+                        // 보이지 않는 요소는 제외
+                        const style = window.getComputedStyle(elem);
+                        if (style.display === 'none' || style.visibility === 'hidden') {
+                            return;
+                        }
                         
-                        // 요금제명 패턴
-                        const planMatch = text.match(/(프리미엄|프리미어|프라임|레귤러|레규러|초이스|스페셜|베이직|에센셜|슈퍼|심플|스마트|슬림)[^\\d]*/i);
-                        // 월요금 패턴 (앞에 "월"이 있을 수 있음)
-                        const feeMatch = text.match(/월?\\s*(\\d{1,3}),?(\\d{3})\\s*원/);
+                        const text = elem.textContent.trim();
                         
-                        if (planMatch && feeMatch) {
-                            const planName = planMatch[0].trim();
-                            const fee = parseInt(feeMatch[1].replace(',', '') + feeMatch[2]);
+                        // 요금제 패턴: 이름 + 월요금
+                        // "프라임 월 89,000원" 또는 "레귤러 플러스 79,000원"
+                        if (text.length < 200 && text.match(/프리미|프라임|레귤러|레규러|스페셜|베이직|심플|슬림|에센셜/i)) {
+                            // 월요금 패턴
+                            const feeMatch = text.match(/월\\s*(\\d{1,3}),?(\\d{3})\\s*원/);
                             
-                            if (planName.length >= 2 && planName.length < 30) {
-                                plans.push({
-                                    name: planName,
-                                    monthly_fee: fee
-                                });
+                            if (feeMatch) {
+                                const fee = parseInt(feeMatch[1].replace(',', '') + feeMatch[2]);
+                                
+                                // 요금제명 추출 (월요금 앞부분)
+                                let planName = text.split(/월\\s*\\d/)[0].trim();
+                                
+                                // OTT, 무제한 등 부가 설명 제거
+                                planName = planName
+                                    .replace(/\\(.*?\\)/g, '')  // 괄호 내용 제거
+                                    .replace(/완전 무제한/g, '')
+                                    .replace(/유무선 무제한/g, '')
+                                    .trim();
+                                
+                                if (planName.length >= 2 && planName.length < 30 && fee >= 40000 && fee <= 150000) {
+                                    plans.push({
+                                        name: planName,
+                                        monthly_fee: fee
+                                    });
+                                }
                             }
                         }
                     });
-                    
-                    // 패턴 2: 개별 span/div에서 추출
-                    if (plans.length === 0) {
-                        const allElements = document.querySelectorAll('div, span, p');
-                        
-                        allElements.forEach(elem => {
-                            const text = elem.textContent.trim();
-                            
-                            // 짧은 텍스트만 (요금제 라인)
-                            if (text.length > 5 && text.length < 100 && 
-                                text.match(/프리미|프라임|레귤러|베이직|심플|슬림/i)) {
-                                
-                                const feeMatch = text.match(/월?\\s*(\\d{1,3}),?(\\d{3})\\s*원/);
-                                
-                                if (feeMatch) {
-                                    const planName = text.split(/월?\\s*\\d{1,3},?\\d{3}\\s*원/)[0].trim();
-                                    const fee = parseInt(feeMatch[1].replace(',', '') + feeMatch[2]);
-                                    
-                                    if (planName.length >= 2 && planName.length < 30) {
-                                        plans.push({
-                                            name: planName,
-                                            monthly_fee: fee
-                                        });
-                                    }
-                                }
-                            }
-                        });
-                    }
                     
                     // 중복 제거
                     const uniquePlans = [];
                     const seenKeys = new Set();
                     
                     plans.forEach(plan => {
-                        const key = plan.name + '_' + plan.monthly_fee;
+                        const key = plan.name.trim() + '_' + plan.monthly_fee;
                         if (!seenKeys.has(key)) {
                             seenKeys.add(key);
                             uniquePlans.push(plan);
@@ -927,13 +943,15 @@ HTML에서 실제 값을 추출하세요. JSON만 출력.
             
             # 알뜰폰은 제외
             if "알뜰" in carrier:
+                logger.debug(f"   ⏭️  알뜰폰 조합 건너뛰기: {carrier}")
                 continue
             
-            # 조건에 맞는 요금제 찾기
+            # 조건에 맞는 요금제만 찾기 (엄격)
             matching_plans = []
             for plan in filtered_plans:
                 if self._is_plan_valid_for_combo(plan, carrier, join_type):
                     matching_plans.append(plan)
+                    logger.debug(f"   ✅ 매칭: {carrier}/{join_type} - {plan['name']} ({plan['monthly_fee']:,}원)")
             
             if matching_plans:
                 # 조건에 맞는 요금제만 조합 생성 (최대 3개)
@@ -942,10 +960,14 @@ HTML에서 실제 값을 추출하세요. JSON만 출력.
                     combo["plan"] = plan_info["name"]
                     combo["plan_fee"] = plan_info["monthly_fee"]  # 디버깅용
                     combinations.append(combo)
+                    logger.debug(f"   📌 조합 추가 (요금제 필터): {combo}")
             else:
-                # 조건에 맞는 요금제가 없으면 현재 요금제 사용
+                # 조건에 맞는 요금제가 없으면 현재 화면 요금제로 기본 조합 생성
+                # (요금제 드롭다운이 안 열린 경우 대비)
+                logger.warning(f"   ⚠️  {carrier}/{join_type} - 조건 맞는 요금제 없음, 현재 요금제 사용")
                 combo = base_combo.copy()
                 combinations.append(combo)
+                logger.debug(f"   📌 조합 추가 (기본): {combo}")
             
             if len(combinations) >= max_combinations:
                 break
