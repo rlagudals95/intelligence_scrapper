@@ -1,5 +1,5 @@
 """
-Prompt Templates (Phase 2)
+Prompt Templates (Phase 2 & Phase 3)
 LLM 분석용 프롬프트 템플릿
 """
 
@@ -449,4 +449,210 @@ def format_pricing_area_prompt(html_content: str) -> str:
 def format_normalization_prompt(text: str) -> str:
     """정규화 프롬프트 생성"""
     return OPTION_NORMALIZATION_PROMPT.format(text=text)
+
+
+# ============================================================================
+# Phase 3B: 화면 기반 정책 추출
+# ============================================================================
+
+SCREEN_PAGE_STRUCTURE_SYSTEM = """
+당신은 휴대폰 구매 페이지 분석 전문가입니다.
+상세 페이지의 HTML을 분석하여 다음을 식별해야 합니다:
+1. 옵션 선택 UI (용량, 색상, 통신사, 가입유형, 요금제)
+2. 가격 표시 영역 (출고가, 지원금, 할부금, 최종가)
+
+정확한 CSS 셀렉터를 제공하여 Playwright로 요소를 찾을 수 있도록 해야 합니다.
+
+🚨 중요: 실제 HTML 구조를 분석하여 존재하는 요소의 실제 셀렉터를 반환하세요.
+"""
+
+SCREEN_PAGE_STRUCTURE_PROMPT = """
+주어진 HTML에서 실제로 존재하는 요소의 셀렉터를 찾으세요.
+
+# HTML (실제 페이지)
+{html}
+
+# 분석 방법
+
+1. **HTML을 직접 읽으세요**: class, id, name 속성을 확인
+2. **실제 존재하는 요소만 반환**: 추측하지 마세요
+3. **테스트 가능한 셀렉터**: document.querySelector()로 찾을 수 있어야 함
+
+# 찾아야 할 요소
+
+## 옵션 선택 UI
+
+HTML에서 다음 옵션 UI를 찾으세요:
+
+**용량 (storage)**:
+- "256GB", "512GB", "1TB" 같은 텍스트가 있는 버튼/탭/select
+- 실제 HTML에서 class나 id 확인
+- type: "button" | "tab" | "select" | "radio"
+- selector: 실제 CSS 셀렉터
+
+**색상 (color)**:
+- 색상 선택 UI (있으면)
+- 색상 버튼이나 스와치를 찾으세요
+
+**통신사 (carrier)**:
+- SKT, KT, LG U+ 등의 로고나 텍스트
+- 실제 HTML에서 찾으세요
+
+**가입유형 (join_type)**:
+- "번호이동", "기기변경", "신규가입" 버튼/탭
+- 실제 HTML에서 찾으세요
+
+**요금제 (plan)**:
+- 요금제 선택 드롭다운이나 버튼
+- 있는 경우만 반환
+
+## 가격 표시 영역
+
+HTML에서 다음 가격 정보가 표시된 요소를 찾으세요:
+
+- **출고가**: "출고가", "기기가격" 근처의 금액
+- **공시지원금**: "공시지원금", "공통지원금" 근처의 금액
+- **추가지원금**: "추가 지원금", "제휴할인" 근처의 금액
+- **할부원금**: "할부원금", "제휴카드" 근처의 금액
+- **월 할부금**: "월 할부금", "월 납부" 근처의 금액
+- **월 통신요금**: "월 통신요금", "월 요금" 근처의 금액
+
+**주의**: 
+- 실제 HTML에서 해당 텍스트를 찾으세요
+- 없으면 null로 반환
+- 추측하지 마세요
+
+# 응답 형식 (JSON)
+
+{{
+  "options": {{
+    "storage": {{
+      "type": "button",
+      "selector": ".actual-storage-button-class"
+    }},
+    "color": {{
+      "type": "button", 
+      "selector": ".actual-color-button-class"
+    }},
+    "carrier": {{
+      "type": "button",
+      "selector": ".actual-carrier-button-class"
+    }},
+    "join_type": {{
+      "type": "button",
+      "selector": ".actual-jointype-button-class"
+    }}
+  }},
+  "pricing": {{
+    "retail_price_selector": ".actual-retail-price-class",
+    "public_subsidy_selector": ".actual-subsidy-class",
+    "additional_subsidy_selector": ".actual-additional-class",
+    "installment_principal_selector": ".actual-installment-class",
+    "monthly_payment_selector": ".actual-monthly-class",
+    "plan_monthly_fee_selector": ".actual-plan-fee-class"
+  }}
+}}
+
+위 예시는 형식일 뿐입니다. 실제 HTML에서 찾은 셀렉터로 교체하세요!
+
+**JSON만 출력하세요. 예시 값을 그대로 반환하지 마세요!**
+"""
+
+SCREEN_EXTRACT_PRICING_SYSTEM = """
+당신은 웹 페이지에서 가격 정보를 추출하는 전문가입니다.
+HTML에서 휴대폰 구매 관련 가격 정보를 정확히 파싱해야 합니다.
+
+🚨 핵심 규칙:
+1. 반드시 HTML에서 실제 텍스트를 찾아야 합니다
+2. 예시 값을 반환하지 마세요
+3. 가격은 주로 <span class="unit-w">숫자</span> 패턴으로 표시됩니다
+4. <dt> 태그에 레이블, <dd> 태그에 값이 있는 패턴을 찾으세요
+"""
+
+SCREEN_EXTRACT_PRICING_PROMPT = """
+주어진 HTML에서 **실제 가격 정보**를 추출하세요.
+
+# HTML (실제 페이지)
+{html}
+
+# 분석 방법
+
+1. **HTML 패턴 파악**:
+   - 휴대폰 가격은 보통 `<dt>레이블</dt><dd>가격</dd>` 구조
+   - 가격 숫자는 보통 `<span class="unit-w">1,980,000</span>` 형태
+   - 예: `<dt>출고가</dt><dd class="sp"><span class="unit-w">1,980,000</span><span>원</span></dd>`
+
+2. **키워드로 검색**:
+   - HTML에서 다음 키워드를 찾으세요
+   - 키워드 근처의 숫자를 추출하세요
+
+# 추출 작업
+
+HTML을 읽으면서 다음 키워드를 찾고, 그 근처의 **실제 숫자**를 추출하세요:
+
+1. **출고가** → "출고가" 키워드 찾기 → 그 근처의 숫자 (예: 1,980,000)
+2. **공시지원금** → "공시지원금" 또는 "공시지원" 키워드 → 근처 숫자
+3. **추가 지원금** → "추가 지원금" 또는 "추가지원금" 키워드 → 근처 숫자 (마이너스 가능)
+4. **할부원금** → "할부원금" 키워드 → 근처 숫자 (제휴카드 관련)
+5. **월 할부금** → "월 할부금" 키워드 → 근처 숫자
+6. **월 통신요금** → "월 통신요금" 또는 "월통신요금" 키워드 → 근처 숫자
+7. **월 납부금액** → "월 납부금액" 또는 "월납부총액" 키워드 → 근처 숫자 (A+B 합계)
+8. **요금제** → 요금제명 (예: "5GX 프리미엄", "5G 초이스") → 그 근처의 월요금
+
+# 검색 전략
+
+```
+예시 HTML:
+<dt>출고가</dt>
+<dd class="sp"><span class="unit-w">1,980,000</span><span>원</span></dd>
+
+추출 과정:
+1. "출고가" 텍스트 발견
+2. 그 다음 <dd> 태그 확인
+3. <span class="unit-w"> 안의 숫자 추출: "1,980,000"
+4. 콤마 제거 → 1980000 (정수)
+```
+
+# 추출 결과 (JSON)
+
+HTML에서 실제로 찾은 값만 반환하세요:
+
+{{
+  "retail_price": 1980000,
+  "public_subsidy": null,
+  "additional_subsidy": -550000,
+  "installment_principal": 1430000,
+  "monthly_payment": 63314,
+  "final_price": 145064,
+  "plan_name": "5GX 프리미엄",
+  "plan_monthly_fee": 109000
+}}
+
+위는 실제 값의 예시입니다. HTML에서 다른 값을 찾으면 그 값을 반환하세요!
+
+# 중요
+
+- **콤마 제거**: "1,980,000" → 1980000
+- **마이너스**: "-550,000" → -550000  
+- **정보 없으면**: null
+- **반드시 HTML에서 실제 값을 찾으세요**
+
+**JSON만 출력하세요. 다른 설명 없이.**
+"""
+
+
+def format_screen_page_structure_prompt(html: str) -> str:
+    """Phase 3B: 페이지 구조 분석 프롬프트"""
+    # 더 많은 HTML 제공 (20000자)
+    if len(html) > 20000:
+        html = html[:20000] + "\n\n...(나머지 HTML 생략)..."
+    return SCREEN_PAGE_STRUCTURE_PROMPT.format(html=html)
+
+
+def format_screen_extract_pricing_prompt(html: str) -> str:
+    """Phase 3B: 가격 추출 프롬프트"""
+    # 더 많은 HTML 제공 (15000자)
+    if len(html) > 15000:
+        html = html[:15000] + "\n\n...(나머지 HTML 생략)..."
+    return SCREEN_EXTRACT_PRICING_PROMPT.format(html=html)
 

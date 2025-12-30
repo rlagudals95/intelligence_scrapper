@@ -1,0 +1,13 @@
+{
+  "index": 2,
+  "url": "https://ddingphone.com/mshop/ajax.mshop.php",
+  "method": "POST",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "timestamp": 1767095774.8099608,
+  "data": {
+    "result": "",
+    "message": "",
+    "template": "<div style=\"text-align:center;\" align=\"center\"><img src=\"https://ddingphone.com/data/editor/2509/4db6026696bef9918657cde1dc9b260e_1757556839_5727.jpg\" title=\"4db6026696bef9918657cde1dc9b260e_1757556839_5727.jpg\" alt=\"4db6026696bef9918657cde1dc9b260e_1757556839_5727.jpg\" /></div><div style=\"text-align:center;\" align=\"center\"><img src=\"https://ddingphone.com/data/editor/2509/4db6026696bef9918657cde1dc9b260e_1757556839_6291.jpg\" title=\"4db6026696bef9918657cde1dc9b260e_1757556839_6291.jpg\" alt=\"4db6026696bef9918657cde1dc9b260e_1757556839_6291.jpg\" /></div><div style=\"text-align:center;\" align=\"center\"><img src=\"https://ddingphone.com/data/editor/2509/4db6026696bef9918657cde1dc9b260e_1757556839_6878.jpg\" title=\"4db6026696bef9918657cde1dc9b260e_1757556839_6878.jpg\" alt=\"4db6026696bef9918657cde1dc9b260e_1757556839_6878.jpg\" /></div><div style=\"text-align:center;\" align=\"center\"><img src=\"https://ddingphone.com/data/editor/2509/4db6026696bef9918657cde1dc9b260e_1757556839_7479.jpg\" title=\"4db6026696bef9918657cde1dc9b260e_1757556839_7479.jpg\" alt=\"4db6026696bef9918657cde1dc9b260e_1757556839_7479.jpg\" /></div><div style=\"text-align:center;\" align=\"center\"><img src=\"https://ddingphone.com/data/editor/2509/4db6026696bef9918657cde1dc9b260e_1757556839_8466.jpg\" title=\"4db6026696bef9918657cde1dc9b260e_1757556839_8466.jpg\" alt=\"4db6026696bef9918657cde1dc9b260e_1757556839_8466.jpg\" /></div><div style=\"text-align:center;\" align=\"center\"><img src=\"https://ddingphone.com/data/editor/2509/4db6026696bef9918657cde1dc9b260e_1757556839_8968.jpg\" title=\"4db6026696bef9918657cde1dc9b260e_1757556839_8968.jpg\" alt=\"4db6026696bef9918657cde1dc9b260e_1757556839_8968.jpg\" /></div><div style=\"text-align:center;\" align=\"center\"><img src=\"https://ddingphone.com/data/editor/2509/4db6026696bef9918657cde1dc9b260e_1757556839_9579.jpg\" title=\"4db6026696bef9918657cde1dc9b260e_1757556839_9579.jpg\" alt=\"4db6026696bef9918657cde1dc9b260e_1757556839_9579.jpg\" /></div><div style=\"text-align:center;\"> </div>"
+  }
+}

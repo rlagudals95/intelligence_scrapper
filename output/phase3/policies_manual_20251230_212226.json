@@ -1,0 +1,56 @@
+{
+  "captured_at": "2025-12-30T21:22:26.073640",
+  "source": {
+    "site": "띵폰",
+    "url": "https://ddingphone.com/view/138?tid=SKT&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=2&code=S1714617302"
+  },
+  "products": [
+    {
+      "product_id": "0908085eed7fac2f",
+      "sku_code": "아이폰 17 Pro Max",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "5e73c039a21b1f42",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프리미엄",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -550000,
+            "sku_installment_fee": 1430000,
+            "monthly_payment": 63314
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "da6891b50320ab0c",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프리미엄",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -300000,
+            "sku_installment_fee": 1680000,
+            "monthly_payment": 74383
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}

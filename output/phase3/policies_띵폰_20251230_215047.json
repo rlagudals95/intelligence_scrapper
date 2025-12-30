@@ -1,0 +1,986 @@
+{
+  "captured_at": "2025-12-30T21:50:47.565781",
+  "source": {
+    "site": "띵폰",
+    "url": "https://ddingphone.com/view/138?tid=SKT&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=2&code=S1714617302"
+  },
+  "products": [
+    {
+      "product_id": "0908085eed7fac2f",
+      "sku_code": "Unknown Model",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "578b178aa9ede8be",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프리미엄",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -550000,
+            "sku_installment_fee": 1430000,
+            "monthly_payment": 63314
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "c94e12ae9ce59310",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프리미엄",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -550000,
+            "sku_installment_fee": 1430000,
+            "monthly_payment": 87666
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "92a2a23ae87ded61",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 레귤러플러스",
+            "monthly_fee": 79000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": 0,
+            "sku_installment_fee": 1980000,
+            "monthly_payment": 87666
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "a6f1b61dc8785925",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 레귤러플러스",
+            "monthly_fee": 79000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": 0,
+            "sku_installment_fee": 1980000,
+            "monthly_payment": 87666
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "022cf01fe8ecd482",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프리미엄",
+            "monthly_fee": 109000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -79000,
+            "sku_installment_fee": 1980000,
+            "monthly_payment": 87666
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "88c728121f35ba57",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 1780000,
+            "monthly_payment": 78811
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "62ae734a06d65896",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1530000,
+            "monthly_payment": 67742
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "52f7a917cf180a4b",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1530000,
+            "monthly_payment": 67742
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "87d3967dfba4c4d5",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프리미엄 플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1530000,
+            "monthly_payment": 67742
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "154809c73e390072",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 1780000,
+            "monthly_payment": 78811
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "27f1939703303e9a",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 1780000,
+            "monthly_payment": 78811
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "ff313c3f2c32aeac",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 1780000,
+            "monthly_payment": 78811
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "6f7bbb4b0bc084c3",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1530000,
+            "monthly_payment": 67742
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "918d3b7966f97284",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1530000,
+            "monthly_payment": 67742
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "7453665c769b297f",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1530000,
+            "monthly_payment": 67742
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "c76c9d21ced0b732",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 1780000,
+            "monthly_payment": 78811
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "e4549e35e5bc9030",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 1780000,
+            "monthly_payment": 78811
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "1b738a28925db11f",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1980000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 1780000,
+            "monthly_payment": 78811
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    },
+    {
+      "product_id": "124192f55bff5289",
+      "sku_code": "Unknown Model",
+      "sku_storage": "512GB",
+      "policies": [
+        {
+          "policy_id": "9e31d43d686d88fe",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 81378
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "3b045ddaa3b10f73",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프리미엄플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 81378
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "5d6b2e2114a0ac53",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 81378
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "d377f0357a6fc908",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 92447
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "b22b92a1c4e407b1",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 166697
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "90cd0c8be541d5de",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 92447
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "567bda012bfb885b",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 81378
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "d66973d536b05010",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프리미엄플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 155628
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "95adae7ed22a5773",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임 플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 81378
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "604bf52c7e015088",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 92447
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "2328f648b4e984af",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 92447
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "20899ba4fb4521a4",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 92447
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "a097acfa934eeb4e",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 155628
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "9756bc24c09e0431",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 81378
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "a19d3c445a98cdee",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 1838000,
+            "monthly_payment": 155628
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "f6f4914c919ebc49",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 92447
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "aea5eb771cd6a1df",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 92447
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "74dce0b49006af65",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프리미엄 플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2288000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2088000,
+            "monthly_payment": 166697
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    },
+    {
+      "product_id": "b42a7fca8e7f0375",
+      "sku_code": "Unknown Model",
+      "sku_storage": "1TB",
+      "policies": [
+        {
+          "policy_id": "4bec3040d7c05f5e",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프리미엄플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 2135000,
+            "monthly_payment": 94528
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "28a05bebc00f6c7a",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 2135000,
+            "monthly_payment": 94528
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "206acf9d6abf47e1",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 2135000,
+            "monthly_payment": 94528
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "772c9f47196f3495",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2385000,
+            "monthly_payment": 105597
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "7ba9fe2fd10fc138",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프리미엄플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2385000,
+            "monthly_payment": 105597
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "02de292b41aaa044",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프리미엄플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2385000,
+            "monthly_payment": 179847
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "e34a75dbe0366503",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 2135000,
+            "monthly_payment": 168778
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "0bb528f8d45d704a",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프리미엄플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 2135000,
+            "monthly_payment": 94528
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "e115b4d9a371e4f5",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 2135000,
+            "monthly_payment": 94528
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "103df910ddc516df",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2385000,
+            "monthly_payment": 179847
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "d1a0b510e2e382e4",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2385000,
+            "monthly_payment": 105597
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "737c3e400bb27568",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -200000,
+            "sku_installment_fee": 2385000,
+            "monthly_payment": 105597
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "9c904c7729cc4ca5",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 2135000,
+            "monthly_payment": 94528
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "8bdbfb5511a9fe7e",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5GX 프라임플러스",
+            "monthly_fee": 99000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 2585000,
+            "public_subsidy": 0,
+            "discount": -450000,
+            "sku_installment_fee": 2135000,
+            "monthly_payment": 94528
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}

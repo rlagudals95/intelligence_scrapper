@@ -1,6 +1,6 @@
 """
 LLM Client (Phase 2)
-OpenAI 및 Anthropic API 통합
+OpenAI, Anthropic, Gemini API 통합
 """
 import os
 from typing import Optional, List, Dict, Any, Union
@@ -15,11 +15,19 @@ from ..utils.logger import get_logger
 
 logger = get_logger()
 
+# Gemini import (optional)
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+
 
 class LLMProvider(str, Enum):
     """LLM 제공자"""
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    GEMINI = "gemini"
 
 
 class LLMClient:
@@ -47,6 +55,8 @@ class LLMClient:
             self.api_key = api_key
         elif provider == LLMProvider.OPENAI:
             self.api_key = os.getenv("OPENAI_API_KEY")
+        elif provider == LLMProvider.GEMINI:
+            self.api_key = os.getenv("GEMINI_API_KEY")
         else:
             self.api_key = os.getenv("ANTHROPIC_API_KEY")
         
@@ -58,12 +68,19 @@ class LLMClient:
             self.model = model
         elif provider == LLMProvider.OPENAI:
             self.model = "gpt-4o"  # 또는 "gpt-4o-mini"
+        elif provider == LLMProvider.GEMINI:
+            self.model = "gemini-3.0-flash-preview"  # 최신 모델
         else:
             self.model = "claude-3-5-sonnet-20241022"
         
         # 클라이언트 초기화
         if provider == LLMProvider.OPENAI:
             self.client = AsyncOpenAI(api_key=self.api_key)
+        elif provider == LLMProvider.GEMINI:
+            if not GEMINI_AVAILABLE:
+                raise ImportError("google-generativeai 패키지가 설치되지 않았습니다. pip install google-generativeai")
+            genai.configure(api_key=self.api_key)
+            self.client = genai.GenerativeModel(self.model)
         else:
             self.client = AsyncAnthropic(api_key=self.api_key)
         
@@ -108,6 +125,10 @@ class LLMClient:
         try:
             if self.provider == LLMProvider.OPENAI:
                 response_text = await self._openai_complete(
+                    prompt, system_message, temp, max_tok, response_format
+                )
+            elif self.provider == LLMProvider.GEMINI:
+                response_text = await self._gemini_complete(
                     prompt, system_message, temp, max_tok, response_format
                 )
             else:
@@ -207,6 +228,96 @@ class LLMClient:
         
         return response.content[0].text
     
+    async def _gemini_complete(
+        self,
+        prompt: str,
+        system_message: Optional[str],
+        temperature: float,
+        max_tokens: int,
+        response_format: Optional[Dict[str, Any]]
+    ) -> str:
+        """Gemini API 호출"""
+        # 시스템 메시지와 프롬프트 결합
+        full_prompt = prompt
+        if system_message:
+            full_prompt = f"{system_message}\n\n{prompt}"
+        
+        # JSON mode 처리
+        if response_format and response_format.get("type") == "json_object":
+            full_prompt += "\n\n**중요: 응답은 반드시 유효한 JSON 형식이어야 합니다.**"
+        
+        # Generation config
+        generation_config = {
+            "temperature": temperature,
+            "max_output_tokens": max_tokens,
+        }
+        
+        # JSON mode 설정 (Gemini 2.0부터 지원)
+        if response_format and response_format.get("type") == "json_object":
+            generation_config["response_mime_type"] = "application/json"
+        
+        # 비동기 호출
+        response = await asyncio.to_thread(
+            self.client.generate_content,
+            full_prompt,
+            generation_config=generation_config
+        )
+        
+        # 토큰 사용량 추적 (Gemini는 무료/저렴)
+        if hasattr(response, 'usage_metadata'):
+            self.total_tokens += (
+                response.usage_metadata.prompt_token_count +
+                response.usage_metadata.candidates_token_count
+            )
+            # Gemini Flash는 무료 또는 매우 저렴 (가격 추정: $0.001/1K tokens)
+            cost = self.total_tokens * 0.001 / 1000
+            self.total_cost = cost
+        
+        return response.text
+    
+    async def _gemini_vision(
+        self,
+        prompt: str,
+        image_url: str,
+        system_message: Optional[str]
+    ) -> str:
+        """Gemini Vision API"""
+        # 시스템 메시지와 프롬프트 결합
+        full_prompt = prompt
+        if system_message:
+            full_prompt = f"{system_message}\n\n{prompt}"
+        
+        # data URL 파싱
+        if image_url.startswith("data:image/"):
+            parts = image_url.split(";base64,")
+            if len(parts) == 2:
+                import base64
+                image_data = base64.b64decode(parts[1])
+                
+                # Gemini에 이미지 전달
+                import PIL.Image
+                import io
+                image = PIL.Image.open(io.BytesIO(image_data))
+                
+                # 비동기 호출
+                response = await asyncio.to_thread(
+                    self.client.generate_content,
+                    [full_prompt, image]
+                )
+                
+                # 토큰 추적
+                if hasattr(response, 'usage_metadata'):
+                    self.total_tokens += (
+                        response.usage_metadata.prompt_token_count +
+                        response.usage_metadata.candidates_token_count
+                    )
+                
+                return response.text
+            else:
+                raise ValueError("잘못된 data URL 형식")
+        else:
+            raise ValueError("Gemini는 data URL 형식만 지원합니다")
+    
     async def complete_with_vision(
         self,
         prompt: str,
@@ -226,6 +337,8 @@ class LLMClient:
         """
         if self.provider == LLMProvider.OPENAI:
             return await self._openai_vision(prompt, image_url, system_message)
+        elif self.provider == LLMProvider.GEMINI:
+            return await self._gemini_vision(prompt, image_url, system_message)
         else:
             return await self._anthropic_vision(prompt, image_url, system_message)
     
