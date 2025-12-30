@@ -265,3 +265,4 @@ if __name__ == "__main__":
     results = asyncio.run(test_collect_all_from_urls())
     print(f"\n✅ 최종 수집: {len(results)}개 사이트")
 
+

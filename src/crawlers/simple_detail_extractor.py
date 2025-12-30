@@ -73,7 +73,7 @@ class SimpleDetailExtractor:
         print(f"🚀 단순 추출기: {site_name}")
         print("="*70)
         
-        # Step 1: 모든 조합 생성 (통신사 × 요금제 × 가입유형)
+        # Step 1: 고유 요금 목록 생성
         collected = []
         
         if self.model_name not in self.PLAN_FILTERS:
@@ -82,57 +82,71 @@ class SimpleDetailExtractor:
         
         filters = self.PLAN_FILTERS[self.model_name]
         
-        # Step 2: 각 통신사별로
-        for carrier in ["SKT", "KT", "LGU"]:
-            if carrier not in filters:
-                continue
-            
+        # 모든 고유 요금 추출
+        all_target_fees = set()
+        for carrier_filters in filters.values():
+            for join_fees in carrier_filters.values():
+                all_target_fees.update(join_fees)
+        
+        all_target_fees = sorted(all_target_fees, reverse=True)  # 높은 요금부터
+        
+        print(f"\n모든 요금제: {all_target_fees}")
+        
+        # Step 2: 각 요금제별로 (핵심 순서!)
+        for target_fee in all_target_fees:
             print(f"\n{'='*70}")
-            print(f"📡 통신사: {carrier}")
+            print(f"💰 요금제: {target_fee:,}원")
             print(f"{'='*70}")
             
-            # 통신사 선택
-            await self._click_by_text(page, carrier)
-            await asyncio.sleep(0.5)
+            # 요금제 선택 (Vision Agent)
+            plan_selected = await self.vision_agent.select_plan_by_fee(page, target_fee)
             
-            # 각 가입유형별로
-            for join_type in ["번호이동", "기기변경"]:
-                if join_type not in filters[carrier]:
+            if not plan_selected:
+                print(f"  ❌ {target_fee:,}원 요금제 선택 실패, skip")
+                continue
+            
+            print(f"  ✅ {target_fee:,}원 요금제 선택 완료")
+            await asyncio.sleep(1)
+            
+            # Step 3: 이 요금제로 모든 통신사 × 가입유형 조합 수집
+            for carrier in ["SKT", "KT", "LGU"]:
+                if carrier not in filters:
+                    print(f"  ⏭️  {carrier}: 필터 없음")
                     continue
                 
-                target_fees = filters[carrier][join_type]
-                
-                print(f"\n[{carrier} / {join_type}]")
-                print(f"  목표 요금: {target_fees}")
-                
-                # 가입유형 선택
-                await self._click_by_text(page, join_type)
-                await asyncio.sleep(0.5)
-                
-                # 각 목표 요금별로 (핵심!)
-                for target_fee in target_fees:
-                    print(f"    💰 {target_fee:,}원 요금제")
+                for join_type in ["번호이동", "기기변경"]:
+                    if join_type not in filters[carrier]:
+                        print(f"  ⏭️  {carrier} / {join_type}: 필터 없음")
+                        continue
                     
-                    # Vision Agent로 요금제 선택
-                    plan_selected = await self.vision_agent.select_plan_by_fee(page, target_fee, carrier)
+                    # 이 조합에 이 요금제가 필요한지 확인
+                    if target_fee not in filters[carrier][join_type]:
+                        print(f"  ⏭️  {carrier} / {join_type}: {target_fee:,}원 불필요")
+                        continue
                     
-                    if plan_selected:
-                        # 가격 추출
-                        await asyncio.sleep(1)
-                        pricing = await self._extract_pricing(page)
-                        
-                        if pricing and (pricing.get('retail_price') or pricing.get('installment_principal')):
-                            collected.append({
-                                "carrier": carrier,
-                                "join_type": join_type,
-                                "target_fee": target_fee,
-                                "pricing": pricing
-                            })
-                            print(f"      ✅ 정책 수집 완료")
-                        else:
-                            print(f"      ⚠️  가격 데이터 없음")
+                    print(f"  [{carrier} / {join_type}] 시도")
+                    
+                    # 통신사 선택
+                    await self._click_by_text(page, carrier)
+                    await asyncio.sleep(0.5)
+                    
+                    # 가입유형 선택
+                    await self._click_by_text(page, join_type)
+                    await asyncio.sleep(0.5)
+                    
+                    # 가격 추출
+                    pricing = await self._extract_pricing(page)
+                    
+                    if pricing and (pricing.get('retail_price') or pricing.get('installment_principal')):
+                        collected.append({
+                            "carrier": carrier,
+                            "join_type": join_type,
+                            "target_fee": target_fee,
+                            "pricing": pricing
+                        })
+                        print(f"    ✅ 정책 수집")
                     else:
-                        print(f"      ❌ 요금제 선택 실패")
+                        print(f"    ⚠️  가격 데이터 없음")
         
         # Step 3: 스키마 변환
         print(f"\n📊 총 {len(collected)}개 정책 수집")
