@@ -24,6 +24,7 @@ from ..models.phase3_schemas import (
     DiscountType,
     parse_storage
 )
+from .smart_plan_extractor import SmartPlanExtractor
 
 logger = get_logger()
 
@@ -139,8 +140,53 @@ class LLMAgentExtractor:
         logger.info("📊 LLM Agent: 옵션 분석 시작")
         logger.info("="*70)
         
+        # Phase 0: 요금제 드롭다운 열기 (확실하게!)
+        logger.info("\n[Phase 0] 요금제 드롭다운 열기")
+        print("\n[Phase 0] 요금제 드롭다운 열기")
+        
+        # 전략 1: "월" + 숫자 패턴이 있는 모든 요소 클릭
+        try:
+            plan_boxes = page.locator('*:has-text("월"):has-text("원")')
+            count = await plan_boxes.count()
+            print(f"   '월'+'원' 요소: {count}개")
+            logger.info(f"   '월'+'원' 요소: {count}개")
+            
+            for i in range(min(count, 10)):
+                try:
+                    elem = plan_boxes.nth(i)
+                    text = await elem.text_content(timeout=500)
+                    
+                    # "월 109,000원" 같은 패턴이 있으면 클릭
+                    if "월" in text and "원" in text and len(text) < 300:
+                        await elem.click(force=True, timeout=500)
+                        await asyncio.sleep(0.2)
+                        print(f"   ✅ 클릭 {i+1}: {text[:30]}...")
+                except:
+                    pass
+        except Exception as e:
+            logger.debug(f"   전략 1 실패: {e}")
+        
+        # 전략 2: ▼ 버튼 클릭
+        try:
+            dropdown_btns = page.locator('*:has-text("▼")')
+            count = await dropdown_btns.count()
+            print(f"   ▼ 버튼: {count}개")
+            
+            for i in range(min(count, 5)):
+                try:
+                    await dropdown_btns.nth(i).click(force=True, timeout=500)
+                    await asyncio.sleep(0.2)
+                except:
+                    pass
+        except:
+            pass
+        
+        # 충분한 대기 (드롭다운이 완전히 열릴 때까지)
+        await asyncio.sleep(2)
+        print("   ⏸️  드롭다운 대기 완료\n")
+        
         # Phase 1: 기본 옵션 분석
-        logger.info("\n[Phase 1] 기본 옵션 분석")
+        logger.info("[Phase 1] 기본 옵션 분석")
         
         # 스크린샷 (타임아웃 처리)
         screenshot_base64 = None
@@ -283,159 +329,56 @@ class LLMAgentExtractor:
             
         except Exception as e:
             logger.error(f"기본 옵션 분석 실패: {e}")
+            import traceback
+            traceback.print_exc()
             options = {}
         
-        # Phase 2: 요금제 드롭다운 열고 LLM으로 요금제 추출
-        logger.info("\n[Phase 2] 요금제 분석 (LLM)")
+        # Phase 2: SmartPlanExtractor로 요금제 추출
+        logger.info("\n[Phase 2] 요금제 추출 (Smart)")
+        print("\n[Phase 2] 요금제 추출 (Smart)")
         
         plans_with_fees = []
+        
         try:
-            # 드롭다운 열기 시도 (여러 전략, 더 공격적으로)
-            logger.info(f"   🔽 요금제 드롭다운 열기 시도...")
+            smart_extractor = SmartPlanExtractor(self.llm)
+            plans_with_fees = await smart_extractor.extract_all_plans(page)
             
-            # 전략 1: "요금제" + "월" + 숫자 패턴이 있는 요소 모두 클릭
-            try:
-                plan_elements = page.locator('div:has-text("요금제"), button:has-text("월"), [class*="plan"]')
-                count = await plan_elements.count()
-                logger.info(f"   요금제 관련 요소: {count}개 발견")
-                
-                for i in range(min(count, 5)):
-                    try:
-                        await plan_elements.nth(i).click(force=True, timeout=800)
-                        await asyncio.sleep(0.3)
-                    except:
-                        pass
-            except Exception as e:
-                logger.debug(f"   전략 1 실패: {e}")
-            
-            # 전략 2: ▼ 아이콘 모두 클릭
-            try:
-                dropdown_btns = page.locator('button:has-text("▼"), button:has-text("∨")')
-                count = await dropdown_btns.count()
-                logger.info(f"   드롭다운 버튼: {count}개")
-                
-                for i in range(min(count, 5)):
-                    try:
-                        await dropdown_btns.nth(i).click(force=True, timeout=800)
-                        await asyncio.sleep(0.2)
-                    except:
-                        pass
-            except Exception as e:
-                logger.debug(f"   전략 2 실패: {e}")
-            
-            # 최종 대기 (드롭다운 DOM 업데이트)
-            await asyncio.sleep(1.5)
-            
-            # LLM Vision으로 요금제 추출 (스크린샷 기반)
-            logger.info(f"   🤖 LLM Vision으로 요금제 추출 중...")
-            
-            screenshot_bytes = await page.screenshot(
-                full_page=False,
-                quality=70,  # 품질 조금 올림 (텍스트 인식 개선)
-                type='jpeg',
-                timeout=10000
-            )
-            screenshot_base64 = base64.b64encode(screenshot_bytes).decode()
-            image_url = f"data:image/jpeg;base64,{screenshot_base64}"
-            
-            plan_prompt = """
-이 이미지에서 **모든 요금제와 월요금**을 추출하세요.
-
-# 분석 방법
-
-1. 요금제 드롭다운이나 리스트를 찾으세요
-2. 각 요금제의 이름과 월요금을 추출하세요
-
-# 요금제 패턴 예시
-
-```
-프리미엄(OTT 택1)      월 109,000원
-프라임 플러스          월 99,000원  
-프라임                 월 89,000원
-레귤러 플러스          월 79,000원
-레귤러                 월 69,000원
-```
-
-# 추출 규칙
-
-- 요금제명: "프라임", "레귤러 플러스", "프리미어 에센셜" 등
-- 괄호 내용은 제거해도 되고 포함해도 됨
-- "5GX", "5G" 접두어는 포함해도 되고 빼도 됨
-- 월요금: 콤마 제거하고 정수로 변환
-
-# 출력 형식 (JSON 배열)
-
-[
-  {"name": "프리미엄", "monthly_fee": 109000},
-  {"name": "프라임 플러스", "monthly_fee": 99000},
-  {"name": "프라임", "monthly_fee": 89000},
-  {"name": "레귤러 플러스", "monthly_fee": 79000},
-  {"name": "레귤러", "monthly_fee": 69000}
-]
-
-**이미지에서 보이는 모든 요금제를 추출하세요.**
-**JSON 배열만 출력하세요. 다른 설명 없이.**
-"""
-            
-            response = await self.llm.complete_with_vision(
-                prompt=plan_prompt,
-                image_url=image_url,
-                system_message="이미지를 보고 모든 요금제와 월요금을 정확히 추출하세요. 드롭다운이 닫혀있어도 보이는 모든 요금제를 찾으세요."
-            )
-            
-            # JSON 파싱
-            response = response.strip()
-            if "```json" in response:
-                response = response.split("```json")[1].split("```")[0]
-            elif "```" in response:
-                response = response.split("```")[1].split("```")[0]
-            response = response.strip()
-            
-            plans_with_fees = json.loads(response)
-            logger.info(f"   ✅ LLM 요금제 추출 완료: {len(plans_with_fees)}개")
         except Exception as e:
-            logger.error(f"   ❌ LLM 요금제 추출 실패: {e}")
+            logger.error(f"   ❌ Smart 추출 실패: {e}")
             
-            # Fallback: JavaScript로 추출
-            logger.info(f"   🔄 Fallback: JavaScript로 요금제 추출")
+            # Fallback: JavaScript로 시도
+            logger.info(f"   🔄 Fallback: JavaScript")
             
             try:
                 plans_with_fees = await page.evaluate("""
                 () => {
                     const plans = [];
                     
-                    // 모든 visible 요소에서 요금제 찾기 (드롭다운 열린 상태)
-                    const allElements = document.querySelectorAll('*');
+                    // 모든 li, option 요소에서 요금제 찾기 (visible 체크 제거!)
+                    const planElements = document.querySelectorAll('li, option, tr');
                     
-                    allElements.forEach(elem => {
-                        // 보이지 않는 요소는 제외
-                        const style = window.getComputedStyle(elem);
-                        if (style.display === 'none' || style.visibility === 'hidden') {
-                            return;
-                        }
-                        
+                    planElements.forEach(elem => {
                         const text = elem.textContent.trim();
                         
-                        // 요금제 패턴: 이름 + 월요금
-                        // "프라임 월 89,000원" 또는 "레귤러 플러스 79,000원"
-                        if (text.length < 200 && text.match(/프리미|프라임|레귤러|레규러|스페셜|베이직|심플|슬림|에센셜/i)) {
+                        // 요금제 패턴: 짧고 + "월" + 숫자 + 키워드
+                        if (text.length < 300 && text.includes('월') &&
+                            text.match(/프리미|프라임|레귤러|레규러|스페셜|베이직|심플|슬림|에센셜/i)) {
+                            
                             // 월요금 패턴
-                            const feeMatch = text.match(/월\\s*(\\d{1,3}),?(\\d{3})\\s*원/);
+                            const feeMatch = text.match(/(\\d{1,3}),?(\\d{3})\\s*원/);
                             
                             if (feeMatch) {
                                 const fee = parseInt(feeMatch[1].replace(',', '') + feeMatch[2]);
                                 
-                                // 요금제명 추출 (월요금 앞부분)
-                                let planName = text.split(/월\\s*\\d/)[0].trim();
+                                // 범위 체크
+                                if (fee < 40000 || fee > 150000) return;
                                 
-                                // OTT, 무제한 등 부가 설명 제거
-                                planName = planName
-                                    .replace(/\\(.*?\\)/g, '')  // 괄호 내용 제거
-                                    .replace(/완전 무제한/g, '')
-                                    .replace(/유무선 무제한/g, '')
+                                // 요금제명 추출
+                                let planName = text.split(/월\\s*(\\d{1,3}),?(\\d{3})\\s*원/)[0]
+                                    .replace(/\\(.*?\\)/g, '')  // 괄호 제거
                                     .trim();
                                 
-                                if (planName.length >= 2 && planName.length < 30 && fee >= 40000 && fee <= 150000) {
+                                if (planName.length >= 2 && planName.length < 30) {
                                     plans.push({
                                         name: planName,
                                         monthly_fee: fee
@@ -447,24 +390,24 @@ class LLMAgentExtractor:
                     
                     // 중복 제거
                     const uniquePlans = [];
-                    const seenKeys = new Set();
+                    const seen = new Set();
                     
                     plans.forEach(plan => {
-                        const key = plan.name.trim() + '_' + plan.monthly_fee;
-                        if (!seenKeys.has(key)) {
-                            seenKeys.add(key);
+                        const key = plan.name + '_' + plan.monthly_fee;
+                        if (!seen.has(key)) {
+                            seen.add(key);
                             uniquePlans.push(plan);
                         }
                     });
                     
                     return uniquePlans;
                 }
-            """)
+                """)
                 
-                if plans_with_fees:
-                    logger.info(f"   📋 JavaScript 추출 성공: {len(plans_with_fees)}개")
+                logger.info(f"   ✅ JavaScript 추출: {len(plans_with_fees)}개")
+                
             except Exception as e2:
-                logger.error(f"   ❌ JavaScript 추출도 실패: {e2}")
+                logger.error(f"   ❌ JavaScript도 실패: {e2}")
         
         # 최종 요금제 저장
         if plans_with_fees:
