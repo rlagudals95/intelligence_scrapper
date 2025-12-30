@@ -1,9 +1,11 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List
 import uvicorn
 import os
 import sys
+import json
 
 # 프로젝트 루트를 path에 추가하여 import 가능하게 함
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -15,6 +17,15 @@ app = FastAPI(
     title="Phone Scrapper API",
     description="갤럭시 S25 및 아이폰 17 정책 통합 수집 API",
     version="1.0.0"
+)
+
+# CORS 설정 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 개발 환경에서는 모두 허용
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 요청 데이터 모델 정의

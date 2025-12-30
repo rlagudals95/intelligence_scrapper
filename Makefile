@@ -122,6 +122,14 @@ test-simple-extractor:
 	@echo "⚡ Simple Extractor: 단순 명확한 추출기"
 	uv run pytest tests/test_simple_extractor.py -v -s --tb=short
 
+run-api:
+	@echo "🚀 Backend API 서버 실행 (Port: 8000)"
+	uv run python -m src.api.main
+
+run-frontend:
+	@echo "🎨 Frontend 서버 실행 (Port: 3000)"
+	cd frontend && npm install && npm run dev
+
 # 특정 사이트 테스트
 test-hiphone:
 	@echo "🧪 하이폰 리스팅 수집 테스트..."

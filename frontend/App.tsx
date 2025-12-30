@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo } from 'react';
-import { DashboardData, RawCapture, FlattenedRow } from './types';
+import React, { useMemo, useState } from 'react';
 import { CarrierTable } from './components/Dashboard';
+import { Cell, DashboardData, FlattenedRow, RawCapture } from './types';
 
 const DEFAULT_DATA: DashboardData = {
   captured_at: "2025-12-30T12:00:00+09:00",
@@ -68,6 +68,98 @@ const App: React.FC = () => {
   const [selectedSku, setSelectedSku] = useState<string>(data.filters.sku_codes[0].value);
   const [activeTab, setActiveTab] = useState<string>("table");
   const [rawData, setRawData] = useState<RawCapture[] | null>(null);
+  const [targetUrl, setTargetUrl] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const transformToDashboardData = (captures: RawCapture[]): DashboardData => {
+    const skuCodesSet = new Set<string>();
+    const carriersSet = new Set<string>();
+    const viewsMap = new Map<string, Cell[]>();
+
+    captures.forEach(capture => {
+      capture.products.forEach(product => {
+        skuCodesSet.add(product.sku_code);
+        
+        if (!viewsMap.has(product.sku_code)) {
+          viewsMap.set(product.sku_code, []);
+        }
+
+        product.policies.forEach(policy => {
+          carriersSet.add(policy.carrier);
+          
+          const discountValue = (policy.pricing.public_subsidy || 0) + (policy.pricing.discount || 0);
+          
+          const cell: Cell = {
+            cell_key: `${policy.carrier}|${policy.mno_join_type}|${policy.mobile_plan.name}|${policy.mobile_plan.monthly_fee}`,
+            carrier: policy.carrier,
+            mno_join_type: policy.mno_join_type,
+            mobile_plan: policy.mobile_plan,
+            policy_level: {
+              discount_max: { value: discountValue, source: capture.source.site },
+              discount_min: { value: discountValue, source: capture.source.site },
+              moyo_discount: { value: discountValue, source: capture.source.site }
+            }
+          };
+          
+          viewsMap.get(product.sku_code)?.push(cell);
+        });
+      });
+    });
+
+    return {
+      captured_at: captures[0]?.captured_at || new Date().toISOString(),
+      filters: {
+        sku_codes: Array.from(skuCodesSet).map(s => ({ value: s, label: s })),
+        carriers: Array.from(carriersSet).map(c => ({ value: c, label: c }))
+      },
+      views: Array.from(viewsMap.entries()).map(([sku_code, cells]) => ({
+        sku_code,
+        cells
+      }))
+    };
+  };
+
+  const handleScrape = async () => {
+    if (!targetUrl) {
+      alert("사이트 URL을 입력해주세요.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/scrape', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ site_url: targetUrl }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "스크래핑 요청에 실패했습니다.");
+      }
+
+      const jsonData = await response.json();
+      setRawData(jsonData);
+      
+      // 대시보드 데이터로 변환하여 적용
+      const dashboardData = transformToDashboardData(jsonData);
+      setData(dashboardData);
+      setFileName(`${jsonData[0]?.source.site || "실시간"} 수집 데이터`);
+      if (dashboardData.filters.sku_codes.length > 0) {
+        setSelectedSku(dashboardData.filters.sku_codes[0].value);
+      }
+      
+      setActiveTab('table');
+      alert('스크래핑 및 데이터 분석 성공!');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '알 수 없는 오류';
+      alert(`스크래핑 중 오류 발생: ${message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -144,11 +236,11 @@ const App: React.FC = () => {
             carrier: policy.carrier,
             joinType: policy.mno_join_type === 'DEVICE_CHANGE' ? '기기변경' : '번호이동',
             planName: policy.mobile_plan.name,
-            monthlyFee: policy.mobile_plan.monthly_fee.toLocaleString(),
-            retailPrice: policy.pricing.mno_retail_price.toLocaleString(),
-            publicSubsidy: policy.pricing.public_subsidy.toLocaleString(),
-            discount: policy.pricing.discount.toLocaleString(),
-            installmentFee: policy.pricing.sku_installment_fee.toLocaleString()
+            monthlyFee: policy.mobile_plan.monthly_fee?.toLocaleString() || '0',
+            retailPrice: policy.pricing.mno_retail_price?.toLocaleString() || '-',
+            publicSubsidy: policy.pricing.public_subsidy?.toLocaleString() || '-',
+            discount: policy.pricing.discount?.toLocaleString() || '-',
+            installmentFee: policy.pricing.sku_installment_fee?.toLocaleString() || '-'
           });
         });
       });
@@ -235,6 +327,34 @@ const App: React.FC = () => {
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </div>
               </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 flex-1">
+              <div className="flex-1 min-w-[300px]">
+                <input
+                  type="text"
+                  value={targetUrl}
+                  onChange={(e) => setTargetUrl(e.target.value)}
+                  placeholder="스크래핑할 사이트 URL을 입력하세요 (예: https://hi-phone.kr)"
+                  className="w-full bg-white border-2 border-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#516AEC]"
+                />
+              </div>
+              <button
+                onClick={handleScrape}
+                disabled={isLoading}
+                className={`px-6 py-2 rounded-lg text-sm font-bold text-white transition-colors ${
+                  isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#516AEC] hover:bg-[#4358c9]'
+                }`}
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    스크래핑 중...
+                  </span>
+                ) : "🚀 실시간 수집"}
+              </button>
             </div>
             <div className="flex items-center gap-3 pt-2">
               <span className="text-sm text-gray-600 whitespace-nowrap">
