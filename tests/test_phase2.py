@@ -471,6 +471,18 @@ async def test_listing_collection(site_name: str, target_url: str, min_items: in
         
         print(f"\n✅ 수집된 상품 수: {len(items)}")
         
+        # LLM 사용량 및 비용 출력
+        stats = llm_client.get_usage_stats()
+        print(f"\n💰 LLM 사용량 및 비용:")
+        print(f"   Provider: {stats['provider']}")
+        print(f"   Model: {stats['model']}")
+        print(f"   요청 횟수: {stats['request_count']}회")
+        print(f"   총 토큰 수: {stats['total_tokens']:,} tokens")
+        print(f"   총 비용: ${stats['total_cost_usd']:.4f} USD")
+        if stats['request_count'] > 0 and stats['total_tokens'] > 0:
+            print(f"   평균 토큰/요청: {stats['total_tokens'] / stats['request_count']:.0f} tokens")
+            print(f"   평균 비용/요청: ${stats['total_cost_usd'] / stats['request_count']:.4f} USD")
+        
         # 검증: 최소 개수 이상
         assert len(items) >= min_items, f"최소 {min_items}개 이상의 상품이 필요합니다 (현재: {len(items)}개)"
         
