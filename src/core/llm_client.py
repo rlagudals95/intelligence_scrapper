@@ -10,6 +10,7 @@ import asyncio
 from openai import AsyncOpenAI
 from anthropic import AsyncAnthropic
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from dotenv import load_dotenv
 
 from ..utils.logger import get_logger
 
@@ -32,6 +33,7 @@ class LLMProvider(str, Enum):
 
 class LLMClient:
     """LLM API 클라이언트 (통합)"""
+    load_dotenv()
     
     def __init__(
         self,

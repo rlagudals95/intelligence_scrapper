@@ -33,7 +33,7 @@ TEST_URLS = {
     "배달의폰_아이폰17": "https://www.deliveryphone.co.kr/phone/detail/146/0000412381",
     
     "성지폰_갤럭시S25": "https://sungjiphone.com/phone/detail/166/0000700659",
-    "성지폰_아이폰17": "https://sungjiphone.com/phone/detail/186/0000700659",
+    "성지폰_아이폰17": "https://sungjiphone.com/pㅔhone/detail/186/0000700659",
 
     "엘지티샵_갤럭시S25" : "https://lgtshop.co.kr/mshop/view/47?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
     "엘지티샵_아이폰17" : "https://lgtshop.co.kr/mshop/view/64?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100686",
