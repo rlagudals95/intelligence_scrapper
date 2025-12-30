@@ -19,6 +19,7 @@ class VisionPlanAgent:
     
     def __init__(self, llm_client: LLMClient):
         self.llm = llm_client
+        self.cached_plans = []  # 처음 추출한 요금제 캐시
     
     async def select_plan_by_fee(
         self,
@@ -27,111 +28,131 @@ class VisionPlanAgent:
         carrier: str = "SKT"
     ) -> bool:
         """
-        Vision이 화면 보고 요금제 선택
+        Vision + JavaScript로 요금제 선택
         
         Args:
             target_fee: 목표 월요금 (89000)
         """
-        print(f"\n🤖 Vision: {target_fee:,}원 요금제 찾기")
+        print(f"\n🤖 Vision: {target_fee:,}원 요금제")
         
         # 드롭다운 열기
         await self._open_dropdown(page)
+        await asyncio.sleep(2)
         
-        # 화면 캡처 (타임아웃 처리)
-        try:
-            screenshot = await page.screenshot(full_page=False, quality=70, type='jpeg', timeout=8000)
-            screenshot_b64 = base64.b64encode(screenshot).decode()
-            img_url = f"data:image/jpeg;base64,{screenshot_b64}"
-        except Exception as e:
-            print(f"  ❌ 스크린샷 실패: {e}")
+        # 캐시 확인
+        plan_name = None
+        if self.cached_plans:
+            print(f"  📦 캐시 확인 ({len(self.cached_plans)}개)")
+            for plan in self.cached_plans:
+                if plan.get('monthly_fee') == target_fee:
+                    plan_name = plan.get('name', '')
+                    print(f"  ✅ 캐시 발견: {plan_name}")
+                    break
+        
+        if not plan_name:
+            print(f"  ❌ 캐시에 없음")
             return False
         
-        # Vision에게 요금제 찾기 요청
-        prompt = f"""
-화면에서 월요금 **{target_fee:,}원** 요금제를 찾으세요.
-
-{{
-  "found": true,
-  "plan_name": "프라임",
-  "click_text": "프라임"
-}}
-
-{target_fee:,}원이 없으면 found: false
-
-**JSON만 출력.**
-"""
-        
-        try:
-            resp = await self.llm.complete_with_vision(prompt=prompt, image_url=img_url)
-            
-            resp = resp.strip()
-            if "```" in resp:
-                resp = resp.split("```")[1] if "```json" not in resp else resp.split("```json")[1].split("```")[0]
-            resp = resp.strip()
-            
-            result = json.loads(resp)
-            
-            if not result.get("found"):
-                print(f"  ❌ {target_fee:,}원 없음")
-                return False
-            
-            click_text = result.get("click_text", "")
-            print(f"  ✅ 발견: {result.get('plan_name')} - '{click_text}'")
-            
-            # JavaScript로 월요금 찾아서 클릭 (가장 확실!)
-            clicked = await page.evaluate(f"""
-                () => {{
-                    const targetFee = {target_fee};
-                    const all = document.querySelectorAll('*');
-                    
-                    for (const elem of all) {{
-                        const text = elem.textContent;
-                        if (text.length < 200 && text.includes('월')) {{
-                            const match = text.match(/(\\d{{1,3}}),?(\\d{{3}})/);
-                            if (match) {{
-                                const fee = parseInt(match[0].replace(/,/g, ''));
-                                if (fee === targetFee) {{
-                                    const onclick = elem.getAttribute('onclick');
-                                    if (onclick) {{
-                                        eval(onclick);
-                                        return true;
-                                    }}
-                                    elem.click();
-                                    return true;
+        # JavaScript로 월요금 찾아서 클릭
+        result = await page.evaluate(f"""
+            () => {{
+                const targetFee = {target_fee};
+                const all = document.querySelectorAll('tr, li, div');
+                let found = 0;
+                
+                for (const elem of all) {{
+                    const text = elem.textContent;
+                    if (text.length < 300 && text.includes('월')) {{
+                        const match = text.match(/(\\d{{1,3}}),?(\\d{{3}})/);
+                        if (match) {{
+                            const fee = parseInt(match[0].replace(/,/g, ''));
+                            if (fee === targetFee) {{
+                                found++;
+                                
+                                // onclick 실행
+                                const onclick = elem.getAttribute('onclick');
+                                if (onclick) {{
+                                    eval(onclick);
+                                    return {{success: true, found: found}};
                                 }}
+                                
+                                // 클릭
+                                elem.click();
+                                return {{success: true, found: found}};
                             }}
                         }}
                     }}
-                    return false;
                 }}
-            """)
-            
-            if clicked:
-                await asyncio.sleep(0.5)
-                print(f"  ✅ 클릭 성공")
                 
-                # popup 닫기
-                try:
-                    await page.evaluate("document.querySelector('.popup_close')?.click()")
-                    await asyncio.sleep(0.3)
-                except:
-                    pass
+                return {{success: false, found: found}};
+            }}
+        """)
+        
+        if result.get('success'):
+            print(f"  ✅ 클릭 성공 (매칭: {result.get('found', 0)}개)")
+            await asyncio.sleep(0.5)
             
-            return clicked
+            # popup 닫기
+            try:
+                await page.evaluate("document.querySelector('.popup_close, .close')?.click()")
+                await asyncio.sleep(0.3)
+            except:
+                pass
             
-        except Exception as e:
-            print(f"  ❌ 오류: {e}")
+            return True
+        else:
+            print(f"  ❌ 클릭 실패 (매칭: {result.get('found', 0)}개)")
             return False
     
     async def _open_dropdown(self, page: Page):
-        """드롭다운 열기"""
+        """드롭다운 열기 + 스크롤 (맨 아래까지)"""
         try:
-            await page.evaluate("""
-                document.querySelector('a[onclick*="popup"]')?.click();
-                document.querySelector('button.bill-view')?.click();
-                document.querySelector('.bill-view-more')?.click();
-                document.querySelector('.plan_mod')?.click();
+            # 모든 가능한 버튼 클릭
+            result = await page.evaluate("""
+                () => {
+                    let clicked = 0;
+                    
+                    // popup 링크
+                    const popupLink = document.querySelector('a[onclick*="popup"], a[onclick*="price"]');
+                    if (popupLink) {
+                        popupLink.click();
+                        clicked++;
+                    }
+                    
+                    // 드롭다운 버튼들
+                    const btns = document.querySelectorAll('button.bill-view, .bill-view-more, .plan_mod');
+                    btns.forEach(btn => {
+                        btn.click();
+                        clicked++;
+                    });
+                    
+                    return clicked;
+                }
             """)
-            await asyncio.sleep(2)
-        except:
-            pass
+            print(f"  🔽 {result}개 버튼 클릭")
+            
+            # 드롭다운 컨테이너 스크롤 (맨 아래까지!)
+            await page.evaluate("""
+                () => {
+                    // 스크롤 가능한 요금제 컨테이너 찾기
+                    const scrollables = document.querySelectorAll('.popup, .bill-layer-box, .plan_list, .plan, ul, div[style*="overflow"]');
+                    
+                    scrollables.forEach(container => {
+                        if (container.scrollHeight > container.clientHeight) {
+                            // 스크롤 여러 번 (lazy loading 대응)
+                            container.scrollTop = container.scrollHeight / 2;
+                            setTimeout(() => {
+                                container.scrollTop = container.scrollHeight;
+                            }, 100);
+                        }
+                    });
+                    
+                    // 전체 페이지도 스크롤
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
+            """)
+            await asyncio.sleep(1)  # 스크롤 후 로딩 대기
+            print(f"  📜 드롭다운 스크롤 완료")
+            
+        except Exception as e:
+            print(f"  ⚠️  드롭다운 열기 실패: {e}")

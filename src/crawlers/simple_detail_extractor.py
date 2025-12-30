@@ -88,12 +88,21 @@ class SimpleDetailExtractor:
             for join_fees in carrier_filters.values():
                 all_target_fees.update(join_fees)
         
-        all_target_fees = sorted(all_target_fees, reverse=True)  # 높은 요금부터
+        all_target_fees = sorted(all_target_fees, reverse=False)  # 낮은 요금부터 (화면 안정성)
         
         print(f"\n모든 요금제: {all_target_fees}")
         
+        # Step 1.5: 화면에 있는 요금제 미리 확인 (Vision 1회만!)
+        print(f"\n화면 요금제 확인 중...")
+        available_fees = await self._get_available_fees(page)
+        print(f"  화면에 있는 요금제: {available_fees}")
+        
+        # 화면에 있는 요금제만 시도
+        target_fees_to_try = [fee for fee in all_target_fees if fee in available_fees]
+        print(f"  시도할 요금제: {target_fees_to_try}")
+        
         # Step 2: 각 요금제별로 (핵심 순서!)
-        for target_fee in all_target_fees:
+        for target_fee in target_fees_to_try:
             print(f"\n{'='*70}")
             print(f"💰 요금제: {target_fee:,}원")
             print(f"{'='*70}")
@@ -109,30 +118,36 @@ class SimpleDetailExtractor:
             await asyncio.sleep(1)
             
             # Step 3: 이 요금제로 모든 통신사 × 가입유형 조합 수집
+            # 모든 통신사를 무조건 시도! (화면에 있으면 다 시도)
             for carrier in ["SKT", "KT", "LGU"]:
-                if carrier not in filters:
-                    print(f"  ⏭️  {carrier}: 필터 없음")
-                    continue
-                
                 for join_type in ["번호이동", "기기변경"]:
-                    if join_type not in filters[carrier]:
-                        print(f"  ⏭️  {carrier} / {join_type}: 필터 없음")
-                        continue
-                    
-                    # 이 조합에 이 요금제가 필요한지 확인
-                    if target_fee not in filters[carrier][join_type]:
-                        print(f"  ⏭️  {carrier} / {join_type}: {target_fee:,}원 불필요")
-                        continue
                     
                     print(f"  [{carrier} / {join_type}] 시도")
                     
-                    # 통신사 선택
-                    await self._click_by_text(page, carrier)
+                    # 통신사 선택 (여러 표기 시도)
+                    carrier_texts = [carrier]
+                    if carrier == "LGU":
+                        carrier_texts = ["LGU", "LG U+", "U+", "LG"]
+                    
+                    clicked_carrier = False
+                    for carrier_text in carrier_texts:
+                        clicked_carrier = await self._click_by_text(page, carrier_text)
+                        if clicked_carrier:
+                            break
+                    
                     await asyncio.sleep(0.5)
                     
+                    if not clicked_carrier:
+                        print(f"    ⚠️  {carrier} 클릭 실패")
+                        continue
+                    
                     # 가입유형 선택
-                    await self._click_by_text(page, join_type)
+                    clicked_join = await self._click_by_text(page, join_type)
                     await asyncio.sleep(0.5)
+                    
+                    if not clicked_join:
+                        print(f"    ⚠️  {join_type} 클릭 실패")
+                        continue
                     
                     # 가격 추출
                     pricing = await self._extract_pricing(page)
@@ -155,12 +170,107 @@ class SimpleDetailExtractor:
         return result
     
     async def _click_by_text(self, page: Page, text: str) -> bool:
-        """텍스트로 요소 찾아서 클릭"""
+        """텍스트 또는 alt 속성으로 요소 찾아서 클릭"""
         try:
+            # 전략 1: 텍스트
             await page.get_by_text(text, exact=False).first.click(force=True, timeout=1000)
             return True
         except:
+            pass
+        
+        try:
+            # 전략 2: alt 속성 (이미지 버튼)
+            await page.locator(f'img[alt*="{text}"], img[src*="{text.lower()}"]').first.click(force=True, timeout=1000)
+            return True
+        except:
+            pass
+        
+        try:
+            # 전략 3: aria-label
+            await page.locator(f'[aria-label*="{text}"]').first.click(force=True, timeout=1000)
+            return True
+        except:
+            pass
+        
+        # 전략 4: JavaScript로 부모 요소 클릭 (이미지의 부모)
+        try:
+            result = await page.evaluate(f"""
+                const text = "{text}";
+                const imgs = document.querySelectorAll('img');
+                
+                for (const img of imgs) {{
+                    const alt = img.alt || '';
+                    const src = img.src || '';
+                    
+                    if (alt.includes(text) || src.toLowerCase().includes(text.toLowerCase())) {{
+                        // 이미지의 클릭 가능한 부모 찾기
+                        const clickable = img.closest('button, a, div[onclick], label');
+                        if (clickable) {{
+                            clickable.click();
+                            return true;
+                        }}
+                        img.click();
+                        return true;
+                    }}
+                }}
+                return false;
+            """)
+            return result
+        except:
             return False
+    
+    async def _get_available_fees(self, page: Page) -> List[int]:
+        """화면에 있는 모든 요금제의 월요금 추출 (Vision 1회)"""
+        try:
+            # 드롭다운 열기
+            await page.evaluate("""
+                document.querySelector('button.bill-view')?.click();
+                document.querySelector('.bill-view-more')?.click();
+                document.querySelector('.plan_mod')?.click();
+                document.querySelector('a[onclick*="popup"]')?.click();
+            """)
+            await asyncio.sleep(3)  # 충분한 대기
+            
+            # 화면 캡처
+            screenshot = await page.screenshot(full_page=False, quality=60, type='jpeg', timeout=8000)
+            screenshot_b64 = base64.b64encode(screenshot).decode()
+            img_url = f"data:image/jpeg;base64,{screenshot_b64}"
+            
+            # Vision에게 모든 요금제 + 이름 물어보기 (캐싱용)
+            prompt = """
+화면에 있는 모든 요금제를 나열하세요:
+
+[
+  {"name": "프리미어 슈퍼", "monthly_fee": 115000},
+  {"name": "프리미어 에센셜", "monthly_fee": 85000},
+  {"name": "심플 플러스", "monthly_fee": 61000}
+]
+
+**모든 요금제를 추출하세요. JSON 배열만 출력.**
+"""
+            
+            resp = await self.llm.complete_with_vision(prompt=prompt, image_url=img_url)
+            
+            resp = resp.strip()
+            if "```" in resp:
+                resp = resp.split("```")[1] if "```json" not in resp else resp.split("```json")[1].split("```")[0]
+            resp = resp.strip()
+            
+            import json
+            plans = json.loads(resp)
+            
+            # 요금제 정보 캐싱
+            self.vision_agent.cached_plans = plans
+            
+            fees = [int(p['monthly_fee']) for p in plans if 'monthly_fee' in p]
+            
+            return fees
+            
+        except Exception as e:
+            print(f"  ⚠️  화면 요금제 확인 실패: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
     
     async def _select_plan_by_fee(self, page: Page, target_fee: int) -> bool:
         """

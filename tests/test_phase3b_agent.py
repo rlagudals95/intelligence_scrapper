@@ -38,7 +38,7 @@ TEST_URLS = {
     "엘지티샵_갤럭시S25" : "https://lgtshop.co.kr/mshop/view/47?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
     "엘지티샵_아이폰17" : "https://lgtshop.co.kr/mshop/view/64?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100686",
 
-    "투게더몰_갤럭시S25" : "https://lgtshop.co.kr/mshop/view/47?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
+    "투게더몰_갤럭시S25" : "https://uplustogethermall.com/mshop/view/60?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
     "투게더몰_아이폰17" : "https://uplustogethermall.com/mshop/view/84?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804",
     
 
@@ -51,7 +51,7 @@ TEST_URLS = {
 @pytest.mark.parametrize("site_name,test_url", [
     # ("배달의폰_갤럭시S25", TEST_URLS["배달의폰_갤럭시S25"]),
     # ("배달의폰_아이폰17", TEST_URLS["배달의폰_아이폰17"]),
-    # ("하이폰_갤럭시S25", TEST_URLS["하이폰_갤럭시S25"]),
+    ("하이폰_갤럭시S25", TEST_URLS["하이폰_갤럭시S25"]),
     # ("하이폰_아이폰17", TEST_URLS["하이폰_아이폰17"]),
     # ("폰슐랭_갤럭시S25", TEST_URLS["폰슐랭_갤럭시S25"]),
     # ("폰슐랭_아이폰17", TEST_URLS["폰슐랭_아이폰17"]),
