@@ -1,0 +1,132 @@
+{
+  "captured_at": "2025-12-30T22:38:20.027686",
+  "source": {
+    "site": "하이폰",
+    "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337"
+  },
+  "products": [
+    {
+      "product_id": "defa82f653bc1b63",
+      "sku_code": "Unknown Model",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "7f3b7686e2a085b3",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미어 에센셜",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": -500000,
+            "discount": -655000,
+            "sku_installment_fee": 0,
+            "monthly_payment": 0
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "ce3a2f6ae281cb4c",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 프리미어 에센셜",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 390000,
+            "sku_installment_fee": 265000,
+            "monthly_payment": 85000
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "676aee2281f42409",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미어 에센셜",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": -390000,
+            "sku_installment_fee": 265000,
+            "monthly_payment": 85000
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "80149b8558e7f19a",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 프리미어 에센셜",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": 500000,
+            "discount": 390000,
+            "sku_installment_fee": 265000,
+            "monthly_payment": 0
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "d6ea8f7ea4fee25c",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미어 에센셜",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": -500000,
+            "discount": -390000,
+            "sku_installment_fee": 265000,
+            "monthly_payment": 85000
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "a5d18c87c463554b",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 프리미어 에센셜",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": -500000,
+            "discount": -390000,
+            "sku_installment_fee": 265000,
+            "monthly_payment": 0
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}

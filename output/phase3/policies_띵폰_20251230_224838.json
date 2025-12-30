@@ -1,0 +1,208 @@
+{
+  "captured_at": "2025-12-30T22:48:38.074365",
+  "source": {
+    "site": "띵폰",
+    "url": "https://ddingphone.com/view/143?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1738389813"
+  },
+  "products": [
+    {
+      "product_id": "0908085eed7fac2f",
+      "sku_code": "Unknown Model",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "55e7397e09807b7e",
+          "carrier": "SKT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미엄 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -507000,
+            "sku_installment_fee": 330000,
+            "monthly_payment": 14611
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "4ce2d448d13e8395",
+          "carrier": "SKT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 프리미어 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -257000,
+            "sku_installment_fee": 580000,
+            "monthly_payment": 25680
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "886dacd2fcfc1fa5",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미어 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -507000,
+            "sku_installment_fee": 330000,
+            "monthly_payment": 14611
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "7b9d268ebace38b1",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 프리미엄 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -257000,
+            "sku_installment_fee": 580000,
+            "monthly_payment": 25680
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "d1e246b43946863c",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미어 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -507000,
+            "sku_installment_fee": 330000,
+            "monthly_payment": 14611
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "725db369b17648d3",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미어 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -507000,
+            "sku_installment_fee": 330000,
+            "monthly_payment": 14611
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "aee90ea6b8cf228b",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 프리미어 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -507000,
+            "sku_installment_fee": 330000,
+            "monthly_payment": 119611
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "9d65fb39d7b93647",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 프리미어 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": 450000,
+            "discount": 257000,
+            "sku_installment_fee": 580000,
+            "monthly_payment": 25680
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "e372932f72a2fff8",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 프리미엄 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -257000,
+            "sku_installment_fee": 580000,
+            "monthly_payment": 25680
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "e0d54727b25fb12a",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 프리미어 플러스",
+            "monthly_fee": 105000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1287000,
+            "public_subsidy": -450000,
+            "discount": -257000,
+            "sku_installment_fee": 580000,
+            "monthly_payment": 25680
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}

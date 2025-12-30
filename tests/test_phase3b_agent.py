@@ -22,12 +22,13 @@ from src.crawlers.llm_agent_extractor import LLMAgentExtractor
 TEST_URLS = {
     "띵폰": "https://ddingphone.com/view/143?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1738389813",
     "하이폰": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337",
+    "폰슐랭": "https://phonechelin.shop/mshop/view/53?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804"
 }
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("띵폰", TEST_URLS["띵폰"]),
+    ("폰슐랭", TEST_URLS["폰슐랭"]),
 ])
 async def test_llm_agent_collect_policies(site_name: str, test_url: str):
     """
@@ -76,7 +77,18 @@ async def test_llm_agent_collect_policies(site_name: str, test_url: str):
         # LLM Agent로 정책 수집
         print("[3/3] 정책 수집 시작...\n")
         
-        extractor = LLMAgentExtractor(llm_client)
+        # 기종명 판단 (URL 또는 페이지 타이틀에서)
+        title = await page.title()
+        if "갤럭시" in title or "Galaxy" in title.upper() or "S25" in title:
+            model_name = "GALAXY_S25"
+        elif "아이폰" in title or "iPhone" in title or "17" in title:
+            model_name = "IPHONE17"
+        else:
+            model_name = "IPHONE17"  # 기본값
+        
+        print(f"   기종 감지: {model_name}\n")
+        
+        extractor = LLMAgentExtractor(llm_client, model_name=model_name)
         
         # 최대 20개 조합 테스트 (용량1 × 색상1 × 통신사3 × 가입2 × 요금3 = 18개)
         result = await extractor.collect_all_policies(
