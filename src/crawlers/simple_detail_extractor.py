@@ -97,8 +97,15 @@ class SimpleDetailExtractor:
         available_fees = await self._get_available_fees(page)
         print(f"  화면에 있는 요금제: {available_fees}")
         
-        # 화면에 있는 요금제만 시도
-        target_fees_to_try = [fee for fee in all_target_fees if fee in available_fees]
+        # 🔥 핵심: 필터에 있는 요금제만 시도 (필터에 없는 요금제는 제외)
+        if not available_fees or len(available_fees) < len(all_target_fees) * 0.5:
+            print(f"  ⚠️  Vision으로 찾은 요금제가 부족함, 필터의 모든 요금제를 시도")
+            target_fees_to_try = all_target_fees
+        else:
+            # 화면에 있고 필터에도 있는 요금제만 시도
+            target_fees_to_try = [fee for fee in all_target_fees if fee in available_fees]
+            print(f"  📋 필터에 없는 요금제 제외: {[f for f in available_fees if f not in all_target_fees]}")
+        
         print(f"  시도할 요금제: {target_fees_to_try}")
         
         # Step 2: 각 요금제별로 (핵심 순서!)
@@ -114,15 +121,37 @@ class SimpleDetailExtractor:
                 print(f"  ❌ {target_fee:,}원 요금제 선택 실패, skip")
                 continue
             
-            print(f"  ✅ {target_fee:,}원 요금제 선택 완료")
+            # 🔥 핵심: 요금제가 실제로 선택되었는지 확인
+            is_actually_selected = await self._verify_plan_selected(page, target_fee)
+            if not is_actually_selected:
+                print(f"  ⚠️  {target_fee:,}원 요금제 선택이 반영되지 않음, 재시도")
+                plan_selected = await self.vision_agent.select_plan_by_fee(page, target_fee)
+                is_actually_selected = await self._verify_plan_selected(page, target_fee)
+                if not is_actually_selected:
+                    print(f"  ❌ {target_fee:,}원 요금제 선택 재시도 실패, skip")
+                    continue
+            
+            print(f"  ✅ {target_fee:,}원 요금제 선택 완료 및 검증됨")
             await asyncio.sleep(1)
             
             # Step 3: 이 요금제로 모든 통신사 × 가입유형 조합 수집
-            # 모든 통신사를 무조건 시도! (화면에 있으면 다 시도)
+            # 🔥 핵심: 필터 조건에 맞는 조합만 시도
             for carrier in ["SKT", "KT", "LGU"]:
                 for join_type in ["번호이동", "기기변경"]:
                     
+                    # 필터 조건 확인: 이 조합이 필터에 있는지 확인
+                    if target_fee not in filters.get(carrier, {}).get(join_type, []):
+                        print(f"  [{carrier} / {join_type}] 스킵 (필터에 없음)")
+                        continue
+                    
                     print(f"  [{carrier} / {join_type}] 시도")
+                    
+                    # 🔥 핵심: 통신사/가입유형 변경 전에 요금제가 여전히 선택되어 있는지 확인
+                    is_still_selected = await self._verify_plan_selected(page, target_fee)
+                    if not is_still_selected:
+                        print(f"    ⚠️  요금제가 초기화됨, 다시 선택")
+                        await self.vision_agent.select_plan_by_fee(page, target_fee)
+                        await asyncio.sleep(0.5)
                     
                     # 통신사 선택 (여러 표기 시도)
                     carrier_texts = [carrier]
@@ -137,6 +166,13 @@ class SimpleDetailExtractor:
                     
                     await asyncio.sleep(0.5)
                     
+                    # 🔥 핵심: 통신사 변경 후에도 요금제가 유지되는지 확인
+                    is_still_selected = await self._verify_plan_selected(page, target_fee)
+                    if not is_still_selected:
+                        print(f"    ⚠️  통신사 변경 후 요금제 초기화됨, 다시 선택")
+                        await self.vision_agent.select_plan_by_fee(page, target_fee)
+                        await asyncio.sleep(0.5)
+                    
                     if not clicked_carrier:
                         print(f"    ⚠️  {carrier} 클릭 실패")
                         continue
@@ -144,6 +180,13 @@ class SimpleDetailExtractor:
                     # 가입유형 선택
                     clicked_join = await self._click_by_text(page, join_type)
                     await asyncio.sleep(0.5)
+                    
+                    # 🔥 핵심: 가입유형 변경 후에도 요금제가 유지되는지 확인
+                    is_still_selected = await self._verify_plan_selected(page, target_fee)
+                    if not is_still_selected:
+                        print(f"    ⚠️  가입유형 변경 후 요금제 초기화됨, 다시 선택")
+                        await self.vision_agent.select_plan_by_fee(page, target_fee)
+                        await asyncio.sleep(0.5)
                     
                     if not clicked_join:
                         print(f"    ⚠️  {join_type} 클릭 실패")
@@ -153,13 +196,19 @@ class SimpleDetailExtractor:
                     pricing = await self._extract_pricing(page)
                     
                     if pricing and (pricing.get('retail_price') or pricing.get('installment_principal')):
+                        # 🔥 핵심: 추출된 가격의 요금제가 맞는지 확인
+                        extracted_fee = pricing.get('plan_monthly_fee', 0)
+                        if extracted_fee and abs(extracted_fee - target_fee) > 1000:  # 1000원 이상 차이나면 다른 요금제
+                            print(f"    ⚠️  추출된 요금제({extracted_fee:,}원)가 목표({target_fee:,}원)와 다름")
+                            continue
+                        
                         collected.append({
                             "carrier": carrier,
                             "join_type": join_type,
                             "target_fee": target_fee,
                             "pricing": pricing
                         })
-                        print(f"    ✅ 정책 수집")
+                        print(f"    ✅ 정책 수집 (요금제: {extracted_fee or target_fee:,}원)")
                     else:
                         print(f"    ⚠️  가격 데이터 없음")
         
@@ -241,26 +290,109 @@ class SimpleDetailExtractor:
         
         return False
     
-    async def _get_available_fees(self, page: Page) -> List[int]:
-        """화면에 있는 모든 요금제의 월요금 추출 (Vision 1회)"""
+    async def _verify_plan_selected(self, page: Page, target_fee: int) -> bool:
+        """요금제가 실제로 선택되었는지 확인"""
         try:
-            # 드롭다운 열기
-            await page.evaluate("""
-                document.querySelector('button.bill-view')?.click();
-                document.querySelector('.bill-view-more')?.click();
-                document.querySelector('.plan_mod')?.click();
-                document.querySelector('a[onclick*="popup"]')?.click();
-            """)
-            await asyncio.sleep(3)  # 충분한 대기
+            result = await page.evaluate(f"""
+                (targetFee) => {{
+                    // 현재 화면에 표시된 요금제 가격 찾기
+                    const selectors = [
+                        '.bill-charge .unit-w',           // 띵폰, 투게더몰
+                        '.plan_price',                    // 하이폰
+                        '.bill_price strong',             // 공통
+                        'span.unit-w',                    // 공통
+                        '[data-billprice]'                // data 속성
+                    ];
+                    
+                    for (const sel of selectors) {{
+                        const elem = document.querySelector(sel);
+                        if (!elem) continue;
+                        
+                        // 텍스트에서 가격 추출
+                        const text = elem.textContent || '';
+                        const textNoComma = text.replace(/,/g, '');
+                        const match = textNoComma.match(/\\d{{5,6}}/);
+                        
+                        if (match) {{
+                            const fee = parseInt(match[0]);
+                            if (fee === targetFee) {{
+                                return true;
+                            }}
+                        }}
+                        
+                        // data-billprice 속성 확인
+                        const dataPrice = elem.getAttribute('data-billprice') || 
+                                        elem.closest('[data-billprice]')?.getAttribute('data-billprice');
+                        if (dataPrice && parseInt(dataPrice) === targetFee) {{
+                            return true;
+                        }}
+                    }}
+                    
+                    // 선택된 상태 클래스 확인
+                    const selected = document.querySelector('.opt_bill_list.on, .layer-bill-item.on, .plan_list_item.on');
+                    if (selected) {{
+                        const dataPrice = selected.getAttribute('data-billprice');
+                        if (dataPrice && parseInt(dataPrice) === targetFee) {{
+                            return true;
+                        }}
+                    }}
+                    
+                    return false;
+                }}
+            """, target_fee)
             
-            # 화면 캡처
+            return result
+        except Exception as e:
+            print(f"      ⚠️  요금제 검증 실패: {e}")
+            return False
+    
+    async def _get_available_fees(self, page: Page) -> List[int]:
+        """화면에 있는 모든 요금제의 월요금 추출 (JavaScript + Vision 복합)"""
+        try:
+            # 드롭다운 열기 (VisionPlanAgent의 로직 사용)
+            await self.vision_agent._open_dropdown(page)
+            await asyncio.sleep(2)  # 스크롤 및 로딩 대기
+            
+            # 🔥 핵심: JavaScript로 직접 data-billprice 속성에서 모든 요금제 찾기
+            js_fees = await page.evaluate("""
+                () => {
+                    const fees = new Set();
+                    
+                    // data-billprice 속성에서 찾기
+                    const elementsWithPrice = document.querySelectorAll('[data-billprice]');
+                    elementsWithPrice.forEach(elem => {
+                        const price = elem.getAttribute('data-billprice');
+                        if (price) {
+                            fees.add(parseInt(price));
+                        }
+                    });
+                    
+                    // 텍스트에서 가격 패턴 찾기 (월 XXX,XXX원)
+                    const allText = document.body.innerText;
+                    const priceMatches = allText.match(/월\\s*(\\d{1,3}(?:,\\d{3})*)\\s*원/g);
+                    if (priceMatches) {
+                        priceMatches.forEach(match => {
+                            const numStr = match.replace(/[월\\s원,]/g, '');
+                            const num = parseInt(numStr);
+                            if (num >= 20000 && num <= 200000) {  // 합리적인 범위
+                                fees.add(num);
+                            }
+                        });
+                    }
+                    
+                    return Array.from(fees).sort((a, b) => a - b);
+                }
+            """)
+            
+            print(f"  🔍 JavaScript로 찾은 요금제: {js_fees}")
+            
+            # Vision으로도 확인 (보조)
             screenshot = await page.screenshot(full_page=False, quality=60, type='jpeg', timeout=8000)
             screenshot_b64 = base64.b64encode(screenshot).decode()
             img_url = f"data:image/jpeg;base64,{screenshot_b64}"
             
-            # Vision에게 모든 요금제 + 이름 물어보기 (캐싱용)
             prompt = """
-화면에 있는 모든 요금제를 나열하세요:
+화면에 있는 모든 요금제를 나열하세요. 스크롤해서 모든 요금제를 확인하세요:
 
 [
   {"name": "프리미어 슈퍼", "monthly_fee": 115000},
@@ -271,20 +403,29 @@ class SimpleDetailExtractor:
 **모든 요금제를 추출하세요. JSON 배열만 출력.**
 """
             
-            resp = await self.llm.complete_with_vision(prompt=prompt, image_url=img_url)
-            
-            resp = resp.strip()
-            if "```" in resp:
-                resp = resp.split("```")[1] if "```json" not in resp else resp.split("```json")[1].split("```")[0]
-            resp = resp.strip()
-            
-            import json
-            plans = json.loads(resp)
-            
-            # 요금제 정보 캐싱
-            self.vision_agent.cached_plans = plans
-            
-            fees = [int(p['monthly_fee']) for p in plans if 'monthly_fee' in p]
+            try:
+                resp = await self.llm.complete_with_vision(prompt=prompt, image_url=img_url)
+                resp = resp.strip()
+                if "```" in resp:
+                    resp = resp.split("```")[1] if "```json" not in resp else resp.split("```json")[1].split("```")[0]
+                resp = resp.strip()
+                
+                import json
+                plans = json.loads(resp)
+                
+                # 요금제 정보 캐싱
+                self.vision_agent.cached_plans = plans
+                
+                vision_fees = [int(p['monthly_fee']) for p in plans if 'monthly_fee' in p]
+                print(f"  👁️  Vision으로 찾은 요금제: {vision_fees}")
+                
+                # JavaScript와 Vision 결과 합치기
+                all_fees = set(js_fees) | set(vision_fees)
+                fees = sorted(list(all_fees))
+                
+            except Exception as e:
+                print(f"  ⚠️  Vision 추출 실패, JavaScript 결과만 사용: {e}")
+                fees = js_fees
             
             return fees
             
@@ -424,7 +565,7 @@ class SimpleDetailExtractor:
                 full_page=False,
                 quality=50,
                 type='jpeg',
-                timeout=5000  # 8초 → 5초
+                timeout=10000  # 10초로 증가 (타임아웃 방지)
             )
             screenshot_b64 = base64.b64encode(screenshot).decode()
             img_url = f"data:image/jpeg;base64,{screenshot_b64}"

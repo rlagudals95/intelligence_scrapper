@@ -1,5 +1,5 @@
 {
-  "captured_at": "2025-12-31T06:15:32.582816",
+  "captured_at": "2025-12-31T11:22:56.868390",
   "source": {
     "site": "폰슐랭_갤럭시S25",
     "url": "https://phonechelin.shop/mshop/view/53?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100804"
@@ -11,77 +11,77 @@
       "sku_storage": "256GB",
       "policies": [
         {
-          "policy_id": "d82f0e3f7656b78d",
-          "carrier": "SKT",
-          "mno_join_type": "번호이동",
-          "mobile_plan": {
-            "name": "5G 프리미어 에센셜",
-            "monthly_fee": 85000
-          },
-          "discount_type": "공시지원금",
-          "pricing": {
-            "mno_retail_price": 1155000,
-            "public_subsidy": null,
-            "discount": null,
-            "sku_installment_fee": 105000,
-            "monthly_payment": 89649
-          },
-          "addons": [],
-          "policy_text": null
-        },
-        {
-          "policy_id": "bf52e23dd06613a5",
-          "carrier": "SKT",
-          "mno_join_type": "기기변경",
-          "mobile_plan": {
-            "name": "5G 프리미어 에센셜",
-            "monthly_fee": 85000
-          },
-          "discount_type": "공시지원금",
-          "pricing": {
-            "mno_retail_price": 1155000,
-            "public_subsidy": null,
-            "discount": null,
-            "sku_installment_fee": 305000,
-            "monthly_payment": 98504
-          },
-          "addons": [],
-          "policy_text": null
-        },
-        {
-          "policy_id": "2b05f6afbb63ca4b",
+          "policy_id": "4a57f6c25cc32df5",
           "carrier": "KT",
           "mno_join_type": "번호이동",
           "mobile_plan": {
-            "name": "프리미엄",
-            "monthly_fee": 85000
+            "name": "5G 심플+",
+            "monthly_fee": 61000
           },
           "discount_type": "공시지원금",
           "pricing": {
             "mno_retail_price": 1155000,
             "public_subsidy": null,
             "discount": null,
-            "sku_installment_fee": 105000,
-            "monthly_payment": 89649
+            "sku_installment_fee": 244000,
+            "monthly_payment": 71803
           },
           "addons": [],
           "policy_text": null
         },
         {
-          "policy_id": "54a5d1b4e1040901",
+          "policy_id": "151f857579223bd0",
           "carrier": "KT",
           "mno_join_type": "기기변경",
           "mobile_plan": {
-            "name": "5G 프리미어 에센셜",
-            "monthly_fee": 85000
+            "name": "심플",
+            "monthly_fee": 61000
           },
           "discount_type": "공시지원금",
           "pricing": {
             "mno_retail_price": 1155000,
             "public_subsidy": null,
             "discount": null,
-            "sku_installment_fee": 305000,
-            "monthly_payment": 98504
+            "sku_installment_fee": 494000,
+            "monthly_payment": 21872
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "8cea9507719e6415",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 심플+",
+            "monthly_fee": 61000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 244000,
+            "monthly_payment": 71803
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "e2b40e892077bf83",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 심플+",
+            "monthly_fee": 61000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 494000,
+            "monthly_payment": 21872
           },
           "addons": [],
           "policy_text": null

@@ -1,0 +1,132 @@
+{
+    "captured_at": "2025-12-31T05:27:52.184463",
+    "source": {
+      "site": "배달의폰",
+      "url": "https://www.deliveryphone.co.kr/phone/detail/136/0000412381"
+    },
+    "products": [
+      {
+        "product_id": "b05170f9437ee9ca",
+        "sku_code": "GALAXY_S25",
+        "sku_storage": "256GB",
+        "policies": [
+          {
+            "policy_id": "a5b7e12ddd6362b8",
+            "carrier": "SKT",
+            "mno_join_type": "번호이동",
+            "mobile_plan": {
+              "name": "프라임",
+              "monthly_fee": 89000
+            },
+            "discount_type": "공시지원금",
+            "pricing": {
+              "mno_retail_price": 1155000,
+              "public_subsidy": 480000,
+              "discount": 190000,
+              "sku_installment_fee": 485000,
+              "monthly_payment": 20208
+            },
+            "addons": [],
+            "policy_text": null
+          },
+          {
+            "policy_id": "8382b023f01baecf",
+            "carrier": "SKT",
+            "mno_join_type": "번호이동",
+            "mobile_plan": {
+              "name": "레귤러 플러스",
+              "monthly_fee": 79000
+            },
+            "discount_type": "공시지원금",
+            "pricing": {
+              "mno_retail_price": 1155000,
+              "public_subsidy": 425000,
+              "discount": 190000,
+              "sku_installment_fee": 540000,
+              "monthly_payment": 102906
+            },
+            "addons": [],
+            "policy_text": null
+          },
+          {
+            "policy_id": "f871177b064b8999",
+            "carrier": "SKT",
+            "mno_join_type": "번호이동",
+            "mobile_plan": {
+              "name": "레귤러",
+              "monthly_fee": 69000
+            },
+            "discount_type": "공시지원금",
+            "pricing": {
+              "mno_retail_price": 1155000,
+              "public_subsidy": 355000,
+              "discount": -190000,
+              "sku_installment_fee": 610000,
+              "monthly_payment": 96005
+            },
+            "addons": [],
+            "policy_text": null
+          },
+          {
+            "policy_id": "93896c9094258f17",
+            "carrier": "SKT",
+            "mno_join_type": "기기변경",
+            "mobile_plan": {
+              "name": "프라임",
+              "monthly_fee": 89000
+            },
+            "discount_type": "공시지원금",
+            "pricing": {
+              "mno_retail_price": 1155000,
+              "public_subsidy": 480000,
+              "discount": 190000,
+              "sku_installment_fee": 485000,
+              "monthly_payment": 110471
+            },
+            "addons": [],
+            "policy_text": null
+          },
+          {
+            "policy_id": "bae6c5831ea2da41",
+            "carrier": "SKT",
+            "mno_join_type": "기기변경",
+            "mobile_plan": {
+              "name": "레귤러 플러스",
+              "monthly_fee": 79000
+            },
+            "discount_type": "공시지원금",
+            "pricing": {
+              "mno_retail_price": 1155000,
+              "public_subsidy": 425000,
+              "discount": 190000,
+              "sku_installment_fee": 540000,
+              "monthly_payment": 102906
+            },
+            "addons": [],
+            "policy_text": null
+          },
+          {
+            "policy_id": "b212125d9850b443",
+            "carrier": "SKT",
+            "mno_join_type": "기기변경",
+            "mobile_plan": {
+              "name": "레귤러",
+              "monthly_fee": 69000
+            },
+            "discount_type": "공시지원금",
+            "pricing": {
+              "mno_retail_price": 1155000,
+              "public_subsidy": -355000,
+              "discount": -190000,
+              "sku_installment_fee": 610000,
+              "monthly_payment": 96005
+            },
+            "addons": [],
+            "policy_text": null
+          }
+        ],
+        "product_name": null,
+        "product_color": null
+      }
+    ]
+  }

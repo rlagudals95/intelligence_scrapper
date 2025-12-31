@@ -1,0 +1,56 @@
+{
+  "captured_at": "2025-12-31T11:18:44.912670",
+  "source": {
+    "site": "하이폰_갤럭시S25",
+    "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337"
+  },
+  "products": [
+    {
+      "product_id": "e53b608ad8bed2f9",
+      "sku_code": "GALAXY_S25",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "42d41d5e7f9228e5",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 0,
+            "monthly_payment": 0
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "ab6c790685924181",
+          "carrier": "LGU",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "프리미엄",
+            "monthly_fee": 85000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 265000,
+            "monthly_payment": 11042
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}
