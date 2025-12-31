@@ -308,7 +308,7 @@ const App: React.FC = () => {
       <div className="pt-16">
         <div className="sticky top-16 bg-white/80 backdrop-blur-sm shadow-sm p-4 border-b border-gray-200 z-10">
           <div className="max-w-screen-xl mx-auto flex flex-wrap items-center justify-between gap-4">
-            <div>
+            {/* <div>
               <label htmlFor="sku-select" className="text-sm font-semibold text-gray-700 mb-2 block">기종 선택</label>
               <div className="relative">
                 <select
@@ -327,9 +327,9 @@ const App: React.FC = () => {
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </div>
               </div>
-            </div>
+            </div> */}
             <div className="flex flex-wrap items-center gap-4 flex-1">
-              <div className="flex-1 min-w-[300px]">
+              {/* <div className="flex-1 min-w-[300px]">
                 <input
                   type="text"
                   value={targetUrl}
@@ -337,8 +337,8 @@ const App: React.FC = () => {
                   placeholder="스크래핑할 사이트 URL을 입력하세요 (예: https://hi-phone.kr)"
                   className="w-full bg-white border-2 border-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#516AEC]"
                 />
-              </div>
-              <button
+              </div> */}
+              {/* <button
                 onClick={handleScrape}
                 disabled={isLoading}
                 className={`px-6 py-2 rounded-lg text-sm font-bold text-white transition-colors ${
@@ -354,7 +354,7 @@ const App: React.FC = () => {
                     스크래핑 중...
                   </span>
                 ) : "🚀 실시간 수집"}
-              </button>
+              </button> */}
             </div>
             <div className="flex items-center gap-3 pt-2">
               <span className="text-sm text-gray-600 whitespace-nowrap">
