@@ -1,0 +1,7 @@
+"\u001b[2m2026-01-02T08:24:08.540786Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1mLLM Client \ucd08\uae30\ud654                \u001b[0m \u001b[36mmodel\u001b[0m=\u001b[35mgpt-4o\u001b[0m \u001b[36mprovider\u001b[0m=\u001b[35mopenai\u001b[0m"
+"\u001b[2m2026-01-02T08:24:08.540895Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1mDetailPageAnalyzer \ucd08\uae30\ud654        \u001b[0m"
+"\u001b[2m2026-01-02T08:24:08.540927Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m\ube0c\ub77c\uc6b0\uc800 \uc2dc\uc791                       \u001b[0m"
+"\u001b[2m2026-01-02T08:24:10.274582Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m\ube0c\ub77c\uc6b0\uc800 \uc2dc\uc791 \uc644\ub8cc                    \u001b[0m"
+"\u001b[2m2026-01-02T08:24:15.105757Z\u001b[0m [\u001b[31m\u001b[1merror    \u001b[0m] \u001b[1mStep 2 \uc2e4\ud328: [Errno 35] write could not complete without blocking\u001b[0m"
+"\u001b[2m2026-01-02T08:24:15.109002Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m\ube0c\ub77c\uc6b0\uc800 \uc885\ub8cc                       \u001b[0m"
+"\u001b[2m2026-01-02T08:24:15.286494Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m\ube0c\ub77c\uc6b0\uc800 \uc885\ub8cc \uc644\ub8cc                    \u001b[0m"

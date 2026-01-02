@@ -1,0 +1,22 @@
+{
+  "structure": {
+    "options": {},
+    "pricing": {},
+    "execution_plan": {
+      "order": [
+        "storage",
+        "carrier",
+        "join_type",
+        "plan"
+      ],
+      "wait_times": {
+        "after_storage": 0.3,
+        "after_carrier": 0.5,
+        "after_join_type": 0.3,
+        "after_plan": 1.0
+      },
+      "price_extraction_trigger": "after_all_selected"
+    }
+  },
+  "options": {}
+}

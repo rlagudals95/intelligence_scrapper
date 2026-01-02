@@ -185,6 +185,7 @@ class DetailPageAnalyzer:
             
         except Exception as e:
             logger.error(f"Step 2 실패: {e}")
+            print(f"\n❌ [Step 2 실패] {type(e).__name__}: {e}")
             import traceback
             traceback.print_exc()
             return {
@@ -245,15 +246,17 @@ class DetailPageAnalyzer:
 
         print(f"HTML 정리 완료: {len(html)}자")
 
-
-        html_payload = html
-        print(f"HTML 정리 완료: {html_payload}")
+        # 100KB 제한 (LLM 토큰 제한 고려)
+        html_payload = html[:100000]
+        print(f"HTML 페이로드 크기: {len(html_payload)}자 (제한: 100KB)")
 
         return html_payload
     
     async def _step2a_extract_selectors(self, html: str) -> Dict[str, Any]:
         """Step 2A: HTML 분석하여 CSS 선택자 추출"""
         print("\n[Step 2A] HTML 분석 중 (선택자 추출)...")
+        print(f"  HTML 크기: {len(html):,}자")
+        print(f"  HTML 샘플 (처음 500자): {html[:500]}")
         
         prompt = f"""
 다음 HTML은 휴대폰 상세페이지입니다. 
@@ -271,18 +274,22 @@ class DetailPageAnalyzer:
 - **click_method**: "click" | "select" | "open_dropdown_then_select"
 - **value_attribute**: 값이 속성에 있는 경우 (예: "data-storage", "value")
 
-## 2. 통신사 선택 UI (carrier)
+## 2. 통신사 선택 UI (carrier) - **반드시 "carrier" 키 사용**
 - SKT, KT, LG U+ 등의 선택 UI
-- **selector**: CSS 선택자
+- HTML에서 `name="item_telecom"`, `name="my_telecom"` 같은 속성 찾기
+- **selector**: CSS 선택자 (예: `input[name='item_telecom']`)
 - **type**: "button" | "radio" | "select"
 - **click_method**: "click" | "select"
 - **value_attribute**: 값이 속성에 있는 경우 (예: "value")
+- **중요**: 키 이름은 반드시 "carrier"로 사용하세요. "my_telecom", "item_telecom" 같은 이름을 사용하지 마세요.
 
-## 3. 가입유형 선택 UI (join_type)
+## 3. 가입유형 선택 UI (join_type) - **반드시 "join_type" 키 사용**
 - "번호이동", "기기변경" 버튼/탭
-- **selector**: CSS 선택자
+- HTML에서 `name="item_ordtype"`, `name="ordtype"` 같은 속성 찾기
+- **selector**: CSS 선택자 (예: `input[name='item_ordtype']`)
 - **type**: "button" | "tab" | "radio"
 - **click_method**: "click" | "select"
+- **중요**: 키 이름은 반드시 "join_type"으로 사용하세요. "item_ordtype", "ordtype" 같은 이름을 사용하지 마세요.
 
 ## 4. 요금제 선택 UI (plan)
 - 요금제 드롭다운/버튼
@@ -362,10 +369,17 @@ class DetailPageAnalyzer:
         response = await self.llm.complete(
             prompt=prompt,
             system_message="당신은 HTML 구조 분석 전문가입니다. 실제 HTML을 분석하여 정확한 CSS 선택자를 추출합니다.",
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
+            max_tokens=4000  # 충분한 토큰 할당
         )
         
+        print(f"\n[LLM 원본 응답]")
+        print(f"  응답 길이: {len(response)}자")
+        print(f"  응답 샘플 (처음 1000자): {response[:1000]}")
+        print(f"  응답 샘플 (마지막 500자): {response[-500:]}")
+        
         # JSON 추출 및 정리
+        response_original = response
         response = response.strip()
         
         # ```json 블록 제거
@@ -376,13 +390,24 @@ class DetailPageAnalyzer:
         
         response = response.strip()
         
+        # 불완전한 JSON 복구 시도
+        response = self._repair_incomplete_json(response)
+        
         # JSON 파싱
         try:
             structure = json.loads(response)
+            print(f"\n[JSON 파싱 성공]")
+            print(f"  options 키 개수: {len(structure.get('options', {}))}")
+            print(f"  pricing 키 개수: {len(structure.get('pricing', {}))}")
             logger.info("   ✅ 선택자 추출 완료")
         except json.JSONDecodeError as e:
             logger.error(f"JSON 파싱 실패: {e}")
-            logger.error(f"응답 내용 (처음 500자): {response[:500]}")
+            logger.error(f"응답 내용 (처음 1000자): {response[:1000]}")
+            logger.error(f"응답 내용 (마지막 500자): {response[-500:]}")
+            print(f"\n[JSON 파싱 실패]")
+            print(f"  에러: {e}")
+            print(f"  응답 (처음 1000자): {response[:1000]}")
+            print(f"  응답 (마지막 500자): {response[-500:]}")
             # 기본 구조 반환
             structure = {
                 "options": {},
@@ -401,6 +426,40 @@ class DetailPageAnalyzer:
         
         return structure
     
+    def _repair_incomplete_json(self, json_str: str) -> str:
+        """불완전한 JSON 복구 시도"""
+        import re
+        
+        # 불완전한 문자열 값 복구
+        # "key": "value 형태로 끝나는 경우
+        json_str = re.sub(r':\s*"([^"]*?)$', r': "\1"', json_str, flags=re.MULTILINE)
+        
+        # 불완전한 객체 복구
+        # 마지막에 열린 중괄호/대괄호 닫기
+        open_braces = json_str.count('{')
+        close_braces = json_str.count('}')
+        open_brackets = json_str.count('[')
+        close_brackets = json_str.count(']')
+        
+        # 불완전한 문자열 값 찾아서 닫기
+        # "key": "value 형태를 "key": "value"로
+        json_str = re.sub(r'("click_method":\s*")([^"]*?)(\s*)$', r'\1\2"', json_str, flags=re.MULTILINE)
+        json_str = re.sub(r'("selector":\s*")([^"]*?)(\s*)$', r'\1\2"', json_str, flags=re.MULTILINE)
+        json_str = re.sub(r'("type":\s*")([^"]*?)(\s*)$', r'\1\2"', json_str, flags=re.MULTILINE)
+        
+        # 중괄호 닫기
+        for _ in range(open_braces - close_braces):
+            json_str += "}"
+        
+        # 대괄호 닫기
+        for _ in range(open_brackets - close_brackets):
+            json_str += "]"
+        
+        # 마지막 쉼표 제거
+        json_str = re.sub(r',\s*([}\]])', r'\1', json_str)
+        
+        return json_str
+    
     async def _step2b_extract_option_values(
         self, 
         page: Page, 
@@ -416,77 +475,140 @@ class DetailPageAnalyzer:
             selector = storage_info.get("selector")
             if selector:
                 try:
-                    values = await page.evaluate(f"""
-                        () => {{
-                            try {{
-                                const elements = document.querySelectorAll('{selector}');
-                                return Array.from(elements).map(el => {{
+                    # 선택자를 인자로 전달하여 작은따옴표 충돌 방지
+                    value_attr = storage_info.get("value_attribute", "")
+                    print(f"    [용량 추출 시도] 선택자: {selector}, value_attr: {value_attr}")
+                    
+                    result = await page.evaluate("""
+                        ([selector, valueAttr]) => {
+                            try {
+                                const elements = document.querySelectorAll(selector);
+                                console.log(`[용량] 선택자로 찾은 요소 개수: ${elements.length}`);
+                                const values = Array.from(elements).map(el => {
                                     // value 속성이 있으면 사용
-                                    const valueAttr = '{storage_info.get("value_attribute", "")}';
-                                    if (valueAttr && el.getAttribute(valueAttr)) {{
+                                    if (valueAttr && el.getAttribute(valueAttr)) {
                                         return el.getAttribute(valueAttr);
-                                    }}
+                                    }
                                     // 텍스트에서 추출
                                     return el.textContent.trim();
-                                }}).filter(v => v);
-                            }} catch (e) {{
-                                return [];
-                            }}
-                        }}
-                    """)
+                                }).filter(v => v);
+                                console.log(`[용량] 추출된 값:`, values);
+                                return { count: elements.length, values: values };
+                            } catch (e) {
+                                console.error(`[용량] 에러:`, e);
+                                return { count: 0, values: [], error: e.message };
+                            }
+                        }
+                    """, [selector, value_attr])
+                    
+                    print(f"    [용량 추출 결과] 요소 개수: {result.get('count', 0)}, 값: {result.get('values', [])}")
+                    if result.get('error'):
+                        print(f"    [용량 에러] {result.get('error')}")
+                    
+                    values = result.get('values', [])
                     if values:
                         options["storage"] = values
                         print(f"    ✅ 용량: {values}")
+                    else:
+                        print(f"    ⚠️  용량 추출 실패: 요소를 찾지 못했거나 값이 없음")
                 except Exception as e:
                     print(f"    ⚠️  용량 추출 실패: {e}")
+                    import traceback
+                    traceback.print_exc()
         
-        # 통신사 추출
-        if carrier_info := structure.get("options", {}).get("carrier"):
+        # 통신사 추출 (carrier 또는 my_telecom, item_telecom 등)
+        carrier_info = structure.get("options", {}).get("carrier") or \
+                      structure.get("options", {}).get("my_telecom") or \
+                      structure.get("options", {}).get("item_telecom")
+        
+        if carrier_info:
             selector = carrier_info.get("selector")
             if selector:
                 try:
-                    values = await page.evaluate(f"""
-                        () => {{
-                            try {{
-                                const elements = document.querySelectorAll('{selector}');
-                                return Array.from(elements).map(el => {{
-                                    const valueAttr = '{carrier_info.get("value_attribute", "value")}';
-                                    if (valueAttr && el.getAttribute(valueAttr)) {{
+                    value_attr = carrier_info.get("value_attribute", "value")
+                    print(f"    [통신사 추출 시도] 선택자: {selector}, value_attr: {value_attr}")
+                    
+                    result = await page.evaluate("""
+                        ([selector, valueAttr]) => {
+                            try {
+                                const elements = document.querySelectorAll(selector);
+                                console.log(`[통신사] 선택자로 찾은 요소 개수: ${elements.length}`);
+                                const values = Array.from(elements).map(el => {
+                                    if (valueAttr && el.getAttribute(valueAttr)) {
                                         return el.getAttribute(valueAttr);
-                                    }}
+                                    }
                                     return el.textContent.trim();
-                                }}).filter(v => v);
-                            }} catch (e) {{
-                                return [];
-                            }}
-                        }}
-                    """)
+                                }).filter(v => v);
+                                console.log(`[통신사] 추출된 값:`, values);
+                                return { count: elements.length, values: values };
+                            } catch (e) {
+                                console.error(`[통신사] 에러:`, e);
+                                return { count: 0, values: [], error: e.message };
+                            }
+                        }
+                    """, [selector, value_attr])
+                    
+                    print(f"    [통신사 추출 결과] 요소 개수: {result.get('count', 0)}, 값: {result.get('values', [])}")
+                    if result.get('error'):
+                        print(f"    [통신사 에러] {result.get('error')}")
+                    
+                    values = result.get('values', [])
                     if values:
                         options["carrier"] = values
                         print(f"    ✅ 통신사: {values}")
+                    else:
+                        print(f"    ⚠️  통신사 추출 실패: 요소를 찾지 못했거나 값이 없음")
                 except Exception as e:
                     print(f"    ⚠️  통신사 추출 실패: {e}")
+                    import traceback
+                    traceback.print_exc()
         
-        # 가입유형 추출
-        if join_type_info := structure.get("options", {}).get("join_type"):
+        # 가입유형 추출 (join_type 또는 item_ordtype 등)
+        join_type_info = structure.get("options", {}).get("join_type") or \
+                        structure.get("options", {}).get("item_ordtype") or \
+                        structure.get("options", {}).get("ordtype")
+        
+        if join_type_info:
             selector = join_type_info.get("selector")
             if selector:
                 try:
-                    values = await page.evaluate(f"""
-                        () => {{
-                            try {{
-                                const elements = document.querySelectorAll('{selector}');
-                                return Array.from(elements).map(el => el.textContent.trim()).filter(v => v);
-                            }} catch (e) {{
-                                return [];
-                            }}
-                        }}
-                    """)
+                    print(f"    [가입유형 추출 시도] 선택자: {selector}")
+                    
+                    result = await page.evaluate("""
+                        (selector) => {
+                            try {
+                                const elements = document.querySelectorAll(selector);
+                                console.log(`[가입유형] 선택자로 찾은 요소 개수: ${elements.length}`);
+                                const values = Array.from(elements).map(el => {
+                                    // 라디오 버튼의 경우 value 속성 우선, 없으면 텍스트
+                                    if (el.getAttribute('value')) {
+                                        return el.getAttribute('value');
+                                    }
+                                    return el.textContent.trim();
+                                }).filter(v => v);
+                                console.log(`[가입유형] 추출된 값:`, values);
+                                return { count: elements.length, values: values };
+                            } catch (e) {
+                                console.error(`[가입유형] 에러:`, e);
+                                return { count: 0, values: [], error: e.message };
+                            }
+                        }
+                    """, selector)
+                    
+                    print(f"    [가입유형 추출 결과] 요소 개수: {result.get('count', 0)}, 값: {result.get('values', [])}")
+                    if result.get('error'):
+                        print(f"    [가입유형 에러] {result.get('error')}")
+                    
+                    values = result.get('values', [])
                     if values:
                         options["join_type"] = values
                         print(f"    ✅ 가입유형: {values}")
+                    else:
+                        print(f"    ⚠️  가입유형 추출 실패: 요소를 찾지 못했거나 값이 없음")
                 except Exception as e:
                     print(f"    ⚠️  가입유형 추출 실패: {e}")
+                    import traceback
+                    traceback.print_exc()
         
         # 요금제는 드롭다운을 열어야 하므로 별도 처리
         if plan_info := structure.get("options", {}).get("plan"):

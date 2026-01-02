@@ -123,10 +123,24 @@ async def test_step2_analyze_option_ui(site_name: str, test_url: str):
         
         # 검증
         print("\n[검증]")
-        print(f"  storage: {result.get('storage', 'N/A')}")
-        print(f"  carrier: {result.get('carrier', 'N/A')}")
-        print(f"  join_type: {result.get('join_type', 'N/A')}")
-        print(f"  plan: {result.get('plan', 'N/A')}")
+        
+    
+        print(f"result 전체 확인: {result}")
+        options = result.get('options', {})
+        structure = result.get('structure', {})
+        
+        print(f"  [옵션 값]")
+        print(f"    storage: {options.get('storage', 'N/A')}")
+        print(f"    carrier: {options.get('carrier', 'N/A')}")
+        print(f"    join_type: {options.get('join_type', 'N/A')}")
+        print(f"    plan: {len(options.get('plan', []))}개" if isinstance(options.get('plan'), list) else f"    plan: {options.get('plan', 'N/A')}")
+        
+        print(f"  [선택자 구조]")
+        structure_options = structure.get('options', {})
+        print(f"    storage 선택자: {structure_options.get('storage', {}).get('selector', 'N/A')}")
+        print(f"    carrier 선택자: {structure_options.get('carrier', {}).get('selector', 'N/A')}")
+        print(f"    join_type 선택자: {structure_options.get('join_type', {}).get('selector', 'N/A')}")
+        print(f"    plan 선택자: {structure_options.get('plan', {}).get('item_selector', 'N/A')}")
 
 
 # ============================================================================

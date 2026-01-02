@@ -1,0 +1,22 @@
+{
+  "structure": {
+    "options": {
+      "storage": {
+        "selector": "input[name='opt_giga']",
+        "type": "radio",
+        "click_method": "click",
+        "value_attribute": "value"
+      },
+      "color": {
+        "selector": "ul.color_table li.color_option a.circle_color",
+        "type": "button",
+        "click_method": "click",
+        "value_attribute": "data-color"
+      },
+      "my_telecom": {
+        "selector": "input[name='item_mytelecom']"
+      }
+    }
+  },
+  "options": {}
+}
