@@ -2,7 +2,7 @@
   "structure": {
     "options": {
       "storage": {
-        "selector": "input[name='opt_giga']",
+        "selector": ".giga_option input[type='radio']",
         "type": "radio",
         "click_method": "click",
         "value_attribute": "value"
@@ -16,24 +16,23 @@
       "join_type": {
         "selector": "input[name='item_ordtype']",
         "type": "radio",
-        "click_method": "click",
-        "value_attribute": "value"
+        "click_method": "click"
       },
       "plan": {
-        "open_button_selector": "div.goods-option-row.option-bill button.bill-view",
-        "list_container_selector": null,
-        "item_selector": null,
+        "open_button_selector": "button.bill-view",
+        "list_container_selector": ".bill-box ul",
+        "item_selector": ".bill-basic",
         "price_attribute": null,
-        "name_selector": null
+        "name_selector": ".bn"
       }
     },
     "pricing": {
-      "retail_price_selector": ".mobile-price-box.calc-bill-box dl:nth-of-type(1) .unit-w",
-      "public_subsidy_selector": ".mobile-price-box.calc-bill-box dl.dl_gp .unit-w",
-      "discount_selector": ".mobile-price-box.calc-bill-box dl.dl_dp .unit-w",
-      "installment_fee_selector": ".mobile-price-box.calc-bill-box dl.dl_hp .unit-w",
-      "monthly_payment_selector": ".mobile-charge-inner .charge-body .cell-halbu .unit-w",
-      "plan_monthly_fee_selector": ".mobile-charge-inner .charge-body .cell-bill .unit-w"
+      "retail_price_selector": ".mobile-price-box .sp .unit-w",
+      "public_subsidy_selector": ".dl_gp .gp .unit-w",
+      "discount_selector": ".dl_dp .dp .unit-w",
+      "installment_fee_selector": ".dl_hp .hp .unit-w",
+      "monthly_payment_selector": ".charge-body .cell-halbu .mp .unit-w",
+      "plan_monthly_fee_selector": ".charge-body .cell-bill .tb .unit-w"
     },
     "execution_plan": {
       "order": [
@@ -51,5 +50,19 @@
       "price_extraction_trigger": "after_all_selected"
     }
   },
-  "options": {}
+  "options": {
+    "storage": [
+      "256",
+      "512"
+    ],
+    "carrier": [
+      "SKT",
+      "KT",
+      "LGU"
+    ],
+    "join_type": [
+      "번호이동",
+      "기기변경"
+    ]
+  }
 }

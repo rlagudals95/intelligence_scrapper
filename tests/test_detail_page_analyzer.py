@@ -216,8 +216,9 @@ async def test_step4_generate_combinations(site_name: str, test_url: str):
         print("\n[Step 3 결과 (입력)]")
         print(json.dumps(step3_result, ensure_ascii=False, indent=2))
         
-        # Step 4 실행
-        result = await analyzer._step4_generate_combinations(step3_result)
+        # Step 4 실행 (structure는 step2_result에서 가져옴)
+        structure = step2_result.get("structure", {})
+        result = await analyzer._step4_generate_combinations(step3_result, structure)
         
         print("\n[Step 4 결과]")
         print(f"  총 조합 수: {len(result)}개")
@@ -263,16 +264,19 @@ async def test_step5_extract_policies_sample(site_name: str, test_url: str):
         step1_result = await analyzer._step1_extract_basic_info(page, test_url)
         step2_result = await analyzer._step2_analyze_option_ui(page)
         step3_result = await analyzer._step3_extract_option_values(page, step2_result)
-        step4_result = await analyzer._step4_generate_combinations(step3_result)
+        
+        # Step 4 실행 (structure는 step2_result에서 가져옴)
+        structure = step2_result.get("structure", {})
+        step4_result = await analyzer._step4_generate_combinations(step3_result, structure)
         
         print(f"\n[입력] 조합 수: {len(step4_result)}개")
         print(f"  샘플 조합 (첫 번째만 테스트): {step4_result[0]}")
         
-        # 첫 번째 조합만 테스트
-        sample_combinations = [step4_result[0]]
+        # 모든 조합 테스트
+        sample_combinations = step4_result
         
-        # Step 5 실행
-        result = await analyzer._step5_extract_policies(page, sample_combinations, step1_result)
+        # Step 5 실행 (structure도 전달)
+        result = await analyzer._step5_extract_policies(page, sample_combinations, step1_result, structure)
         
         print("\n[Step 5 결과]")
         print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
@@ -360,9 +364,9 @@ async def test_step6_convert_to_schema(site_name: str, test_url: str):
 # ============================================================================
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("띵폰_갤럭시S25", TEST_URLS["띵폰_갤럭시S25"]),
+    # ("띵폰_갤럭시S25", TEST_URLS["띵폰_갤럭시S25"]),
     # ("띵폰_아이폰17", TEST_URLS["띵폰_아이폰17"]),
-    # ("하이폰_갤럭시S25", TEST_URLS["하이폰_갤럭시S25"]),
+    ("하이폰_갤럭시S25", TEST_URLS["하이폰_갤럭시S25"]),
     # ("하이폰_아이폰17", TEST_URLS["하이폰_아이폰17"]),
 ])
 async def test_detail_page_analyzer_full(site_name: str, test_url: str):

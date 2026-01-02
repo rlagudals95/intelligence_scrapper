@@ -1,0 +1,967 @@
+{
+  "storage": [
+    "256",
+    "512"
+  ],
+  "carrier": [
+    "SKT",
+    "KT",
+    "LGU"
+  ],
+  "join_type": [
+    "번호이동",
+    "기기변경"
+  ],
+  "plan": [
+    {
+      "name": "삼성전자",
+      "price": "",
+      "element": "<li class=\"me_1dli me_20   \"><a href=\"http://ddingphone.com/list?sst=c&amp;cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90\" class=\"me_1da  \" target=\"_self\"><span class=\"me_1ds\">삼성전자</span></a></li>"
+    },
+    {
+      "name": "애플 아이폰",
+      "price": "",
+      "element": "<li class=\"me_1dli me_30   \"><a href=\"http://ddingphone.com/list?sst=c&amp;cid=APPLE\" class=\"me_1da  \" target=\"_self\"><span class=\"me_1ds\">애플 아이폰</span></a></li>"
+    },
+    {
+      "name": "한정특가🎁",
+      "price": "",
+      "element": "<li class=\"me_1dli me_40   \"><a href=\"http://ddingphone.com/list?view=free\" class=\"me_1da  \" target=\"_self\"><span class=\"me_1ds\">한정특가🎁</span></a></li>"
+    },
+    {
+      "name": "LTE&키즈폰",
+      "price": "",
+      "element": "<li class=\"me_1dli me_50   \"><a href=\"http://ddingphone.com/list?mid=4G+%EC%8A%A4%EB%A7%88%ED%8A%B8%ED%8F%B0\" class=\"me_1da  \" target=\"_self\"><span class=\"me_1ds\">LTE&amp;키즈폰</span></a></li>"
+    },
+    {
+      "name": "이벤트",
+      "price": "",
+      "element": "<li><a href=\"https://ddingphone.com/event\"><span>이벤트</span></a></li>"
+    },
+    {
+      "name": "구매후기",
+      "price": "",
+      "element": "<li><a href=\"https://ddingphone.com/epilogue\"><span>구매후기</span></a></li>"
+    },
+    {
+      "name": "회원가입",
+      "price": "",
+      "element": "<li><a href=\"https://ddingphone.com/join\"><span>회원가입</span></a></li>"
+    },
+    {
+      "name": "로그인",
+      "price": "",
+      "element": "<li><a href=\"https://ddingphone.com/login\"><span>로그인</span></a></li>"
+    },
+    {
+      "name": "배송조회",
+      "price": "",
+      "element": "<li><a href=\"https://ddingphone.com/deliveryview\"><span class=\"ico-btn\">배송조회</span></a></li>"
+    },
+    {
+      "name": "휴대폰검색",
+      "price": "",
+      "element": "<li>\n                    <a href=\"javascript:void(0);\" id=\"btn_msearch\">\n                        <svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><title></title><g data-name=\"Layer 2\" id=\"L"
+    },
+    {
+      "name": "삼성전자",
+      "price": "",
+      "element": "<li class=\"me_1dli me_20   \"><a href=\"http://ddingphone.com/list?sst=c&amp;cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90\" class=\"me_1da  \" target=\"_self\"><span class=\"me_1ds\">삼성전자</span></a></li>"
+    },
+    {
+      "name": "애플 아이폰",
+      "price": "",
+      "element": "<li class=\"me_1dli me_30   \"><a href=\"http://ddingphone.com/list?sst=c&amp;cid=APPLE\" class=\"me_1da  \" target=\"_self\"><span class=\"me_1ds\">애플 아이폰</span></a></li>"
+    },
+    {
+      "name": "한정특가🎁",
+      "price": "",
+      "element": "<li class=\"me_1dli me_40   \"><a href=\"http://ddingphone.com/list?view=free\" class=\"me_1da  \" target=\"_self\"><span class=\"me_1ds\">한정특가🎁</span></a></li>"
+    },
+    {
+      "name": "LTE&키즈폰",
+      "price": "",
+      "element": "<li class=\"me_1dli me_50   \"><a href=\"http://ddingphone.com/list?mid=4G+%EC%8A%A4%EB%A7%88%ED%8A%B8%ED%8F%B0\" class=\"me_1da  \" target=\"_self\"><span class=\"me_1ds\">LTE&amp;키즈폰</span></a></li>"
+    },
+    {
+      "name": "회원정보",
+      "price": "",
+      "element": "<li>\n                                        <a href=\"https://ddingphone.com/member_confirm?url=/join\">\n                        <div class=\"ico ico-user\"><svg fill=\"none\" stroke-width=\"1.5\" viewBox=\"0"
+    },
+    {
+      "name": "주문내역",
+      "price": "",
+      "element": "<li>\n                    <a href=\"https://ddingphone.com/deliveryview\">\n                        <div class=\"ico ico-trance\"><svg fill=\"none\" stroke-width=\"1.5\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3"
+    },
+    {
+      "name": "전화상담",
+      "price": "",
+      "element": "<li>\n                    <a href=\"javascript:void(0);\" class=\" callcenter\" data-class=\"dlqa\">\n                        <div class=\"ico ico-callcenter\"><svg viewBox=\"0 0 16 16\" xmlns=\"http://www.w3.org/"
+    },
+    {
+      "name": "삼성전자",
+      "price": "",
+      "element": "<li class=\"me_1dli me_20  \"><a href=\"http://ddingphone.com/list?sst=c&amp;cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90\" class=\"me_1da \" target=\"_self\"><span class=\"me_1ds\">삼성전자</span></a></li>"
+    },
+    {
+      "name": "애플 아이폰",
+      "price": "",
+      "element": "<li class=\"me_1dli me_30  \"><a href=\"http://ddingphone.com/list?sst=c&amp;cid=APPLE\" class=\"me_1da \" target=\"_self\"><span class=\"me_1ds\">애플 아이폰</span></a></li>"
+    },
+    {
+      "name": "한정특가🎁",
+      "price": "",
+      "element": "<li class=\"me_1dli me_40  \"><a href=\"http://ddingphone.com/list?view=free\" class=\"me_1da \" target=\"_self\"><span class=\"me_1ds\">한정특가🎁</span></a></li>"
+    },
+    {
+      "name": "LTE&키즈폰",
+      "price": "",
+      "element": "<li class=\"me_1dli me_50  \"><a href=\"http://ddingphone.com/list?mid=4G+%EC%8A%A4%EB%A7%88%ED%8A%B8%ED%8F%B0\" class=\"me_1da \" target=\"_self\"><span class=\"me_1ds\">LTE&amp;키즈폰</span></a></li>"
+    },
+    {
+      "name": "민트",
+      "price": "",
+      "element": "<li class=\"color_option on\"><a href=\"javascript:void(0);\" class=\"circle_color color_black\" data-color=\"민트\" data-code=\"#BDCEC3\" style=\"background-color:#BDCEC3;\"><span>민트</span></a></li>"
+    },
+    {
+      "name": "네이비",
+      "price": "",
+      "element": "<li class=\"color_option \"><a href=\"javascript:void(0);\" class=\"circle_color color_white\" data-color=\"네이비\" data-code=\"#061534\" style=\"background-color:#061534;\"><span>네이비</span></a></li>"
+    },
+    {
+      "name": "아이스 블루",
+      "price": "",
+      "element": "<li class=\"color_option \"><a href=\"javascript:void(0);\" class=\"circle_color color_black\" data-color=\"아이스 블루\" data-code=\"#B9C2D1\" style=\"background-color:#B9C2D1;\"><span>아이스 블루</span></a></li>"
+    },
+    {
+      "name": "실버 쉐도우",
+      "price": "",
+      "element": "<li class=\"color_option \"><a href=\"javascript:void(0);\" class=\"circle_color color_black\" data-color=\"실버 쉐도우\" data-code=\"#BDBDBF\" style=\"background-color:#BDBDBF;\"><span>실버 쉐도우</span></a></li>"
+    },
+    {
+      "name": "5G 초이스 베이직",
+      "price": "90000",
+      "element": "<li>\n                                        <div class=\"bill-basic\"><span class=\"bn\">5G 초이스 베이직</span></div>\n                                        <div class=\"bill-charge\"><span>월</span><span class"
+    },
+    {
+      "name": "완전 무제한(넷플릭스, 디즈니+,티빙/지니 중 택1)\n                                        무제한\n                                        무제한",
+      "price": "",
+      "element": "<li class=\"bill-info\">\n                                        <span class=\"bill-data\"><span><i class=\"fa fa-wifi\" style=\"color:#000000;\"></i></span><b>완전 무제한</b><small>(넷플릭스, 디즈니+,티빙/지니 중 택1)</small>"
+    },
+    {
+      "name": "공시지원금총 500,000원 할인",
+      "price": "500000",
+      "element": "<li class=\"saletype_list on\" data-saletype=\"1\" data-mpoint=\"655000\" data-opoint=\"0\" data-gongsi=\"500000\" data-totalpoint=\"500000\" id=\"type_gongsi\"><div class=\"saletype_name\"><p class=\"\">공시지원금</p></div"
+    },
+    {
+      "name": "선택약정할인매월 25% 요금할인",
+      "price": "",
+      "element": "<li class=\"saletype_list \" data-saletype=\"24\" data-mpoint=\"655000\" data-opoint=\"0\" data-gongsi=\"0\" data-totalpoint=\"540000\" id=\"type_sale\"><div class=\"saletype_name\"><p class=\"fav\">선택약정할인</p></div><di"
+    },
+    {
+      "name": "월할부금\n                                24개월\n                            \n                            \n                                월통신요금\n                                (5G 초이스 베이직)\n                            \n                            \n                                (월납부금액)\n                                VAT/할부이자포함",
+      "price": "",
+      "element": "<li class=\"charge-head\">\n                            <div class=\"charge-cell cell-halbu\">\n                                <span>월할부금</span>\n                                <span class=\"hm\">24개월</span>"
+    },
+    {
+      "name": "0원\n                            \n                            \n                                90,000원\n                            \n                            \n                                90,000원",
+      "price": "90000",
+      "element": "<li class=\"charge-body\">\n                            <div class=\"charge-cell cell-halbu\">\n                                <span class=\"mp\"><span class=\"unit-w\">0</span><span class=\"unit-k\">원</span></s"
+    },
+    {
+      "name": "구매혜택",
+      "price": "",
+      "element": "<li class=\"tab-menu tab-63ca357775ba3 on\" data-tabs=\"63ca357775ba3\" data-shop=\"1\"><a href=\"javascript:void(0);\" class=\"info-tab\">구매혜택</a></li>"
+    },
+    {
+      "name": "모델정보",
+      "price": "",
+      "element": "<li class=\"tab-menu tab-iteminfo\" data-tabs=\"iteminfo\" data-shop=\"1\"><a href=\"javascript:void(0);\" class=\"info-tab\">모델정보</a></li>"
+    },
+    {
+      "name": "구매후기",
+      "price": "",
+      "element": "<li class=\"tab-menu tab-itemuse\" data-tabs=\"itemuse\" data-shop=\"1\"><a href=\"javascript:void(0);\" class=\"info-tab\">구매후기</a></li>"
+    },
+    {
+      "name": "상품문의",
+      "price": "",
+      "element": "<li class=\"tab-menu tab-itemqna\" data-tabs=\"itemqna\" data-shop=\"1\"><a href=\"javascript:void(0);\" class=\"info-tab\">상품문의</a></li>"
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n황○태2026-01-01후기 첨으로 온라인에서 폰 산거라서 걱정이 많았는데 빠르게 배송해 주셨고 개통도 빨리 해주셨어요. 가격도 저렴한 편이라 만족스럽습니다~!",
+      "price": "2026",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n권○선2025-10-29후기 여자친구와 함께 공동 구매해서 후기를 남깁니다~ 신청 후 택배로 기기가 신속하게 배송되었고, 개통도 미리 해주셔서 바로 사용할 수 있었습니다. 빠르고 저렴하게 잘 구매했어요.  번창하세요! ~",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n김○준2025-09-28S25후기 신속하고 정확하게 개통 진행해주셔서 너무 만족했습니다. 절차도 복잡하지 않고 안내도 친절해서 걱정 없이 진행할 수 있었어요. 감사해요",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n한○진2025-09-23s25띵폰후기 말씀하신대로 0원에 개통 되었습니다.^^ 온라인 처음이어서 걱정 많이했는데 깔끔하게 처리해주셔서 감사해요 :) 곧 아이들 폰도 바꿔야 되는데 연락드릴게요! 번창하세요~",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n유○환2025-09-22S25 토요일에 개통되서 잘쓰고 있습니다 사장님 ^^ 번창하세요! 사은품도 잘받았습니다.",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n강○혁2025-09-02s25후기 여친이랑 커플폰으로 묶음배송 해달라고 했는데 따로왔네요ㅋㅋ 그래도 둘 다 잘 개통되고 잘 쓰고 있습니다ㅎㅎ",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n성○란2025-08-13s25후기 상담사님이 ㅎㅎ 친절하게 설명해주셔서 기분 좋았어용~ 택배도 다음날에 바로 와있었구 완전 만족해용 ㅠㅠ 😊",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n홍○경2025-07-21S25후기 휴대폰 문의 드렸는데 정말 친절하게 상담 해주셔서 감사했어요. 다른 곳과 가격을 비교해봤는데 여기가 정말로 저렴했어요. 나중에 부모님 핸드폰을 바꿀 기회가 생기면 또 이용하려고 생각 중이에요. 배송도 주문 후 다음 날 아침에 도착해서 정말 놀랐어요. 지방에 사는데도 이렇게 빠른 배송이라니 정말 신기하네요ㅋ 번창하세요!~",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n송○지2025-06-11S25 구매후기 계속해서 아이폰만 사용해왔는데 이번에는 S25로 선택했어요. 너무 감사한 마음에, 일반적으로 후기를 남기지 않는데 이번에는 남겨야겠다 싶었어요. 정말로 감사합니다~",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n정○준2025-05-27S25 후기 개통은 이미되서 온다고 해서 아까 폰 받아서 유심 꽂았어요! 감사합니다. 폰이 너무 좋아요. 상담사분이 친절하게 궁금한 건 잘 알려주셔서 상담만 40분 가까이 한 거 같아요ㅋㅋㅋ 그런데 정말 꼼꼼하게 잘 챙겨주시고 혜택도 알려주셔서 아예 맘 굳히고 하게 되었습니다. 감사해요!",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n고○라2025-04-24s25 후기!! 온라인으로 첨 구매해봤습니다 ㅎㅎ 말씀하신 대로 요금 나오고 기계도 아주 상태 좋게 잘 쓰고 있습니다. 감사합니다!! 다음에 또 구매하러 오겠습니다 ㅋㅋ",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n김○2025-04-18구매후기!! 온라인 구매가 처음이라 상담사분과 통화하면서 신청을 완료했는데, 걸린 시간이 10분 정도 되네요. 상세하게 알려주시면서 친절하게 대응해주셔서 정말 감사합니다! 해보니 별 것도 없는데, 제가 지레 겁먹고 못했네요. ㅋㅋㅋ 온라인 구매가 이렇게 쉬운 줄은 몰랐어요. 신분증도 필요없고, 인증 문자 하나로 기기 변경을 할 수 있다니 참 놀랍네요. 친절하고 정확한 안내로 믿음이 갑니다! 여자친구 것도 진행할 건데, 추천해주셔도 전혀 문제 없겠습니다! 감사합니다!! ㅎㅎ",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n황○태2025-04-12후기 첨으로 온라인에서 폰 산거라서 걱정이 많았는데 빠르게 배송해 주셨고 개통도 빨리 해주셨어요. 가격도 저렴한 편이라 만족스럽습니다~! 문의 전화가 많아서 그런지 상담전화 연결이 잘 안 되는 게 좀 아쉽네요.",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n유○민2025-04-05s25 후기 말투도 친절하시고 답변도 빠르게 주셔서 너무 좋았어요~ 포장도 꼼꼼하게 해주시고 덤까지 주셔서 너무 좋았습니다. 다음에 또 가족들 개통할 때는 여쭤보러 올게요. 좋은 하루 보내세요!",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n임○선2025-03-2625 개통후기 후기가 많은 이유가 확실히 느껴져요ㅋㅋㅋ 정말 빠르고 신속한 처리에 정말 만족했습니다! 앞으로도 또 이용할 거에요 😍 구매 잘했습니다, 믿고 구매하세요ㅎㅎㅠㅠ 감사합니다!",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n정○태2025-03-21s25 온라인 구매가 처음이라 상담사분과 통화하면서 신청을 완료했는데, 걸린 시간이 10분 정도 되네요. 상세하게 알려주시면서 친절하게 대응해주셔서 정말 감사합니다! 해보니 별 것도 없는데, 제가 지레 겁먹고 못했네요. ㅋㅋㅋ 온라인 구매가 이렇게 쉬운 줄은 몰랐어요. 신분증도 필요없고, 인증 문자 하나로 기기 변경을 할 수 있다니 참 놀랍네요. 친절하고 정확한 안내로 믿음이 갑니다! 여자친구 것도 진행할 건데, 추천해주셔도 전혀 문제 없겠습니다! 감사합니다!! ㅎㅎ",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/editor/2503/thumb-c9ec813531a6cb4743175b7d79e24e5c_1742802699_1878_400x400.jpg\"></div><div class=\"use_cont\"><d"
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n송○아2025-03-11s25후기 s25로 결정했어요. 플러스가 화면이 크긴하지만 손이 작아서 자주 떨어뜨릴까봐 조금 더 안전하게 s25로 선택했어요. 상담사언니께서 할인도 좀 더 크다고 설명해주셔서 결국 갬성의 길을 택했어요! ㅋㅋㅋㅋㅋ 감사합니다",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/editor/2503/thumb-c925ece5ed4dd5f145cbe5a417997ed1_1741952011_8113_400x400.jpg\"></div><div class=\"use_cont\"><d"
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n강○현2025-03-07s25개통후기 첨으로 온라인에서 핸드폰을 구매하려고 유튜브로 이것저것 알아보다가 s25으로 결정하고 온라인으로 처음 구매해보았습니다 ㅎㅎ 어려움 없이 잘 구매했고, 기존 폰이 너무 오래 사용되어서 급했는데 상담사님이 잘 케어해주셔서 배송받고 바로 사용할 수 있어서 좋았습니다 ㅎㅎ 고마워요!",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n배○욱2025-03-03S25 개통후기  가격도 저렴하면서 성능도 괜찮아서 여기서 구매하길 정말 잘한 것 같아요. 빠르게 받아서 기분이 좋아요. 잘 사용하고 있습니다!",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/mshop/model/S/thumb-2025012410175820_400x400.jpg\"></div><div class=\"use_cont\"><div class=\"use_top\"><div class="
+    },
+    {
+      "name": "갤럭시 S25\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n김○지2025-02-24s25 개통후기 오늘 받고 개통하고 사용 중이에용!! 말씀하신 대로 받고 개통 해주신다하셨는데 정말 오차 없이 잘해주셨네용 퇴근하고 집 왔는데 넘넘 조아용!! 감사합니당 ㅋㅋㅋ ㅎㅎ",
+      "price": "2025",
+      "element": "<li class=\"board-list list-body\"><div class=\"image\"><img src=\"https://ddingphone.com/data/editor/2502/thumb-dc1dfeede965f522aab55d6c4f2dfc54_1740454498_6864_400x400.jpg\"></div><div class=\"use_cont\"><d"
+    },
+    {
+      "name": "691방금 주문을 했는데 색상을 잘못 선택했어요안○은26-01-02답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">691</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"665\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "690SKT기기변경이○영26-01-02답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">690</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"687\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "689개통 관련 문의드립니다.손○애26-01-02답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">689</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"673\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "688sk 인터넷 사용중 입니다공○락26-01-02답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">688</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"680\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "687문의요○제26-01-02답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">687</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"689\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "686요금제 유지기간 문의드립니다김○윤26-01-02답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">686</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"607\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "685선택약정할인오○호26-01-02답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">685</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"612\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "684미개봉 미개통 새제품 정품인가요?김○라26-01-02답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">684</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"635\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "683요금제 낮출 때박○주26-01-01답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">683</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"663\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "682S25 256g 기변 문의 드립니다.문○중26-01-01답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">682</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"678\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "681요금제와 선약기간 문의문○요26-01-01답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">681</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"700\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "680개통이○지26-01-01답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">680</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"686\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "679두번 신청서 작성한것같아요성○정26-01-01답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">679</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"684\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "678아이폰17 구입하려고 합니다.김○섭26-01-01답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">678</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"668\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "677S25카드조건 아니죠?임○희25-12-31답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">677</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"702\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "676s24 플러스 재고는 없나요?장○연25-12-31답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">676</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"672\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "67516e를 주문했는데한○선25-12-31답변완료",
+      "price": "67516",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">675</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"669\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "674S25울트라 관련 상담 요망최○환25-12-31답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">674</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"642\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "673선택약정 구매문의허○우25-12-31답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">673</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"645\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "672해피콜은 언제쯤 오나요???이○경25-12-31답변완료",
+      "price": "",
+      "element": "<li class=\"board-list list-body\"><div class=\"num\">672</div><div class=\"subject\"><a href=\"javascript:void(0);\" data-uid=\"627\" class=\"qna-view\"><span class=\"list_secret\"><i class=\"fa fa-lock fa-fw\" aria"
+    },
+    {
+      "name": "※ 부가세(Vat) 포함 금액할부이자 할부원금 기준 5.9% 0원 포함",
+      "price": "",
+      "element": "<li>※ 부가세(Vat) 포함 금액<br>할부이자 할부원금 기준 5.9% <span class=\"ip\"><span class=\"unit-w\">0</span><span class=\"unit-k\">원</span></span> 포함</li>"
+    },
+    {
+      "name": "홈",
+      "price": "",
+      "element": "<li><a href=\"https://ddingphone.com\">홈</a></li>"
+    },
+    {
+      "name": "이용약관",
+      "price": "",
+      "element": "<li><a href=\"javascript:void(0);\" data-clause=\"provision\" data-toggle=\"modal\" data-target=\"#clauseModal\" onclick=\"return false\">이용약관</a></li>"
+    },
+    {
+      "name": "개인정보처리방침",
+      "price": "",
+      "element": "<li><a href=\"javascript:void(0);\" data-clause=\"privacy\" data-toggle=\"modal\" data-target=\"#clauseModal\" onclick=\"return false\">개인정보처리방침</a></li>"
+    },
+    {
+      "name": "공지사항",
+      "price": "",
+      "element": "<li><a href=\"https://ddingphone.com/board/notice\">공지사항</a></li>"
+    },
+    {
+      "name": "빠른상담",
+      "price": "",
+      "element": "<li><a href=\"javascript:void(0);\" class=\"callcenter\">빠른상담</a></li>"
+    },
+    {
+      "name": "상호명아이엠팩토리\n                        대표자한인모",
+      "price": "",
+      "element": "<li>\n                    <ol class=\"d-flex\">\n                        <li><span>상호명</span>아이엠팩토리</li>\n                        <li><span>대표자</span>한인모</li>\n                    </ol>\n                </li"
+    },
+    {
+      "name": "상호명아이엠팩토리",
+      "price": "",
+      "element": "<li><span>상호명</span>아이엠팩토리</li>"
+    },
+    {
+      "name": "대표자한인모",
+      "price": "",
+      "element": "<li><span>대표자</span>한인모</li>"
+    },
+    {
+      "name": "사업자등록번호 841-04-02917",
+      "price": "02917",
+      "element": "<li>\n                    <ol class=\"d-flex\">\n                        <li><span class=\"ft_cnumber\">사업자등록번호 </span>841-04-02917</li>\n                    </ol>\n                </li>"
+    },
+    {
+      "name": "사업자등록번호 841-04-02917",
+      "price": "02917",
+      "element": "<li><span class=\"ft_cnumber\">사업자등록번호 </span>841-04-02917</li>"
+    },
+    {
+      "name": "통신판매업신고번호 제2023-서울동대문-0459호",
+      "price": "2023",
+      "element": "<li>\n                    <ol class=\"d-flex\">\n                        <li><span class=\"ft_cnumber\">통신판매업신고번호 </span>제2023-서울동대문-0459호</li>\n                    </ol>\n                </li>"
+    },
+    {
+      "name": "통신판매업신고번호 제2023-서울동대문-0459호",
+      "price": "2023",
+      "element": "<li><span class=\"ft_cnumber\">통신판매업신고번호 </span>제2023-서울동대문-0459호</li>"
+    },
+    {
+      "name": "주소(02560) 서울 동대문구 고산자로34길 70 436호 (용두동, 해링턴플레이스)",
+      "price": "02560",
+      "element": "<li>\n                    <ol class=\"d-flex\">\n                        <li><span>주소</span>(02560) 서울 동대문구 고산자로34길 70 436호 (용두동, 해링턴플레이스) </li>\n                    </ol>\n                </li>"
+    },
+    {
+      "name": "주소(02560) 서울 동대문구 고산자로34길 70 436호 (용두동, 해링턴플레이스)",
+      "price": "02560",
+      "element": "<li><span>주소</span>(02560) 서울 동대문구 고산자로34길 70 436호 (용두동, 해링턴플레이스) </li>"
+    },
+    {
+      "name": "개인정보보호책임자김인호\n                        이메일inho.kim8@gmail.com",
+      "price": "",
+      "element": "<li>\n                    <ol class=\"d-flex\">\n                        <li><span>개인정보보호책임자</span>김인호</li>\n                        <li><span>이메일</span>inho.kim8@gmail.com </li>\n                    </ol>\n"
+    },
+    {
+      "name": "개인정보보호책임자김인호",
+      "price": "",
+      "element": "<li><span>개인정보보호책임자</span>김인호</li>"
+    },
+    {
+      "name": "이메일inho.kim8@gmail.com",
+      "price": "",
+      "element": "<li><span>이메일</span>inho.kim8@gmail.com </li>"
+    },
+    {
+      "name": "상호명아이엠팩토리\n\t\t\t\t\t\t\t대표자한인모",
+      "price": "",
+      "element": "<li>\n\t\t\t\t\t\t<ol class=\"d-flex\">\n\t\t\t\t\t\t\t<li><span>상호명</span>아이엠팩토리</li>\n\t\t\t\t\t\t\t<li><span>대표자</span>한인모</li>\n\t\t\t\t\t\t</ol>\n\t\t\t\t\t</li>"
+    },
+    {
+      "name": "상호명아이엠팩토리",
+      "price": "",
+      "element": "<li><span>상호명</span>아이엠팩토리</li>"
+    },
+    {
+      "name": "대표자한인모",
+      "price": "",
+      "element": "<li><span>대표자</span>한인모</li>"
+    },
+    {
+      "name": "사업자등록번호 841-04-02917",
+      "price": "02917",
+      "element": "<li>\n\t\t\t\t\t\t<ol class=\"d-flex\">\n\t\t\t\t\t\t\t<li><span class=\"ft_cnumber\">사업자등록번호 </span>841-04-02917</li>\n\t\t\t\t\t\t</ol>\n\t\t\t\t\t</li>"
+    },
+    {
+      "name": "사업자등록번호 841-04-02917",
+      "price": "02917",
+      "element": "<li><span class=\"ft_cnumber\">사업자등록번호 </span>841-04-02917</li>"
+    },
+    {
+      "name": "통신판매업신고번호제2023-서울동대문-0459호",
+      "price": "2023",
+      "element": "<li>\n\t\t\t\t\t\t<ol class=\"d-flex\">\n\t\t\t\t\t\t\t<li><span>통신판매업신고번호</span>제2023-서울동대문-0459호</li>\n\t\t\t\t\t\t</ol>\n\t\t\t\t\t</li>"
+    },
+    {
+      "name": "통신판매업신고번호제2023-서울동대문-0459호",
+      "price": "2023",
+      "element": "<li><span>통신판매업신고번호</span>제2023-서울동대문-0459호</li>"
+    },
+    {
+      "name": "주소서울 동대문구 고산자로34길 70 436호 (용두동, 해링턴플레이스)",
+      "price": "",
+      "element": "<li>\n\t\t\t\t\t\t<ol class=\"d-flex\">\n\t\t\t\t\t\t\t<li><span>주소</span>서울 동대문구 고산자로34길 70 436호 (용두동, 해링턴플레이스) </li>\n\t\t\t\t\t\t</ol>\n\t\t\t\t\t</li>"
+    },
+    {
+      "name": "주소서울 동대문구 고산자로34길 70 436호 (용두동, 해링턴플레이스)",
+      "price": "",
+      "element": "<li><span>주소</span>서울 동대문구 고산자로34길 70 436호 (용두동, 해링턴플레이스) </li>"
+    },
+    {
+      "name": "개인정보보호책임자김인호\n\t\t\t\t\t\t\t이메일inho.kim8@gmail.com",
+      "price": "",
+      "element": "<li>\n\t\t\t\t\t\t<ol class=\"d-flex\">\n\t\t\t\t\t\t\t<li><span>개인정보보호책임자</span>김인호</li>\n\t\t\t\t\t\t\t<li><span>이메일</span>inho.kim8@gmail.com </li>\n\t\t\t\t\t\t</ol>\n\t\t\t\t\t</li>"
+    },
+    {
+      "name": "개인정보보호책임자김인호",
+      "price": "",
+      "element": "<li><span>개인정보보호책임자</span>김인호</li>"
+    },
+    {
+      "name": "이메일inho.kim8@gmail.com",
+      "price": "",
+      "element": "<li><span>이메일</span>inho.kim8@gmail.com </li>"
+    },
+    {
+      "name": "홈",
+      "price": "",
+      "element": "<li>\n            <a href=\"https://ddingphone.com\">\n                <div class=\"ico ico-home\"><svg class=\"bi bi-house-door\" fill=\"currentColor\" viewBox=\"0 0 16 16\" xmlns=\"http://www.w3.org/2000/svg\"><p"
+    },
+    {
+      "name": ".cls-1{fill:#190933;}\n                갤럭시",
+      "price": "190933",
+      "element": "<li>\n            <a href=\"https://ddingphone.com/list?cid=삼성전자\">\n                <div class=\"ico ico-galaxy\"><svg data-name=\"Layer 1\" id=\"Layer_1\" viewBox=\"0 0 64 64\" xmlns=\"http://www.w3.org/2000/svg"
+    },
+    {
+      "name": "아이폰",
+      "price": "",
+      "element": "<li>\n            <a href=\"https://ddingphone.com/list?cid=APPLE\">\n                <div class=\"ico ico-apple\"><svg enable-background=\"new 0 0 164.3715 208.904\" viewBox=\"0 0 164.3715 208.904\" xml:space="
+    },
+    {
+      "name": "이벤트",
+      "price": "",
+      "element": "<li>\n            <a href=\"https://ddingphone.com/event\">\n                <div class=\"ico ico-event\"><svg viewBox=\"0 0 256 256\" xml:space=\"preserve\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http"
+    },
+    {
+      "name": "빠른상담",
+      "price": "",
+      "element": "<li>\n            <a href=\"javascript:void(0);\" class=\"callcenter\">\n                <div class=\"ico ico-callcenter\"><svg viewBox=\"0 0 16 16\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M14 1a1 1 0 0 1 "
+    },
+    {
+      "name": "5G 스마트폰추천5G 초이스 스페셜월110,000원무제한무제한완전 무제한넷플릭스, 디즈니+,티빙/지니 중 택1",
+      "price": "110000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1738388579\" data-billprice=\"110000\" data-billname=\"5G 초이스 스페셜\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span><span clas"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "완전 무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>완전 무제한</span></li>"
+    },
+    {
+      "name": "넷플릭스, 디즈니+,티빙/지니 중 택1",
+      "price": "",
+      "element": "<li><i class=\"fa fa-certificate\" style=\"color:#ee1c25\"></i><span class=\"bill_benefit\">넷플릭스, 디즈니+,티빙/지니 중 택1</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 스페셜월100,000원무제한무제한완전 무제한스마트기기 요금 1대 무료",
+      "price": "100000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1596090043\" data-billprice=\"100000\" data-billname=\"5G 스페셜\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div cla"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "완전 무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>완전 무제한</span></li>"
+    },
+    {
+      "name": "스마트기기 요금 1대 무료",
+      "price": "",
+      "element": "<li><i class=\"fa fa-certificate\" style=\"color:#ee1c25\"></i><span class=\"bill_benefit\">스마트기기 요금 1대 무료</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 초이스 베이직월90,000원무제한무제한완전 무제한넷플릭스, 디즈니+,티빙/지니 중 택1",
+      "price": "90000",
+      "element": "<li class=\"opt_bill_list on\" data-billcode=\"K1596089921\" data-billprice=\"90000\" data-billname=\"5G 초이스 베이직\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><di"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "완전 무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>완전 무제한</span></li>"
+    },
+    {
+      "name": "넷플릭스, 디즈니+,티빙/지니 중 택1",
+      "price": "",
+      "element": "<li><i class=\"fa fa-certificate\" style=\"color:#ee1c25\"></i><span class=\"bill_benefit\">넷플릭스, 디즈니+,티빙/지니 중 택1</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 베이직월80,000원무제한무제한완전 무제한멤버쉽 VIP 혜택",
+      "price": "80000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1596090013\" data-billprice=\"80000\" data-billname=\"5G 베이직\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div clas"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "완전 무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>완전 무제한</span></li>"
+    },
+    {
+      "name": "멤버쉽 VIP 혜택",
+      "price": "",
+      "element": "<li><i class=\"fa fa-certificate\" style=\"color:#ee1c25\"></i><span class=\"bill_benefit\">멤버쉽 VIP 혜택</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 심플 110GB월69,000원무제한무제한110GB+5Mbps",
+      "price": "69000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1706329137\" data-billprice=\"69000\" data-billname=\"5G 심플 110GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "110GB+5Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>110GB+5Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 심플 90GB월67,000원무제한무제한90GB+최대 1Mbps",
+      "price": "67000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1743042430\" data-billprice=\"67000\" data-billname=\"5G 심플 90GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div "
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "90GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>90GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 심플 70GB월65,000원무제한무제한70GB+최대 1Mbps",
+      "price": "65000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1743042358\" data-billprice=\"65000\" data-billname=\"5G 심플 70GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div "
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "70GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>70GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 심플 50GB월63,000원무제한무제한50GB+최대 1Mbps",
+      "price": "63000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1743042303\" data-billprice=\"63000\" data-billname=\"5G 심플 50GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div "
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "50GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>50GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 심플 30GB월61,000원무제한무제한30GB+최대 1Mbps",
+      "price": "61000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1665546058\" data-billprice=\"61000\" data-billname=\"5G 심플 30GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div "
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "30GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>30GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 슬림 21GB월58,000원무제한무제한21GB+최대 1Mbps",
+      "price": "58000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1743042548\" data-billprice=\"58000\" data-billname=\"5G 슬림 21GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div "
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "21GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>21GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 슬림 14GB월55,000원무제한무제한14GB+최대 1Mbps",
+      "price": "55000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1594100073\" data-billprice=\"55000\" data-billname=\"5G 슬림 14GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div "
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "14GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>14GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 슬림 10GB월50,000원무제한무제한10GB+최대 400Kbps",
+      "price": "50000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1742517802\" data-billprice=\"50000\" data-billname=\"5G 슬림 10GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div "
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "10GB+최대 400Kbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>10GB+최대 400Kbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 시니어베이직 (만 65세 이상)월49,000원무제한무제한15GB+최대 1Mbps",
+      "price": "49000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1764139830\" data-billprice=\"49000\" data-billname=\"5G 시니어베이직 (만 65세 이상)\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span><"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "15GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>15GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G Y틴 (만 19세 미만)월47,000원무제한무제한10GB+최대 1Mbps",
+      "price": "47000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1594100163\" data-billprice=\"47000\" data-billname=\"5G Y틴 (만 19세 미만)\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "10GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>10GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 슬림 7GB월45,000원무제한무제한7GB+최대 400Kbps",
+      "price": "45000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1681213167\" data-billprice=\"45000\" data-billname=\"5G 슬림 7GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div c"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "7GB+최대 400Kbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>7GB+최대 400Kbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 시니어A형 (만 65세 이상)월44,000원무제한무제한10GB+최대 1Mbps",
+      "price": "44000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1705739076\" data-billprice=\"44000\" data-billname=\"5G 시니어A형 (만 65세 이상)\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "10GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>10GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 주니어 (만 13세 미만)월38,000원무제한무제한5GB+최대 1Mbps",
+      "price": "38000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1764139775\" data-billprice=\"38000\" data-billname=\"5G 주니어 (만 13세 미만)\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></di"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "5GB+최대 1Mbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>5GB+최대 1Mbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 슬림 4GB월37,000원무제한무제한4GB+최대 400Kbps",
+      "price": "37000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1741795474\" data-billprice=\"37000\" data-billname=\"5G 슬림 4GB\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span></div><div c"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "4GB+최대 400Kbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>4GB+최대 400Kbps</span></li>"
+    },
+    {
+      "name": "5G 스마트폰5G 주니어 슬림 (만 13세 미만)월28,000원무제한무제한3GB+최대 400Kbps",
+      "price": "28000",
+      "element": "<li class=\"opt_bill_list \" data-billcode=\"K1741795579\" data-billprice=\"28000\" data-billname=\"5G 주니어 슬림 (만 13세 미만)\"><div class=\"bill_item\"><div class=\"bill_icon\"><span class=\"bill_type\">5G 스마트폰</span><"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-tty\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "무제한",
+      "price": "",
+      "element": "<li><i class=\"fa fa-envelope-o\" style=\"color:#ee1c25\"></i><span>무제한</span></li>"
+    },
+    {
+      "name": "3GB+최대 400Kbps",
+      "price": "",
+      "element": "<li><i class=\"fa fa-wifi\" style=\"color:#ee1c25\"></i><span>3GB+최대 400Kbps</span></li>"
+    }
+  ]
+}

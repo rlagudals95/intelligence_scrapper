@@ -1,0 +1,86 @@
+[
+  {
+    "storage": "256",
+    "carrier": "SKT",
+    "join_type": "번호이동",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "256",
+    "carrier": "SKT",
+    "join_type": "기기변경",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "256",
+    "carrier": "KT",
+    "join_type": "번호이동",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "256",
+    "carrier": "KT",
+    "join_type": "기기변경",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "256",
+    "carrier": "LGU",
+    "join_type": "번호이동",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "256",
+    "carrier": "LGU",
+    "join_type": "기기변경",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "512",
+    "carrier": "SKT",
+    "join_type": "번호이동",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "512",
+    "carrier": "SKT",
+    "join_type": "기기변경",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "512",
+    "carrier": "KT",
+    "join_type": "번호이동",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "512",
+    "carrier": "KT",
+    "join_type": "기기변경",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "512",
+    "carrier": "LGU",
+    "join_type": "번호이동",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  },
+  {
+    "storage": "512",
+    "carrier": "LGU",
+    "join_type": "기기변경",
+    "plan": "5G 초이스 베이직",
+    "plan_price": ""
+  }
+]

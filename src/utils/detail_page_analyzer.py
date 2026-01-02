@@ -153,7 +153,8 @@ class DetailPageAnalyzer:
         print("\n[Step 2] HTML 구조 분석 및 선택자 추출 중...")
         
         try:
-            # HTML 전체 추출
+            # HTML 전체 추출 (LLM이 모달 구조를 분석할 수 있도록)
+            # 모달이 닫혀있어도 HTML에는 모달 구조가 포함되어 있음
             html = await page.content()
             
             # HTML 정리 (불필요한 스크립트 제거)
@@ -291,13 +292,21 @@ class DetailPageAnalyzer:
 - **click_method**: "click" | "select"
 - **중요**: 키 이름은 반드시 "join_type"으로 사용하세요. "item_ordtype", "ordtype" 같은 이름을 사용하지 마세요.
 
-## 4. 요금제 선택 UI (plan)
-- 요금제 드롭다운/버튼
-- **open_button_selector**: 드롭다운을 여는 버튼 (예: `button.bill-view`)
-- **list_container_selector**: 요금제 리스트 컨테이너 (예: `.plan-list`, `.myModal-content`)
-- **item_selector**: 요금제 항목 선택자 (예: `li.opt_bill_list`, `.plan_list_item`)
-- **price_attribute**: 요금제 가격 속성 (예: `data-billprice`, `data-price`)
-- **name_selector**: 요금제 이름이 있는 하위 요소 (선택적)
+## 4. 요금제 선택 UI (plan) - **매우 중요**
+- 요금제는 보통 모달/팝업/드롭다운으로 표시됨
+- **open_button_selector**: 요금제 모달/드롭다운을 여는 버튼 찾기
+  - HTML에서 "요금제", "요금제 선택", "▼", "더보기" 같은 텍스트가 있는 버튼 찾기
+  - 예: `button.bill-view`, `button[class*="bill"]`, `.plan_mod`
+  - 모달이 닫혀있어도 HTML 구조를 보고 버튼을 찾을 수 있어야 함
+- **list_container_selector**: 요금제 리스트가 있는 컨테이너
+  - 모달/팝업 내부의 리스트 컨테이너 (예: `.myModal-content`, `.modal-bill-list`, `.plan-list`)
+  - 모달이 닫혀있어도 HTML에서 구조를 찾을 수 있어야 함 (예: `<div class="myModal-content">`)
+- **item_selector**: 각 요금제 항목의 선택자 (가장 중요!)
+  - 모달 내부의 각 요금제 항목 (예: `li.opt_bill_list`, `li[data-billprice]`)
+  - **반드시 모든 요금제 항목을 선택할 수 있는 선택자여야 함**
+  - 예: `li.opt_bill_list`, `.opt_bill_list`, `li[data-billcode]`
+- **price_attribute**: 요금제 가격이 저장된 속성 (예: `data-billprice`, `data-price`)
+- **name_selector**: 요금제 이름이 있는 하위 요소 (예: `.bill_name`, `.bn`)
 
 ## 5. 가격 정보 영역 (pricing)
 - **retail_price_selector**: 출고가가 표시된 요소
@@ -613,63 +622,213 @@ class DetailPageAnalyzer:
         # 요금제는 드롭다운을 열어야 하므로 별도 처리
         if plan_info := structure.get("options", {}).get("plan"):
             try:
-                # 드롭다운 열기
-                open_btn = plan_info.get("open_button_selector")
-                if open_btn:
-                    await page.evaluate(f"""
-                        () => {{
-                            const btn = document.querySelector('{open_btn}');
-                            if (btn) {{
-                                btn.click();
-                            }}
-                        }}
-                    """)
-                    await asyncio.sleep(1)
-                    print(f"    ✅ 요금제 드롭다운 열기 시도")
+                print(f"    [요금제 추출 시작]")
                 
-                # 요금제 목록 추출
+                # 선택자 먼저 가져오기
                 item_selector = plan_info.get("item_selector")
-                price_attr = plan_info.get("price_attribute", "data-billprice")
                 name_selector = plan_info.get("name_selector", "")
+                price_attr = plan_info.get("price_attribute")
+                
+                # 드롭다운/다이얼로그 열기
+                open_btn = plan_info.get("open_button_selector")
+                list_container = plan_info.get("list_container_selector", "")
+                
+                if open_btn:
+                    # Playwright로 버튼 클릭 (더 확실함)
+                    try:
+                        btn_element = await page.query_selector(open_btn)
+                        if btn_element:
+                            # 드롭다운 열기 전 항목 개수 확인
+                            selector_for_check = item_selector if item_selector else ".bill-basic"
+                            before_count = await page.evaluate("""
+                                (selector) => {
+                                    const items = document.querySelectorAll(selector);
+                                    return items.length;
+                                }
+                            """, selector_for_check)
+                            
+                            await btn_element.click()
+                            
+                            # 드롭다운이 열릴 때까지 대기 (최대 3초)
+                            max_wait = 3.0
+                            wait_interval = 0.2
+                            waited = 0.0
+                            after_count = before_count
+                            
+                            while waited < max_wait:
+                                await asyncio.sleep(wait_interval)
+                                waited += wait_interval
+                                
+                                after_count = await page.evaluate("""
+                                    (selector) => {
+                                        const items = document.querySelectorAll(selector);
+                                        return items.length;
+                                    }
+                                """, selector_for_check)
+                                
+                                # 항목이 증가하면 성공
+                                if after_count > before_count:
+                                    break
+                            
+                            await asyncio.sleep(0.5)  # 추가 안정화 대기
+                            
+                            print(f"    ✅ 요금제 드롭다운 열기 버튼 클릭 (항목: {before_count} → {after_count}개, 대기: {waited:.1f}초)")
+                        else:
+                            print(f"    ⚠️  요금제 드롭다운 버튼을 찾지 못함")
+                    except Exception as e:
+                        print(f"    ⚠️  드롭다운 열기 실패: {e}, 계속 진행...")
+                
+                # 컨테이너가 있으면 스크롤하여 모든 항목 로드
+                scroll_container = list_container
+                
+                if scroll_container:
+                    try:
+                        # 선택자로 컨테이너 찾기
+                        if isinstance(scroll_container, str):
+                            container = await page.query_selector(scroll_container)
+                        else:
+                            container = scroll_container
+                        
+                        if container:
+                            # 스크롤하여 모든 항목 로드
+                            scroll_result = await container.evaluate("""
+                                (container) => {
+                                    let lastHeight = 0;
+                                    let currentHeight = container.scrollHeight;
+                                    let scrollAttempts = 0;
+                                    
+                                    // 최대 15번 스크롤 시도
+                                    while (scrollAttempts < 15 && currentHeight > lastHeight) {
+                                        container.scrollTop = container.scrollHeight;
+                                        
+                                        // 대기
+                                        const start = Date.now();
+                                        while (Date.now() - start < 300) {}
+                                        
+                                        lastHeight = currentHeight;
+                                        currentHeight = container.scrollHeight;
+                                        scrollAttempts++;
+                                    }
+                                    
+                                    // 맨 위로 스크롤
+                                    container.scrollTop = 0;
+                                    
+                                    return {
+                                        scrollAttempts: scrollAttempts
+                                    };
+                                }
+                            """)
+                            
+                            await asyncio.sleep(0.5)
+                            print(f"    ✅ 요금제 리스트 스크롤 완료 (시도: {scroll_result.get('scrollAttempts', 0)}회)")
+                        else:
+                            print(f"    ⚠️  스크롤 컨테이너를 찾지 못함")
+                    except Exception as e:
+                        print(f"    ⚠️  스크롤 실패: {e}, 계속 진행...")
+                else:
+                    print(f"    ⚠️  스크롤할 컨테이너가 없음")
+                
+                # 요금제 목록 추출 (개선된 가격 추출)
+                # 추가 대기 (동적 로딩 완료 대기)
+                await asyncio.sleep(0.5)
                 
                 if item_selector:
-                    plans = await page.evaluate(f"""
-                        () => {{
-                            try {{
-                                const items = document.querySelectorAll('{item_selector}');
-                                return Array.from(items).map(item => {{
-                                    const nameElem = '{name_selector}' ? item.querySelector('{name_selector}') : item;
-                                    const name = nameElem ? nameElem.textContent.trim() : item.textContent.trim();
-                                    const price = item.getAttribute('{price_attr}') || '';
+                    plans = await page.evaluate("""
+                        ([itemSelector, nameSelector, priceAttr, listContainer]) => {
+                            try {
+                                // LLM이 추출한 컨테이너 선택자 사용
+                                let searchRoot = document;
+                                
+                                if (listContainer) {
+                                    const container = document.querySelector(listContainer);
+                                    if (container) {
+                                        searchRoot = container;
+                                        console.log(`[요금제] 컨테이너 사용: ${listContainer}`);
+                                    } else {
+                                        console.log(`[요금제] 컨테이너를 찾지 못함: ${listContainer}`);
+                                    }
+                                }
+                                
+                                // LLM이 추출한 선택자로 항목 찾기
+                                const items = searchRoot.querySelectorAll(itemSelector);
+                                console.log(`[요금제] 선택자 "${itemSelector}"로 찾은 항목: ${items.length}개`);
+                                
+                                // 각 항목의 정보 출력 (디버깅)
+                                Array.from(items).forEach((item, idx) => {
+                                    const name = nameSelector ? (item.querySelector(nameSelector)?.textContent || '') : item.textContent;
+                                    const price = priceAttr ? item.getAttribute(priceAttr) : '';
+                                    console.log(`  [${idx + 1}] ${name?.trim()} (${price}원)`);
+                                });
+                                
+                                const plans = Array.from(items).map(item => {
+                                    // 이름 추출
+                                    let name = '';
+                                    if (nameSelector) {
+                                        const nameElem = item.querySelector(nameSelector);
+                                        if (nameElem) {
+                                            name = nameElem.textContent.trim();
+                                        }
+                                    }
+                                    if (!name) {
+                                        name = item.textContent.trim();
+                                    }
                                     
-                                    // 텍스트에서 가격 추출 시도
-                                    let priceFromText = '';
-                                    if (!price) {{
+                                    // 가격 추출 (여러 방법 시도)
+                                    let price = '';
+                                    
+                                    // LLM이 추출한 가격 속성으로 가격 추출
+                                    if (priceAttr) {
+                                        price = item.getAttribute(priceAttr) || '';
+                                    }
+                                    
+                                    // 가격 속성이 없으면 텍스트에서 가격 패턴 찾기
+                                    if (!price) {
                                         const text = item.textContent || '';
-                                        const match = text.match(/(\\d{{1,3}}),?(\\d{{3}}),?(\\d{{3}})?/);
-                                        if (match) {{
-                                            priceFromText = match[0].replace(/,/g, '');
-                                        }}
-                                    }}
+                                        const patterns = [
+                                            /(\d{1,3}(?:,\d{3})*)\s*원/,
+                                            /(\d{4,})\s*원/,
+                                            /월\s*(\d{1,3}(?:,\d{3})*)\s*원/
+                                        ];
+                                        
+                                        for (const pattern of patterns) {
+                                            const match = text.match(pattern);
+                                            if (match) {
+                                                price = match[1].replace(/,/g, '');
+                                                break;
+                                            }
+                                        }
+                                    }
                                     
-                                    return {{
+                                    return {
                                         name: name,
-                                        price: price || priceFromText,
-                                        element: item.outerHTML.substring(0, 200)
-                                    }};
-                                }}).filter(p => p.name);
-                            }} catch (e) {{
+                                        price: price,
+                                        element: item.outerHTML.substring(0, 300)
+                                    };
+                                }).filter(p => p.name);
+                                
+                                console.log(`[요금제] 추출된 요금제 개수: ${plans.length}`);
+                                return plans;
+                            } catch (e) {
+                                console.error(`[요금제] 에러:`, e);
                                 return [];
-                            }}
-                        }}
-                    """)
+                            }
+                        }
+                    """, [item_selector, name_selector, price_attr, list_container])
+                    
                     if plans:
                         options["plan"] = plans
                         print(f"    ✅ 요금제: {len(plans)}개 발견")
-                        for plan in plans[:3]:
-                            print(f"      - {plan.get('name')} ({plan.get('price')}원)")
+                        for plan in plans[:10]:  # 최대 10개까지 출력
+                            price_str = f" ({plan.get('price', '')}원)" if plan.get('price') else " (가격 없음)"
+                            print(f"      - {plan.get('name', 'N/A')}{price_str}")
+                    else:
+                        print(f"    ⚠️  요금제 추출 실패: 항목을 찾지 못함")
+                else:
+                    print(f"    ⚠️  요금제 선택자가 없음")
             except Exception as e:
                 print(f"    ⚠️  요금제 추출 실패: {e}")
+                import traceback
+                traceback.print_exc()
         
         return options
     
@@ -776,52 +935,200 @@ class DetailPageAnalyzer:
         
         return results
     
-    async def _select_options(self, page: Page, combo: Dict[str, str]):
-        """옵션 선택 (텍스트 기반)"""
-        # 용량 선택
-        if combo.get("storage"):
-            await self._click_by_text(page, combo["storage"])
-            await asyncio.sleep(0.3)
+    async def _select_options(self, page: Page, combo: Dict[str, str], structure: Dict[str, Any]):
+        """옵션 선택 (선택자 기반 우선, 폴백으로 텍스트 기반)"""
+        options_info = structure.get("options", {})
+        execution_plan = structure.get("execution_plan", {})
+        order = execution_plan.get("order", ["storage", "carrier", "join_type", "plan"])
+        wait_times = execution_plan.get("wait_times", {})
         
-        # 통신사 선택
-        if combo.get("carrier"):
-            carrier_texts = [combo["carrier"]]
-            if combo["carrier"] == "LGU":
-                carrier_texts = ["LGU", "LG U+", "U+", "LG"]
+        # 순서대로 옵션 선택
+        for option_type in order:
+            if option_type == "storage" and combo.get("storage"):
+                storage_info = options_info.get("storage", {})
+                if storage_info.get("selector"):
+                    # 선택자 기반 선택
+                    await self._select_by_selector(page, storage_info, combo["storage"])
+                else:
+                    # 텍스트 기반 폴백
+                    await self._click_by_text(page, combo["storage"])
+                await asyncio.sleep(wait_times.get("after_storage", 0.3))
             
-            for carrier_text in carrier_texts:
-                if await self._click_by_text(page, carrier_text):
-                    break
-            await asyncio.sleep(0.3)
-        
-        # 가입유형 선택
-        if combo.get("join_type"):
-            await self._click_by_text(page, combo["join_type"])
-            await asyncio.sleep(0.3)
+            elif option_type == "carrier" and combo.get("carrier"):
+                carrier_info = options_info.get("carrier", {})
+                if carrier_info.get("selector"):
+                    # 선택자 기반 선택
+                    await self._select_by_selector(page, carrier_info, combo["carrier"])
+                else:
+                    # 텍스트 기반 폴백
+                    await self._click_by_text(page, combo["carrier"])
+                await asyncio.sleep(wait_times.get("after_carrier", 0.5))
+            
+            elif option_type == "join_type" and combo.get("join_type"):
+                join_type_info = options_info.get("join_type", {})
+                if join_type_info.get("selector"):
+                    # 선택자 기반 선택
+                    await self._select_by_selector(page, join_type_info, combo["join_type"])
+                else:
+                    # 텍스트 기반 폴백
+                    await self._click_by_text(page, combo["join_type"])
+                await asyncio.sleep(wait_times.get("after_join_type", 0.3))
+            
+            elif option_type == "plan" and combo.get("plan"):
+                plan_info = options_info.get("plan", {})
+                if plan_info.get("open_button_selector"):
+                    # 요금제 드롭다운 열기
+                    await self._select_plan(page, plan_info, combo["plan"], combo.get("plan_price"))
+                else:
+                    # 텍스트 기반 폴백
+                    await self._click_by_text(page, combo["plan"])
+                await asyncio.sleep(wait_times.get("after_plan", 1.0))
+    
+    async def _select_by_selector(self, page: Page, option_info: Dict[str, Any], value: str) -> bool:
+        """선택자 기반으로 옵션 선택"""
+        try:
+            selector = option_info.get("selector")
+            value_attr = option_info.get("value_attribute", "value")
+            click_method = option_info.get("click_method", "click")
+            
+            if not selector:
+                return False
+            
+            # value 속성으로 찾기
+            if value_attr:
+                result = await page.evaluate("""
+                    ([selector, valueAttr, targetValue]) => {
+                        try {
+                            const elements = document.querySelectorAll(selector);
+                            for (const elem of elements) {
+                                const attrValue = elem.getAttribute(valueAttr);
+                                if (attrValue === targetValue || attrValue === String(targetValue)) {
+                                    elem.click();
+                                    return true;
+                                }
+                            }
+                            return false;
+                        } catch (e) {
+                            return false;
+                        }
+                    }
+                """, [selector, value_attr, value])
+                
+                if result:
+                    return True
+            
+            # 텍스트로 찾기
+            result = await page.evaluate("""
+                ([selector, targetText]) => {
+                    try {
+                        const elements = document.querySelectorAll(selector);
+                        for (const elem of elements) {
+                            if (elem.textContent && elem.textContent.trim().includes(targetText)) {
+                                elem.click();
+                                return true;
+                            }
+                        }
+                        return false;
+                    } catch (e) {
+                        return false;
+                    }
+                }
+            """, [selector, value])
+            
+            return result
+            
+        except Exception as e:
+            print(f"      ⚠️  선택자 기반 선택 실패: {e}")
+            return False
+    
+    async def _select_plan(self, page: Page, plan_info: Dict[str, Any], plan_name: str, plan_price: str = None) -> bool:
+        """요금제 선택 (드롭다운 열고 선택)"""
+        try:
+            # 드롭다운 열기
+            open_btn = plan_info.get("open_button_selector")
+            if open_btn:
+                btn_element = await page.query_selector(open_btn)
+                if btn_element:
+                    await btn_element.click()
+                    await asyncio.sleep(0.5)
+            
+            # 요금제 항목 찾아서 클릭
+            item_selector = plan_info.get("item_selector")
+            name_selector = plan_info.get("name_selector", "")
+            
+            if item_selector:
+                # 가격 우선 매칭 (있으면)
+                if plan_price:
+                    result = await page.evaluate("""
+                        ([itemSelector, nameSelector, targetPrice]) => {
+                            try {
+                                const items = document.querySelectorAll(itemSelector);
+                                for (const item of items) {
+                                    const text = item.textContent || '';
+                                    // 가격 찾기
+                                    const priceMatch = text.match(/(\\d{1,3}(?:,\\d{3})*)/);
+                                    if (priceMatch) {
+                                        const price = priceMatch[1].replace(/,/g, '');
+                                        if (price === targetPrice) {
+                                            item.click();
+                                            return true;
+                                        }
+                                    }
+                                }
+                                return false;
+                            } catch (e) {
+                                return false;
+                            }
+                        }
+                    """, [item_selector, name_selector, plan_price])
+                    
+                    if result:
+                        return True
+                
+                # 이름으로 매칭
+                result = await page.evaluate("""
+                    ([itemSelector, nameSelector, targetName]) => {
+                        try {
+                            const items = document.querySelectorAll(itemSelector);
+                            for (const item of items) {
+                                let name = '';
+                                if (nameSelector) {
+                                    const nameElem = item.querySelector(nameSelector);
+                                    if (nameElem) {
+                                        name = nameElem.textContent.trim();
+                                    }
+                                }
+                                if (!name) {
+                                    name = item.textContent.trim();
+                                }
+                                
+                                if (name.includes(targetName)) {
+                                    item.click();
+                                    return true;
+                                }
+                            }
+                            return false;
+                        } catch (e) {
+                            return false;
+                        }
+                    }
+                """, [item_selector, name_selector, plan_name])
+                
+                return result
+            
+            return False
+            
+        except Exception as e:
+            print(f"      ⚠️  요금제 선택 실패: {e}")
+            return False
     
     async def _click_by_text(self, page: Page, text: str) -> bool:
-        """텍스트로 요소 찾아서 클릭"""
+        """텍스트로 요소 찾아서 클릭 (Playwright 기본 기능만 사용)"""
         try:
             await page.get_by_text(text, exact=False).first.click(force=True, timeout=1000)
             return True
         except:
-            # JavaScript로 시도
-            try:
-                result = await page.evaluate(f"""
-                    () => {{
-                        const all = document.querySelectorAll('button, a, div, span, label, input[type="radio"]');
-                        for (const elem of all) {{
-                            if (elem.textContent && elem.textContent.includes("{text}")) {{
-                                elem.click();
-                                return true;
-                            }}
-                        }}
-                        return false;
-                    }}
-                """)
-                return result
-            except:
-                return False
+            return False
     
     async def _extract_pricing_with_selectors(
         self, 
