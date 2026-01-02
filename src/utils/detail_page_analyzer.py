@@ -315,7 +315,6 @@ class DetailPageAnalyzer:
 - **discount_selector**: 추가할인이 표시된 요소
 - **installment_fee_selector**: 할부원금이 표시된 요소
 - **monthly_payment_selector**: 월 할부금이 표시된 요소
-- **plan_monthly_fee_selector**: 요금제 월요금이 표시된 요소
 
 # 응답 형식 (JSON)
 
@@ -352,7 +351,6 @@ class DetailPageAnalyzer:
     "discount_selector": ".discount .unit-w",
     "installment_fee_selector": ".installment .unit-w",
     "monthly_payment_selector": ".monthly-payment .unit-w",
-    "plan_monthly_fee_selector": ".plan-fee .unit-w"
   }},
   "execution_plan": {{
     "order": ["storage", "carrier", "join_type", "plan"],
@@ -1265,8 +1263,6 @@ class DetailPageAnalyzer:
                         pricing["sku_installment_fee"] = value
                     elif price_type == "monthly_payment_selector":
                         pricing["monthly_payment"] = value
-                    elif price_type == "plan_monthly_fee_selector":
-                        pricing["plan_monthly_fee"] = value
                         
                 except Exception as e:
                     logger.debug(f"가격 추출 실패 ({price_type}): {e}")
@@ -1307,7 +1303,6 @@ JSON 형식:
   "discount": 100000,
   "final_price": 900000,
   "sku_installment_fee": 37500,
-  "plan_monthly_fee": 89000
 }
 
 숫자는 콤마 없이 정수로 반환하세요.
@@ -1402,7 +1397,6 @@ JSON만 출력하세요.
                 mno_join_type=join_type,
                 mobile_plan=MobilePlan(
                     name=combo.get("plan") or "Unknown",
-                    monthly_fee=pricing.get("plan_monthly_fee") or 0
                 ),
                 discount_type=DiscountType.PUBLIC_SUBSIDY,  # 기본값: 공시지원금
                 pricing=PricingDetails(
