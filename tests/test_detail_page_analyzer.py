@@ -222,8 +222,8 @@ async def test_step4_generate_combinations(site_name: str, test_url: str):
         
         print("\n[Step 4 결과]")
         print(f"  총 조합 수: {len(result)}개")
-        print(f"\n  첫 5개 조합:")
-        for i, combo in enumerate(result[:5], 1):
+        
+        for i, combo in enumerate(result):
             print(f"    [{i}] {combo}")
         
         # 결과 저장

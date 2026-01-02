@@ -296,17 +296,18 @@ class DetailPageAnalyzer:
 - 요금제는 보통 모달/팝업/드롭다운으로 표시됨
 - **open_button_selector**: 요금제 모달/드롭다운을 여는 버튼 찾기
   - HTML에서 "요금제", "요금제 선택", "▼", "더보기" 같은 텍스트가 있는 버튼 찾기
-  - 예: `button.bill-view`, `button[class*="bill"]`, `.plan_mod`
   - 모달이 닫혀있어도 HTML 구조를 보고 버튼을 찾을 수 있어야 함
-- **list_container_selector**: 요금제 리스트가 있는 컨테이너
-  - 모달/팝업 내부의 리스트 컨테이너 (예: `.myModal-content`, `.modal-bill-list`, `.plan-list`)
-  - 모달이 닫혀있어도 HTML에서 구조를 찾을 수 있어야 함 (예: `<div class="myModal-content">`)
+- **list_container_selector**: 요금제 리스트가 있는 컨테이너 (매우 중요!)
+  - **반드시 "open_button_selector"를 클릭했을 때 나타나는 모달/드롭다운 내부의 리스트 컨테이너여야 함**
+  - HTML에서 모달/팝업 구조를 찾을 때, 버튼 클릭 후 나타날 요소를 추론해야 함
+  - 예: 버튼 클릭 후 나타나는 `<div class="myModal-content">` 내부의 `<ul>` 또는 `<div class="modal-bill-list">`
+  - **주의**: 버튼 클릭 전에 보이는 요소(예: `.bill-box`)가 아니라, 클릭 후 나타나는 요소여야 함
 - **item_selector**: 각 요금제 항목의 선택자 (가장 중요!)
-  - 모달 내부의 각 요금제 항목 (예: `li.opt_bill_list`, `li[data-billprice]`)
+  - "list_container_selector" 내부의 각 요금제 항목 선택자
   - **반드시 모든 요금제 항목을 선택할 수 있는 선택자여야 함**
   - 예: `li.opt_bill_list`, `.opt_bill_list`, `li[data-billcode]`
-- **price_attribute**: 요금제 가격이 저장된 속성 (예: `data-billprice`, `data-price`)
-- **name_selector**: 요금제 이름이 있는 하위 요소 (예: `.bill_name`, `.bn`)
+- **price_attribute**: 요금제 가격이 저장된 속성
+- **name_selector**: 요금제 이름이 있는 하위 요소
 
 ## 5. 가격 정보 영역 (pricing)
 - **retail_price_selector**: 출고가가 표시된 요소
@@ -632,6 +633,94 @@ class DetailPageAnalyzer:
                 # 드롭다운/다이얼로그 열기
                 open_btn = plan_info.get("open_button_selector")
                 list_container = plan_info.get("list_container_selector", "")
+                
+                # open_button_selector를 클릭하고 나타나는 요소를 확인하여 list_container_selector 검증/보정
+                if open_btn:
+                    try:
+                        btn_element = await page.query_selector(open_btn)
+                        if btn_element:
+                            # 클릭 전 상태 저장
+                            before_html = await page.content()
+                            
+                            # 버튼 클릭
+                            await btn_element.click()
+                            await asyncio.sleep(1.0)  # 모달/드롭다운 열림 대기
+                            
+                            # 클릭 후 나타나는 모달/드롭다운 찾기
+                            detected_container = await page.evaluate("""
+                                () => {
+                                    // 새로 나타난 모달/팝업 찾기
+                                    const modals = document.querySelectorAll('.modal, .popup, [class*="Modal"], [class*="modal"], [class*="layer"], [class*="Layer"]');
+                                    for (const modal of modals) {
+                                        // display: none이 아니고, visible한 요소
+                                        const style = window.getComputedStyle(modal);
+                                        if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+                                            // 내부에 리스트가 있는지 확인
+                                            const list = modal.querySelector('ul, ol, [class*="list"], [class*="List"]');
+                                            if (list) {
+                                                return modal.className || modal.id || modal.tagName;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // 모달 내부의 리스트 컨테이너 직접 찾기
+                                    const listContainers = document.querySelectorAll('[class*="list"], [class*="List"], ul, ol');
+                                    for (const container of listContainers) {
+                                        const style = window.getComputedStyle(container);
+                                        if (style.display !== 'none' && style.visibility !== 'hidden') {
+                                            // 부모가 모달/팝업인지 확인
+                                            let parent = container.parentElement;
+                                            while (parent) {
+                                                const parentClass = parent.className || '';
+                                                if (parentClass.includes('modal') || parentClass.includes('Modal') || 
+                                                    parentClass.includes('popup') || parentClass.includes('Popup') ||
+                                                    parentClass.includes('layer') || parentClass.includes('Layer')) {
+                                                    return container.className || container.id || container.tagName;
+                                                }
+                                                parent = parent.parentElement;
+                                            }
+                                        }
+                                    }
+                                    
+                                    return null;
+                                }
+                            """)
+                            
+                            if detected_container:
+                                # 실제로 나타난 컨테이너의 선택자 추출
+                                actual_container_selector = await page.evaluate("""
+                                    (containerClassOrId) => {
+                                        // 클래스명으로 찾기
+                                        if (containerClassOrId.includes(' ')) {
+                                            const parts = containerClassOrId.split(' ').filter(p => p);
+                                            if (parts.length > 0) {
+                                                return '.' + parts[0];
+                                            }
+                                        }
+                                        // ID로 찾기
+                                        const elem = document.getElementById(containerClassOrId);
+                                        if (elem) {
+                                            return '#' + containerClassOrId;
+                                        }
+                                        // 클래스명으로 찾기
+                                        const elemByClass = document.querySelector('.' + containerClassOrId);
+                                        if (elemByClass) {
+                                            return '.' + containerClassOrId;
+                                        }
+                                        return null;
+                                    }
+                                """, detected_container)
+                                
+                                if actual_container_selector:
+                                    print(f"    ✅ 실제 나타난 컨테이너 감지: {actual_container_selector}")
+                                    # LLM이 추출한 선택자와 다르면 업데이트
+                                    if list_container != actual_container_selector:
+                                        print(f"    🔄 list_container_selector 업데이트: {list_container} → {actual_container_selector}")
+                                        list_container = actual_container_selector
+                                        plan_info["list_container_selector"] = actual_container_selector
+                                        
+                    except Exception as e:
+                        print(f"    ⚠️  컨테이너 자동 감지 실패: {e}, LLM 추론 선택자 사용")
                 
                 if open_btn:
                     # Playwright로 버튼 클릭 (더 확실함)

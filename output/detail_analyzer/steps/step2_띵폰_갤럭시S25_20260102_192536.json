@@ -1,0 +1,80 @@
+{
+  "structure": {
+    "options": {
+      "storage": {
+        "selector": ".giga_option input[type='radio']",
+        "type": "radio",
+        "click_method": "click",
+        "value_attribute": "value"
+      },
+      "carrier": {
+        "selector": "input[name='item_telecom']",
+        "type": "radio",
+        "click_method": "click",
+        "value_attribute": "value"
+      },
+      "join_type": {
+        "selector": "input[name='item_ordtype']",
+        "type": "radio",
+        "click_method": "click"
+      },
+      "plan": {
+        "open_button_selector": "button.bill-view",
+        "list_container_selector": ".bill-box ul",
+        "item_selector": "li",
+        "price_attribute": null,
+        "name_selector": ".bn"
+      }
+    },
+    "pricing": {
+      "retail_price_selector": ".mobile-price-box .sp .unit-w",
+      "public_subsidy_selector": ".dl_gp .gp .unit-w",
+      "discount_selector": ".dl_dp .dp .unit-w",
+      "installment_fee_selector": ".dl_hp .hp .unit-w",
+      "monthly_payment_selector": ".charge-body .cell-halbu .mp .unit-w",
+      "plan_monthly_fee_selector": ".charge-body .cell-bill .tb .unit-w"
+    },
+    "execution_plan": {
+      "order": [
+        "storage",
+        "carrier",
+        "join_type",
+        "plan"
+      ],
+      "wait_times": {
+        "after_storage": 0.3,
+        "after_carrier": 0.5,
+        "after_join_type": 0.3,
+        "after_plan": 1.0
+      },
+      "price_extraction_trigger": "after_all_selected"
+    }
+  },
+  "options": {
+    "storage": [
+      "256",
+      "512"
+    ],
+    "carrier": [
+      "SKT",
+      "KT",
+      "LGU"
+    ],
+    "join_type": [
+      "번호이동",
+      "기기변경"
+    ],
+    "plan": [
+      {
+        "name": "5G 초이스 베이직",
+        "price": "90000",
+        "element": "<li>\n                                        <div class=\"bill-basic\"><span class=\"bn\">5G 초이스 베이직</span></div>\n                                        <div class=\"bill-charge\"><span>월</span><span class=\"unit-w\">90,000</span><span class=\"unit-k\">원</span></div>\n                                        <"
+      },
+      {
+        "name": "완전 무제한(넷플릭스, 디즈니+,티빙/지니 중 택1)\n                                        무제한\n                                        무제한",
+        "price": "",
+        "element": "<li class=\"bill-info\">\n                                        <span class=\"bill-data\"><span><i class=\"fa fa-wifi\" style=\"color:#000000;\"></i></span><b>완전 무제한</b><small>(넷플릭스, 디즈니+,티빙/지니 중 택1)</small></span>\n                                        <span class=\"bill-voice\"><span><i class=\"fa fa-tty\" "
+      }
+    ]
+  }
+}
