@@ -48,6 +48,50 @@ install:
 	@echo "🎭 Playwright 브라우저 설치 중..."
 	uv run playwright install chromium
 
+# 상세페이지
+test-detail-page-analyzer:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py -v -s --tb=short
+
+test-detail-page-analyzer-all:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py -v -s --tb=short
+	uv run pytest tests/test_detail_page_analyzer.py::test_detail_page_analyzer[띵폰_갤럭시S25] -v -s --tb=short
+	uv run pytest tests/test_detail_page_analyzer.py::test_detail_page_analyzer[띵폰_아이폰17] -v -s --tb=short
+	uv run pytest tests/test_detail_page_analyzer.py::test_detail_page_analyzer[하이폰_갤럭시S25] -v -s --tb=short
+	uv run pytest tests/test_detail_page_analyzer.py::test_detail_page_analyzer[하이폰_아이폰17] -v -s --tb=short
+
+
+test-detail-page-analyzer-step1:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py::test_step1_extract_basic_info -v -s --tb=short
+
+test-detail-page-analyzer-step2:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py::test_step2_analyze_option_ui -v -s --tb=short
+
+test-detail-page-analyzer-step3:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py::test_step3_extract_option_values -v -s --tb=short
+
+test-detail-page-analyzer-step4:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py::test_step4_generate_combinations -v -s --tb=short
+
+test-detail-page-analyzer-step5:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py::test_step5_extract_policies_sample -v -s --tb=short
+
+test-detail-page-analyzer-step6:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py::test_step6_convert_to_schema -v -s --tb=short
+
+test-detail-page-analyzer-full:
+	@echo "🧪 상세페이지 분석 테스트 실행 중..."
+	uv run pytest tests/test_detail_page_analyzer.py::test_detail_page_analyzer_full -v -s --tb=short
+
+########################################################
+
 # Phase 1 테스트
 test-phase1:
 	@echo "🧪 Phase 1 테스트 실행 중..."

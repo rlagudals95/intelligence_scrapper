@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from src.core.llm_client import LLMClient, LLMProvider
-from src.utils.page_analyzer import PageAnalyzer
+from src.utils.list_list_page_analyzer import ListPageAnalyzer
 from src.utils.prompts import (
     format_listing_analysis_prompt,
     format_detail_options_prompt,
@@ -288,7 +288,7 @@ def test_prompt_template_pricing():
 # 2-2. Page Analyzer 테스트
 # ============================================================================
 
-def test_page_analyzer_initialization():
+def test_list_page_analyzer_initialization():
     """PageAnalyzer 초기화 테스트"""
     if not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"):
         pytest.skip("API 키 없음")
@@ -306,7 +306,7 @@ def test_page_analyzer_initialization():
     not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
     reason="API 키 없음"
 )
-async def test_page_analyzer_json_extraction():
+async def test_list_page_analyzer_json_extraction():
     """PageAnalyzer JSON 추출 테스트"""
     analyzer = PageAnalyzer()
     
@@ -340,7 +340,7 @@ async def test_page_analyzer_json_extraction():
     not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
     reason="API 키 없음"
 )
-async def test_page_analyzer_llm_stats():
+async def test_list_page_analyzer_llm_stats():
     """PageAnalyzer LLM 통계 조회 테스트"""
     analyzer = PageAnalyzer()
     
@@ -572,7 +572,7 @@ if __name__ == "__main__":
     test_prompt_template_listing()
     test_prompt_template_detail_options()
     test_prompt_template_pricing()
-    test_page_analyzer_initialization()
+    test_list_page_analyzer_initialization()
     
     # 비동기 테스트
     if os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"):
@@ -582,8 +582,8 @@ if __name__ == "__main__":
         asyncio.run(test_llm_client_json_mode())
         asyncio.run(test_llm_vision_api())
         asyncio.run(test_llm_retry_logic())
-        asyncio.run(test_page_analyzer_json_extraction())
-        asyncio.run(test_page_analyzer_llm_stats())
+        asyncio.run(test_list_page_analyzer_json_extraction())
+        asyncio.run(test_list_page_analyzer_llm_stats())
         asyncio.run(test_phase2_integration())
     else:
         print("\n⚠️  API 키가 설정되지 않아 일부 테스트를 건너뜁니다")

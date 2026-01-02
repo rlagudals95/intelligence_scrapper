@@ -78,7 +78,7 @@ phone_scrapper_v2/
 
 ### Phase 2: LLM 통합 ✅
 - [x] LLM Client (`core/llm_client.py`) - OpenAI/Anthropic 지원
-- [x] Page Analyzer (`utils/page_analyzer.py`) - LLM 기반 페이지 분석
+- [x] Page Analyzer (`utils/list_page_analyzer.py`) - LLM 기반 페이지 분석
 - [x] Prompt Templates (`utils/prompts.py`) - 리스팅/옵션/가격 분석
 - [x] 테스트 작성 및 통과
 

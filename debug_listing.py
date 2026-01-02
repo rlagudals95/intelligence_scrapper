@@ -41,7 +41,7 @@ async def main():
         print(f"페이지 로드 완료: {await page.title()}\n")
         
         # PageAnalyzer로 구조 분석
-        from src.utils.page_analyzer import PageAnalyzer
+        from src.utils.list_page_analyzer import PageAnalyzer
         analyzer = PageAnalyzer(llm_client)
         
         print("페이지 구조 분석 중...")

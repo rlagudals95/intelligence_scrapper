@@ -10,7 +10,7 @@ from playwright.async_api import Page
 from ..core.browser import BrowserManager
 from ..core.llm_client import LLMClient
 from ..models.schemas import PhoneListingItem
-from ..utils.page_analyzer import PageAnalyzer
+from ..utils.list_page_analyzer import PageAnalyzer
 from ..utils.logger import get_logger
 from ..utils.delay import random_delay
 
@@ -31,7 +31,7 @@ class ListingCrawler:
     ):
         self.llm = llm_client
         self.browser = browser_manager
-        self.page_analyzer = PageAnalyzer(llm_client)
+        self.list_page_analyzer = PageAnalyzer(llm_client)
     
     async def crawl(self, listing_url: str) -> List[PhoneListingItem]:
         """
@@ -53,7 +53,7 @@ class ListingCrawler:
         
         # 1. LLM으로 페이지 구조 1회 분석
         logger.info("LLM으로 페이지 구조 분석 중...")
-        page_structure = await self.page_analyzer.analyze_listing_page(
+        page_structure = await self.list_page_analyzer.analyze_listing_page(
             page,
             use_screenshot=True
         )

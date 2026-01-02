@@ -144,7 +144,7 @@ class SiteConfig:
 - 페이지네이션 감지 프롬프트
 - 시스템 메시지 (리스팅 분석 전문가 역할)
 
-#### 2-3. Listing Page Analyzer (`utils/page_analyzer.py`)
+#### 2-3. Listing Page Analyzer (`utils/list_page_analyzer.py`)
 - LLM을 활용한 리스팅 페이지 구조 분석
 - HTML + 스크린샷을 LLM에 제공
 - LLM 응답에서 JSON 추출 및 파싱
@@ -312,7 +312,7 @@ class PhoneListingItem:
   * 할인 정보 영역
   * 약정 정보 영역
 
-#### 3-2. Detail Page Analyzer (`utils/page_analyzer.py` 확장)
+#### 3-2. Detail Page Analyzer (`utils/list_page_analyzer.py` 확장)
 - LLM을 활용한 상세 페이지 분석
 - 옵션 구조 분석:
   * 각 옵션의 셀렉터 추출

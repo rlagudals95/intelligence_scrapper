@@ -21,7 +21,7 @@ from .prompts import (
 logger = get_logger()
 
 
-class PageAnalyzer:
+class ListPageAnalyzer:
     """LLM 기반 페이지 분석기"""
     
     def __init__(
@@ -34,7 +34,7 @@ class PageAnalyzer:
         else:
             self.llm = LLMClient(provider=provider)
         
-        logger.info("PageAnalyzer 초기화", provider=provider.value)
+        logger.info("ListPageAnalyzer 초기화", provider=provider.value)
     
     async def analyze_listing_page(
         self,
