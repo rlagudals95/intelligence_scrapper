@@ -1,0 +1,75 @@
+{
+  "captured_at": "2025-12-31T14:30:24.323140",
+  "source": {
+    "site": "띵폰_갤럭시S25",
+    "url": "https://ddingphone.com/view/116?tid=KT&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=K1596089921"
+  },
+  "products": [
+    {
+      "product_id": "74a8ef887c09a27e",
+      "sku_code": "GALAXY_S25",
+      "sku_storage": "256GB",
+      "policies": [
+        {
+          "policy_id": "0391d9594eb1000c",
+          "carrier": "KT",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 슬림 30GB",
+            "monthly_fee": 61000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 603000,
+            "monthly_payment": 87698
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "59740fe38f6ddbb0",
+          "carrier": "KT",
+          "mno_join_type": "기기변경",
+          "mobile_plan": {
+            "name": "5G 심플 30GB",
+            "monthly_fee": 61000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 653000,
+            "monthly_payment": 28912
+          },
+          "addons": [],
+          "policy_text": null
+        },
+        {
+          "policy_id": "ffe79e52b0e4d65e",
+          "carrier": "LGU",
+          "mno_join_type": "번호이동",
+          "mobile_plan": {
+            "name": "5G 심플 플러스",
+            "monthly_fee": 61000
+          },
+          "discount_type": "공시지원금",
+          "pricing": {
+            "mno_retail_price": 1155000,
+            "public_subsidy": null,
+            "discount": null,
+            "sku_installment_fee": 694000,
+            "monthly_payment": 30727
+          },
+          "addons": [],
+          "policy_text": null
+        }
+      ],
+      "product_name": null,
+      "product_color": null
+    }
+  ]
+}

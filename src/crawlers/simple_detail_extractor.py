@@ -153,18 +153,36 @@ class SimpleDetailExtractor:
                         await self.vision_agent.select_plan_by_fee(page, target_fee)
                         await asyncio.sleep(0.5)
                     
-                    # 통신사 선택 (여러 표기 시도)
-                    carrier_texts = [carrier]
-                    if carrier == "LGU":
-                        carrier_texts = ["LGU", "LG U+", "U+", "LG"]
-                    
+                    # 통신사 선택 (띵폰 사이트 특화 + 일반 방식)
                     clicked_carrier = False
-                    for carrier_text in carrier_texts:
-                        clicked_carrier = await self._click_by_text(page, carrier_text)
-                        if clicked_carrier:
-                            break
+                    
+                    # 띵폰 사이트: 라디오 버튼 value 속성으로 직접 선택
+                    if "ddingphone" in url.lower():
+                        clicked_carrier = await self._click_carrier_radio(page, carrier)
+                    
+                    # 일반 방식: 텍스트/이미지 기반 클릭
+                    if not clicked_carrier:
+                        carrier_texts = [carrier]
+                        if carrier == "LGU":
+                            carrier_texts = ["LGU", "LG U+", "U+", "LG"]
+                        
+                        for carrier_text in carrier_texts:
+                            clicked_carrier = await self._click_by_text(page, carrier_text)
+                            if clicked_carrier:
+                                break
                     
                     await asyncio.sleep(0.5)
+                    
+                    # 통신사 선택 검증
+                    if clicked_carrier:
+                        is_carrier_selected = await self._verify_carrier_selected(page, carrier)
+                        if not is_carrier_selected:
+                            print(f"    ⚠️  {carrier} 선택 검증 실패, 재시도")
+                            clicked_carrier = False
+                    
+                    if not clicked_carrier:
+                        print(f"    ⚠️  {carrier} 클릭 실패")
+                        continue
                     
                     # 🔥 핵심: 통신사 변경 후에도 요금제가 유지되는지 확인
                     is_still_selected = await self._verify_plan_selected(page, target_fee)
@@ -172,10 +190,6 @@ class SimpleDetailExtractor:
                         print(f"    ⚠️  통신사 변경 후 요금제 초기화됨, 다시 선택")
                         await self.vision_agent.select_plan_by_fee(page, target_fee)
                         await asyncio.sleep(0.5)
-                    
-                    if not clicked_carrier:
-                        print(f"    ⚠️  {carrier} 클릭 실패")
-                        continue
                     
                     # 가입유형 선택
                     clicked_join = await self._click_by_text(page, join_type)
@@ -289,6 +303,100 @@ class SimpleDetailExtractor:
                 pass
         
         return False
+    
+    async def _click_carrier_radio(self, page: Page, carrier: str) -> bool:
+        """띵폰 사이트: 라디오 버튼 value 속성으로 통신사 선택"""
+        try:
+            # 띵폰 사이트의 통신사 라디오 버튼 선택자
+            # <input type="radio" name="item_telecom" value="SKT|KT|LGU">
+            result = await page.evaluate(f"""
+                (carrier) => {{
+                    // 라디오 버튼 직접 선택
+                    const radio = document.querySelector(`input[name="item_telecom"][value="${{carrier}}"]`);
+                    if (radio) {{
+                        // 라디오 버튼 클릭
+                        radio.click();
+                        
+                        // 또는 label 클릭 (더 안전)
+                        const label = document.querySelector(`label[for="${{radio.id}}"]`);
+                        if (label) {{
+                            label.click();
+                        }}
+                        
+                        // 변경 이벤트 트리거
+                        radio.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                        radio.dispatchEvent(new Event('click', {{ bubbles: true }}));
+                        
+                        return true;
+                    }}
+                    
+                    return false;
+                }}
+            """, carrier)
+            
+            if result:
+                print(f"    ✅ 라디오 버튼으로 {carrier} 선택 성공")
+                return True
+            else:
+                print(f"    ⚠️  라디오 버튼 {carrier} 찾기 실패")
+                return False
+        except Exception as e:
+            print(f"    ⚠️  라디오 버튼 클릭 오류: {e}")
+            return False
+    
+    async def _verify_carrier_selected(self, page: Page, carrier: str) -> bool:
+        """통신사가 실제로 선택되었는지 확인"""
+        try:
+            result = await page.evaluate(f"""
+                (carrier) => {{
+                    // 띵폰 사이트: 라디오 버튼 checked 확인
+                    const radio = document.querySelector(`input[name="item_telecom"][value="${{carrier}}"]`);
+                    if (radio && radio.checked) {{
+                        return true;
+                    }}
+                    
+                    // 일반 사이트: 텍스트나 클래스로 확인
+                    const selectedTexts = ["SKT", "KT", "LGU", "LG U+", "U+"];
+                    const carrierText = carrier.toUpperCase();
+                    
+                    // 현재 선택된 통신사 요소 찾기
+                    const allElements = document.querySelectorAll('button, a, div, span, label, input[type="radio"]');
+                    for (const elem of allElements) {{
+                        const text = (elem.textContent || '').toUpperCase();
+                        const value = (elem.value || '').toUpperCase();
+                        const className = (elem.className || '').toUpperCase();
+                        
+                        // 선택된 상태 확인 (checked, active, on, selected 클래스)
+                        const isSelected = elem.checked || 
+                                         className.includes('ACTIVE') || 
+                                         className.includes('ON') || 
+                                         className.includes('SELECTED') ||
+                                         className.includes('CHECKED');
+                        
+                        if (isSelected) {{
+                            // SKT 확인
+                            if (carrierText === 'SKT' && (text.includes('SKT') || value === 'SKT')) {{
+                                return true;
+                            }}
+                            // KT 확인
+                            if (carrierText === 'KT' && (text.includes('KT') || value === 'KT')) {{
+                                return true;
+                            }}
+                            // LGU 확인
+                            if (carrierText === 'LGU' && (text.includes('LG') || text.includes('U+') || value === 'LGU')) {{
+                                return true;
+                            }}
+                        }}
+                    }}
+                    
+                    return false;
+                }}
+            """, carrier)
+            
+            return result
+        except Exception as e:
+            print(f"      ⚠️  통신사 검증 실패: {e}")
+            return False
     
     async def _verify_plan_selected(self, page: Page, target_fee: int) -> bool:
         """요금제가 실제로 선택되었는지 확인"""
