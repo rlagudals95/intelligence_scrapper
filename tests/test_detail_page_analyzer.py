@@ -24,6 +24,8 @@ TEST_URLS = {
 }
 
 
+test_name_and_url = ("하이폰_갤럭시S25", TEST_URLS["하이폰_갤럭시S25"])
+
 # ============================================================================
 # 공통 설정
 # ============================================================================
@@ -50,7 +52,7 @@ def get_llm_client():
 # ============================================================================
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("띵폰_갤럭시S25", TEST_URLS["띵폰_갤럭시S25"]),
+    test_name_and_url,
 ])
 async def test_step1_extract_basic_info(site_name: str, test_url: str):
     """Step 1: 페이지 로드 및 기본 정보 추출"""
@@ -90,7 +92,7 @@ async def test_step1_extract_basic_info(site_name: str, test_url: str):
 # ============================================================================
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("띵폰_갤럭시S25", TEST_URLS["띵폰_갤럭시S25"]),
+    test_name_and_url,
 ])
 async def test_step2_analyze_option_ui(site_name: str, test_url: str):
     """Step 2: Vision + HTML로 옵션 UI 분석"""
@@ -148,7 +150,7 @@ async def test_step2_analyze_option_ui(site_name: str, test_url: str):
 # ============================================================================
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("띵폰_갤럭시S25", TEST_URLS["띵폰_갤럭시S25"]),
+    test_name_and_url,
 ])
 async def test_step3_extract_option_values(site_name: str, test_url: str):
     """Step 3: 옵션 값 추출 및 검증"""
@@ -191,7 +193,7 @@ async def test_step3_extract_option_values(site_name: str, test_url: str):
 # ============================================================================
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("띵폰_갤럭시S25", TEST_URLS["띵폰_갤럭시S25"]),
+    test_name_and_url,
 ])
 async def test_step4_generate_combinations(site_name: str, test_url: str):
     """Step 4: 옵션 조합 생성"""
@@ -242,7 +244,7 @@ async def test_step4_generate_combinations(site_name: str, test_url: str):
 # ============================================================================
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("띵폰_갤럭시S25", TEST_URLS["띵폰_갤럭시S25"]),
+    test_name_and_url,
 ])
 async def test_step5_extract_policies_sample(site_name: str, test_url: str):
     """Step 5: 정책 추출 테스트 (샘플 조합 1개만)"""
@@ -301,7 +303,7 @@ async def test_step5_extract_policies_sample(site_name: str, test_url: str):
 # ============================================================================
 @pytest.mark.asyncio
 @pytest.mark.parametrize("site_name,test_url", [
-    ("띵폰_갤럭시S25", TEST_URLS["띵폰_갤럭시S25"]),
+    test_name_and_url,
 ])
 async def test_step6_convert_to_schema(site_name: str, test_url: str):
     """Step 6: 결과를 ScrapingResult 스키마로 변환"""

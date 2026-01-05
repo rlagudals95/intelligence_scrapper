@@ -468,6 +468,165 @@ class DetailPageAnalyzer:
         
         return json_str
     
+    async def _extract_plan_list_with_llm(self, page: Page, list_container_selector: str = None) -> List[Dict[str, str]]:
+        """
+        LLM을 이용해 요금제 리스트 추출
+        
+        모달/드롭다운 HTML을 LLM에게 전달해서 실제 요금제만 정확히 추출
+        """
+        print("    [LLM 기반 요금제 추출 시작]")
+        
+        try:
+            # 현재 보이는 모달/드롭다운/리스트의 HTML 추출
+            modal_html = await page.evaluate("""
+                (containerSelector) => {
+                    // 1. 컨테이너 선택자가 있으면 사용
+                    if (containerSelector) {
+                        const container = document.querySelector(containerSelector);
+                        if (container) {
+                            const style = window.getComputedStyle(container);
+                            if (style.display !== 'none' && style.visibility !== 'hidden') {
+                                return container.outerHTML;
+                            }
+                        }
+                    }
+                    
+                    // 2. 보이는 모달/드롭다운 찾기
+                    const candidates = document.querySelectorAll(
+                        '.modal, [class*="modal"], [class*="Modal"], ' +
+                        '.layer, [class*="layer"], [class*="Layer"], ' +
+                        '.popup, [class*="popup"], [class*="Popup"], ' +
+                        '.dropdown, [class*="dropdown"], [class*="Dropdown"]'
+                    );
+                    
+                    for (const el of candidates) {
+                        const style = window.getComputedStyle(el);
+                        if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+                            // 가격 정보가 포함된 요소 우선
+                            if (el.innerHTML.includes('원') || el.querySelector('[data-billprice], [data-price]')) {
+                                return el.outerHTML;
+                            }
+                        }
+                    }
+                    
+                    // 3. 가격 정보가 있는 리스트 찾기
+                    const lists = document.querySelectorAll('ul, ol, [class*="list"], [class*="List"]');
+                    for (const list of lists) {
+                        const style = window.getComputedStyle(list);
+                        if (style.display !== 'none' && style.visibility !== 'hidden') {
+                            if (list.innerHTML.includes('원') || list.querySelector('[data-billprice], [data-price]')) {
+                                return list.outerHTML;
+                            }
+                        }
+                    }
+                    
+                    return null;
+                }
+            """, list_container_selector)
+            
+            if not modal_html:
+                print("    ⚠️  모달/드롭다운 HTML을 찾지 못함")
+                return []
+            
+            # HTML 크기 제한 (50KB)
+            modal_html = modal_html[:50000]
+            print(f"    📄 모달 HTML 크기: {len(modal_html)}자")
+            
+            # LLM에게 요금제 추출 요청
+            prompt = f"""
+다음 HTML은 휴대폰 요금제 선택 모달/드롭다운입니다.
+이 HTML에서 **실제 선택 가능한 요금제만** 추출하세요.
+
+# HTML
+{modal_html}
+
+# 추출 규칙 (매우 중요!)
+1. **실제 요금제만 추출**: "무제한", "10GB+최대 1Mbps", "완전 무제한" 같은 부가정보/혜택은 제외
+2. **가격 필수**: 가격이 있는 항목만 추출
+3. **요금제명**: 실제 요금제 이름만 추출 (예: "5G 심플 30GB", "5G 베이직")
+4. 60000원 이상의 요금제만 추출
+
+# 가격 추출 우선순위
+1. data-billprice, data-price 속성값 (예: data-billprice="61000" → 61000)
+2. "월 XX,XXX원" 패턴의 텍스트
+3. "XXXXX원" 패턴
+
+# 응답 형식 (JSON 배열만 출력)
+[
+  {{"name": "5G 심플 30GB", "price": 61000}},
+  {{"name": "5G 베이직", "price": 80000}}
+]
+
+**주의사항:**
+- "무제한", "완전 무제한", "10GB+최대 1Mbps", "넷플릭스" 같은 부가 혜택/정보는 절대 포함하지 마세요
+- 가격이 없는 항목은 제외하세요
+- data-billprice 같은 속성에서 가격을 추출할 때는 숫자만 추출하세요
+- JSON 배열만 출력하세요, 다른 텍스트 없이
+"""
+            
+            response = await self.llm.complete(prompt, max_tokens=4000)
+            response_text = response.strip()
+            
+            # JSON 파싱
+            # 코드 블록 제거
+            if "```" in response_text:
+                lines = response_text.split("\n")
+                json_lines = []
+                in_code_block = False
+                for line in lines:
+                    if line.strip().startswith("```"):
+                        in_code_block = not in_code_block
+                        continue
+                    if in_code_block or (not line.strip().startswith("```")):
+                        json_lines.append(line)
+                response_text = "\n".join(json_lines)
+            
+            # JSON 배열 시작/끝 찾기
+            start_idx = response_text.find("[")
+            end_idx = response_text.rfind("]") + 1
+            if start_idx != -1 and end_idx > start_idx:
+                response_text = response_text[start_idx:end_idx]
+            
+            try:
+                plans = json.loads(response_text)
+            except json.JSONDecodeError as e:
+                print(f"    ⚠️  JSON 파싱 실패: {e}")
+                print(f"    응답: {response_text[:500]}")
+                return []
+            
+            # 가격이 있는 항목만 필터링
+            valid_plans = []
+            for p in plans:
+                price = p.get("price")
+                name = p.get("name", "")
+                
+                # 가격 정수로 변환
+                if isinstance(price, str):
+                    price = int(price.replace(",", "")) if price.replace(",", "").isdigit() else 0
+                elif isinstance(price, (int, float)):
+                    price = int(price)
+                else:
+                    price = 0
+                
+                # 부가정보 필터링 (무제한, 데이터 용량만 있는 항목 제외)
+                exclude_keywords = ["무제한", "Mbps", "Kbps", "넷플릭스", "디즈니", "티빙", "지니", "멤버쉽", "VIP"]
+                is_benefit_only = any(kw in name for kw in exclude_keywords) and price == 0
+                
+                if price > 0 and not is_benefit_only:
+                    valid_plans.append({
+                        "name": name,
+                        "price": str(price)
+                    })
+            
+            print(f"    ✅ LLM이 {len(valid_plans)}개 유효 요금제 추출")
+            return valid_plans
+            
+        except Exception as e:
+            print(f"    ⚠️  LLM 요금제 추출 실패: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+    
     async def _step2b_extract_option_values(
         self, 
         page: Page, 
@@ -815,103 +974,21 @@ class DetailPageAnalyzer:
                 else:
                     print(f"    ⚠️  스크롤할 컨테이너가 없음")
                 
-                # 요금제 목록 추출 (개선된 가격 추출)
+                # 요금제 목록 추출 (LLM 기반)
                 # 추가 대기 (동적 로딩 완료 대기)
                 await asyncio.sleep(0.5)
                 
-                if item_selector:
-                    plans = await page.evaluate("""
-                        ([itemSelector, nameSelector, priceAttr, listContainer]) => {
-                            try {
-                                // LLM이 추출한 컨테이너 선택자 사용
-                                let searchRoot = document;
-                                
-                                if (listContainer) {
-                                    const container = document.querySelector(listContainer);
-                                    if (container) {
-                                        searchRoot = container;
-                                        console.log(`[요금제] 컨테이너 사용: ${listContainer}`);
-                                    } else {
-                                        console.log(`[요금제] 컨테이너를 찾지 못함: ${listContainer}`);
-                                    }
-                                }
-                                
-                                // LLM이 추출한 선택자로 항목 찾기
-                                const items = searchRoot.querySelectorAll(itemSelector);
-                                console.log(`[요금제] 선택자 "${itemSelector}"로 찾은 항목: ${items.length}개`);
-                                
-                                // 각 항목의 정보 출력 (디버깅)
-                                Array.from(items).forEach((item, idx) => {
-                                    const name = nameSelector ? (item.querySelector(nameSelector)?.textContent || '') : item.textContent;
-                                    const price = priceAttr ? item.getAttribute(priceAttr) : '';
-                                    console.log(`  [${idx + 1}] ${name?.trim()} (${price}원)`);
-                                });
-                                
-                                const plans = Array.from(items).map(item => {
-                                    // 이름 추출
-                                    let name = '';
-                                    if (nameSelector) {
-                                        const nameElem = item.querySelector(nameSelector);
-                                        if (nameElem) {
-                                            name = nameElem.textContent.trim();
-                                        }
-                                    }
-                                    if (!name) {
-                                        name = item.textContent.trim();
-                                    }
-                                    
-                                    // 가격 추출 (여러 방법 시도)
-                                    let price = '';
-                                    
-                                    // LLM이 추출한 가격 속성으로 가격 추출
-                                    if (priceAttr) {
-                                        price = item.getAttribute(priceAttr) || '';
-                                    }
-                                    
-                                    // 가격 속성이 없으면 텍스트에서 가격 패턴 찾기
-                                    if (!price) {
-                                        const text = item.textContent || '';
-                                        const patterns = [
-                                            /(\d{1,3}(?:,\d{3})*)\s*원/,
-                                            /(\d{4,})\s*원/,
-                                            /월\s*(\d{1,3}(?:,\d{3})*)\s*원/
-                                        ];
-                                        
-                                        for (const pattern of patterns) {
-                                            const match = text.match(pattern);
-                                            if (match) {
-                                                price = match[1].replace(/,/g, '');
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    
-                                    return {
-                                        name: name,
-                                        price: price,
-                                        element: item.outerHTML.substring(0, 300)
-                                    };
-                                }).filter(p => p.name);
-                                
-                                console.log(`[요금제] 추출된 요금제 개수: ${plans.length}`);
-                                return plans;
-                            } catch (e) {
-                                console.error(`[요금제] 에러:`, e);
-                                return [];
-                            }
-                        }
-                    """, [item_selector, name_selector, price_attr, list_container])
-                    
-                    if plans:
-                        options["plan"] = plans
-                        print(f"    ✅ 요금제: {len(plans)}개 발견")
-                        for plan in plans[:10]:  # 최대 10개까지 출력
-                            price_str = f" ({plan.get('price', '')}원)" if plan.get('price') else " (가격 없음)"
-                            print(f"      - {plan.get('name', 'N/A')}{price_str}")
-                    else:
-                        print(f"    ⚠️  요금제 추출 실패: 항목을 찾지 못함")
+                # LLM 기반 요금제 추출 시도
+                plans = await self._extract_plan_list_with_llm(page, list_container)
+                
+                if plans:
+                    options["plan"] = plans
+                    print(f"    ✅ 요금제: {len(plans)}개 발견 (LLM 기반)")
+                    for plan in plans[:10]:  # 최대 10개까지 출력
+                        price_str = f" ({plan.get('price', '')}원)" if plan.get('price') else " (가격 없음)"
+                        print(f"      - {plan.get('name', 'N/A')}{price_str}")
                 else:
-                    print(f"    ⚠️  요금제 선택자가 없음")
+                    print(f"    ⚠️  요금제 추출 실패: LLM이 요금제를 찾지 못함")
             except Exception as e:
                 print(f"    ⚠️  요금제 추출 실패: {e}")
                 import traceback
