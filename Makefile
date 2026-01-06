@@ -9,10 +9,18 @@ help:
 	@echo "📋 사용 가능한 명령어:"
 	@echo ""
 	@echo "  make install              - 의존성 설치 및 Playwright 설정"
-	@echo "  make test-phase1          - Phase 1 테스트 실행"
-	@echo "  make test-phase2          - Phase 2 전체 테스트 실행"
-	@echo "  make test-phase3          - Phase 3 전체 테스트 실행"
-	@echo "  make test-all             - 모든 테스트 실행"
+	@echo "  make test-list-analyzer   - Phase 1: 인프라 테스트"
+	@echo "  make test-extract-urls    - 리스트 페이지 URL 추출 테스트 🔗"
+	@echo "  make test-extract-urls-all - 전체 사이트 URL 추출 (통합) 🌐"
+	@echo ""
+	@echo "  === 상세 페이지 분석 테스트 ==="
+	@echo "  make test-detail-page-analyzer-step1 - Step 1: 기본 정보 추출 📋"
+	@echo "  make test-detail-page-analyzer-step2 - Step 2: 옵션 UI 분석 🎛️"
+	@echo "  make test-detail-page-analyzer-step3 - Step 3: 옵션 값 추출 📝"
+	@echo "  make test-detail-page-analyzer-step4 - Step 4: 조합 생성 🔀"
+	@echo "  make test-detail-page-analyzer-step5 - Step 5: 정책 추출 💰"
+	@echo "  make test-detail-page-analyzer-step6 - Step 6: 스키마 변환 📊"
+	@echo "  make test-detail-page-analyzer-full  - 전체 통합 테스트 🚀"
 	@echo ""
 	@echo "  make test-phase3-step1    - Phase 3 Step 1: API 모니터링 기본 테스트 🔍"
 	@echo "  make test-phase3-step2    - Phase 3 Step 2: LLM 기반 API 분석 🤖"
@@ -92,16 +100,33 @@ test-detail-page-analyzer-full:
 
 ########################################################
 
-# Phase 1 테스트
+# Phase 1 테스트 (인프라)
 test-list-analyzer:
 	@echo "🧪 Phase 1 테스트 실행 중..."
 	uv run pytest tests/test_list_page_analyzer.py -v
+
+# 리스트 페이지 URL 추출 테스트
+test-extract-urls:
+	@echo "🧪 리스트 페이지 URL 추출 테스트 실행 중..."
+	uv run pytest tests/test_list_page_analyzer.py::test_extract_product_urls -v -s --tb=short
+
+test-extract-urls-all:
+	@echo "🧪 전체 사이트 URL 추출 테스트 실행 중..."
+	uv run pytest tests/test_list_page_analyzer.py::test_extract_all_sites -v -s --tb=short
 
 # Phase 2 전체 테스트
 test-phase2:
 	@echo "🧪 Phase 2 테스트 실행 중..."
 	uv run pytest tests/test_list_page_analyzer.py -v -s
 
+# 통합 테스트 (리스트 → 상세 → 슬랙)
+test-integration-single:
+	@echo "🧪 단일 사이트 통합 테스트 실행 중..."
+	uv run pytest tests/test_integration.py::test_integration_single_site -v -s --tb=short
+
+test-integration-multi:
+	@echo "🧪 다중 사이트 통합 테스트 실행 중..."
+	uv run pytest tests/test_integration.py::test_integration_multi_sites -v -s --tb=short
 
 # 정리
 clean:

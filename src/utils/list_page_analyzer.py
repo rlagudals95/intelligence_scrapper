@@ -4,8 +4,9 @@ LLM을 활용한 페이지 구조 분석
 """
 import json
 import base64
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from playwright.async_api import Page
+from urllib.parse import urljoin
 
 from ..core.llm_client import LLMClient, LLMProvider
 from ..utils.logger import get_logger
@@ -219,6 +220,96 @@ class ListPageAnalyzer:
         
         # JSON 파싱
         return json.loads(response.strip())
+    
+    async def extract_product_urls(
+        self,
+        page: Page,
+        base_url: Optional[str] = None
+    ) -> List[Dict[str, str]]:
+        """
+        리스트 페이지에서 제품 상세 URL 추출
+        
+        Args:
+            page: Playwright Page 객체
+            base_url: 기본 URL (상대경로 처리용)
+            
+        Returns:
+            List[Dict]: 제품 URL 리스트
+            [
+                {"name": "갤럭시S25", "url": "https://..."},
+                ...
+            ]
+        """
+        logger.info("제품 URL 추출 시작")
+        
+        # 1단계: LLM으로 페이지 구조 분석
+        structure = await self.analyze_listing_page(page)
+        
+        logger.info("페이지 구조 분석 완료", structure=structure)
+        
+        # 2단계: 선택자로 실제 요소 추출
+        product_card_selector = structure.get("product_card_selector", "")
+        detail_link_selector = structure.get("detail_link_selector", "")
+        product_name_selector = structure.get("product_name_selector", "")
+        
+        if not product_card_selector or not detail_link_selector:
+            logger.error("필수 선택자를 찾지 못함", structure=structure)
+            raise ValueError("제품 카드 또는 상세 링크 선택자를 찾을 수 없습니다")
+        
+        # 3단계: 페이지에서 제품 URL 추출
+        products = []
+        
+        try:
+            # Playwright의 query_selector_all로 모든 제품 카드 찾기
+            cards = await page.query_selector_all(product_card_selector)
+            logger.info(f"제품 카드 {len(cards)}개 발견")
+            
+            for idx, card in enumerate(cards):
+                try:
+                    # 상세 링크 추출
+                    link_element = await card.query_selector(detail_link_selector)
+                    if not link_element:
+                        # 카드 자체가 링크일 수도 있음
+                        link_element = card
+                    
+                    href = await link_element.get_attribute("href")
+                    if not href:
+                        logger.warning(f"제품 카드 {idx}: href 속성 없음")
+                        continue
+                    
+                    # 절대 URL로 변환
+                    if base_url:
+                        absolute_url = urljoin(base_url, href)
+                    else:
+                        current_url = page.url
+                        absolute_url = urljoin(current_url, href)
+                    
+                    # 제품명 추출 (선택적)
+                    product_name = "N/A"
+                    if product_name_selector:
+                        try:
+                            name_element = await card.query_selector(product_name_selector)
+                            if name_element:
+                                product_name = await name_element.inner_text()
+                                product_name = product_name.strip()
+                        except Exception as e:
+                            logger.debug(f"제품명 추출 실패 (카드 {idx}): {e}")
+                    
+                    products.append({
+                        "name": product_name,
+                        "url": absolute_url
+                    })
+                    
+                except Exception as e:
+                    logger.warning(f"제품 카드 {idx} 처리 중 오류", error=str(e))
+                    continue
+            
+            logger.info(f"제품 URL 추출 완료: {len(products)}개")
+            return products
+            
+        except Exception as e:
+            logger.error("제품 URL 추출 실패", error=str(e))
+            raise
     
     def get_llm_stats(self) -> Dict[str, Any]:
         """LLM 사용량 통계"""

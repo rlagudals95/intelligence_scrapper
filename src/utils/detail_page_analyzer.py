@@ -98,7 +98,8 @@ class DetailPageAnalyzer:
             print(f"  샘플 조합: {step4_result[0]}")
         
         # Step 5: 각 조합에 대해 정책 추출
-        step5_result = await self._step5_extract_policies(page, step4_result, step1_result)
+        structure = step2_result.get("structure", {})
+        step5_result = await self._step5_extract_policies(page, step4_result, step1_result, structure)
         print(f"\n[Step 5 완료] 정책 추출")
         print(f"  성공한 조합: {len([r for r in step5_result if r.get('success')])}개")
         print(f"  실패한 조합: {len([r for r in step5_result if not r.get('success')])}개")

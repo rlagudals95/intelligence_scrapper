@@ -5,12 +5,18 @@ import pytest
 import asyncio
 from pathlib import Path
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from src.core.config import SiteConfig
 from src.core.browser import BrowserManager
 from src.core.state import StateManager
+from src.core.llm_client import LLMClient, LLMProvider
 from src.utils.logger import get_logger, setup_logger
 from src.utils.delay import random_delay, fixed_delay
+from src.utils.list_page_analyzer import ListPageAnalyzer
 
 
 # ============================================================================
@@ -389,6 +395,202 @@ async def test_target_site_ddingphone():
         print("\n" + "="*60)
         print("✅ 띵폰 사이트 검증 완료 - 휴대폰 리스트 페이지 확인")
         print("="*60)
+
+
+# ============================================================================
+# 리스트 페이지 URL 추출 테스트
+# ============================================================================
+
+# 테스트 대상 URL (띵폰 제외)
+LIST_PAGE_URLS = {
+    "하이폰_삼성": "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
+    "하이폰_아이폰": "https://hi-phone.kr/index.php?channel=list&cate=103002000000",
+    "딜리버리폰_삼성": "https://www.deliveryphone.co.kr/phone/list/2",
+    "딜리버리폰_아이폰": "https://www.deliveryphone.co.kr/phone/list/3",
+    "성지폰_삼성": "https://sungjiphone.com/phone/list/2",
+    "성지폰_아이폰": "https://sungjiphone.com/phone/list/3",
+    "폰슐랭_삼성": "https://phonechelin.shop/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+    "폰슐랭_아이폰": "https://phonechelin.shop/mshop/list?sst=c&cid=APPLE",
+    "엘지티샵_삼성": "https://lgtshop.co.kr/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+    "엘지티샵_아이폰": "https://lgtshop.co.kr/mshop/list?sst=c&cid=APPLE",
+    "투게더몰_삼성": "https://uplustogethermall.com/section/samsung",
+    "투게더몰_아이폰": "https://uplustogethermall.com/section/apple",
+}
+
+
+def get_llm_client():
+    """LLM Client 생성"""
+    if os.getenv("GEMINI_API_KEY"):
+        provider = LLMProvider.GEMINI
+        model = "gemini-2.5-flash"
+    elif os.getenv("OPENAI_API_KEY"):
+        provider = LLMProvider.OPENAI
+        model = None
+    elif os.getenv("ANTHROPIC_API_KEY"):
+        provider = LLMProvider.ANTHROPIC
+        model = None
+    else:
+        pytest.skip("API 키 없음")
+        return None
+    
+    return LLMClient(provider=provider, model=model) if model else LLMClient(provider=provider)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("site_name,list_url", [
+    ("하이폰_삼성", LIST_PAGE_URLS["하이폰_삼성"]),
+    ("하이폰_아이폰", LIST_PAGE_URLS["하이폰_아이폰"]),
+    ("딜리버리폰_삼성", LIST_PAGE_URLS["딜리버리폰_삼성"]),
+    ("성지폰_삼성", LIST_PAGE_URLS["성지폰_삼성"]),
+    ("폰슐랭_삼성", LIST_PAGE_URLS["폰슐랭_삼성"]),
+    ("엘지티샵_삼성", LIST_PAGE_URLS["엘지티샵_삼성"]),
+    ("투게더몰_삼성", LIST_PAGE_URLS["투게더몰_삼성"]),
+])
+async def test_extract_product_urls(site_name: str, list_url: str):
+    """리스트 페이지에서 제품 상세 URL 추출 테스트"""
+    print("\n" + "="*70)
+    print(f"🧪 [{site_name}] 제품 URL 추출 테스트")
+    print("="*70)
+    print(f"URL: {list_url}")
+    print("="*70 + "\n")
+    
+    llm_client = get_llm_client()
+    analyzer = ListPageAnalyzer(llm_client)
+    
+    config = SiteConfig(
+        target_url=list_url,
+        headless=True,
+        timeout=60000
+    )
+    
+    async with BrowserManager(config) as browser:
+        await browser.goto(list_url, wait_until="domcontentloaded")
+        page = await browser.get_page()
+        
+        # 페이지 렌더링 대기
+        await asyncio.sleep(3)
+        
+        # URL 추출
+        products = await analyzer.extract_product_urls(page, base_url=list_url)
+        
+        # 결과 출력
+        print(f"\n✅ 추출된 제품 URL: {len(products)}개\n")
+        
+        for idx, product in enumerate(products[:10], 1):  # 상위 10개만 출력
+            print(f"  [{idx}] {product['name']}")
+            print(f"      {product['url']}")
+        
+        if len(products) > 10:
+            print(f"\n  ... 외 {len(products) - 10}개")
+        
+        # JSON 저장
+        output_dir = Path("output/list_analyzer")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_file = output_dir / f"{site_name}_urls.json"
+        
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(products, f, ensure_ascii=False, indent=2)
+        
+        print(f"\n💾 결과 저장: {output_file}")
+        
+        # LLM 사용량
+        stats = llm_client.get_usage_stats()
+        print("\n" + "="*70)
+        print("💰 LLM 사용량")
+        print("="*70)
+        print(f"Provider: {stats['provider']}")
+        print(f"요청: {stats['request_count']}회")
+        print(f"토큰: {stats['total_tokens']:,} tokens")
+        print(f"비용: ${stats['total_cost_usd']:.4f} USD")
+        
+        print("\n" + "="*70)
+        print(f"✅ {site_name} 테스트 완료!")
+        print("="*70 + "\n")
+        
+        # 검증
+        assert len(products) > 0, f"{site_name}: 제품 URL이 추출되지 않음"
+        assert all(p['url'].startswith('http') for p in products), f"{site_name}: 유효하지 않은 URL 존재"
+
+
+@pytest.mark.asyncio
+async def test_extract_all_sites():
+    """모든 사이트의 제품 URL 추출 (통합 테스트)"""
+    print("\n" + "="*70)
+    print("🧪 전체 사이트 제품 URL 추출 테스트")
+    print("="*70 + "\n")
+    
+    llm_client = get_llm_client()
+    analyzer = ListPageAnalyzer(llm_client)
+    
+    results = {}
+    
+    for site_name, list_url in LIST_PAGE_URLS.items():
+        print(f"\n📋 [{site_name}] 처리 중...")
+        print(f"   URL: {list_url}")
+        
+        config = SiteConfig(
+            target_url=list_url,
+            headless=True,
+            timeout=60000
+        )
+        
+        try:
+            async with BrowserManager(config) as browser:
+                await browser.goto(list_url, wait_until="domcontentloaded")
+                page = await browser.get_page()
+                await asyncio.sleep(3)
+                
+                products = await analyzer.extract_product_urls(page, base_url=list_url)
+                
+                results[site_name] = {
+                    "url": list_url,
+                    "count": len(products),
+                    "products": products
+                }
+                
+                print(f"   ✅ {len(products)}개 추출 완료")
+                
+        except Exception as e:
+            print(f"   ⚠️  오류: {e}")
+            results[site_name] = {
+                "url": list_url,
+                "count": 0,
+                "error": str(e)
+            }
+    
+    # 전체 결과 저장
+    output_dir = Path("output/list_analyzer")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_file = output_dir / "all_sites_urls.json"
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
+    
+    print(f"\n💾 전체 결과 저장: {output_file}")
+    
+    # 요약 출력
+    print("\n" + "="*70)
+    print("📊 추출 결과 요약")
+    print("="*70)
+    
+    for site_name, result in results.items():
+        count = result.get('count', 0)
+        status = "✅" if count > 0 else "❌"
+        print(f"{status} {site_name}: {count}개")
+    
+    # LLM 사용량
+    stats = llm_client.get_usage_stats()
+    print("\n" + "="*70)
+    print("💰 LLM 사용량 (전체)")
+    print("="*70)
+    print(f"Provider: {stats['provider']}")
+    print(f"요청: {stats['request_count']}회")
+    print(f"토큰: {stats['total_tokens']:,} tokens")
+    print(f"비용: ${stats['total_cost_usd']:.4f} USD")
+    
+    print("\n" + "="*70)
+    print("✅ 전체 사이트 테스트 완료!")
+    print("="*70 + "\n")
 
 
 # ============================================================================

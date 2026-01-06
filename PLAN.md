@@ -13,10 +13,6 @@
 https://hi-phone.kr/index.php?channel=list&cate=103001000000 (삼성전자)
 https://hi-phone.kr/index.php?channel=list&cate=103002000000 (아이폰)
 
-띵폰
-https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90 (삼성전자)
-https://ddingphone.com/list?sst=c&cid=APPLE (아이폰)
-
 
 딜리버리폰
 https://www.deliveryphone.co.kr/phone/list/2 (삼성전자)
@@ -44,6 +40,12 @@ https://uplustogethermall.com/section/apple (아이폰)
 
 https://ktmarket.co.kr/phone/samsung (삼성전자)
 https://ktmarket.co.kr/phone/apple (아이폰)
+
+
+띵폰
+https://ddingphone.com/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90 (삼성전자)
+https://ddingphone.com/list?sst=c&cid=APPLE (아이폰)
+
 
 
 
