@@ -128,6 +128,34 @@ test-integration-multi:
 	@echo "🧪 다중 사이트 통합 테스트 실행 중..."
 	uv run pytest tests/test_integration.py::test_integration_multi_sites -v -s --tb=short
 
+# 메인 스크래핑 스크립트
+scrape:
+	@echo "🚀 휴대폰 정책 스크래핑 실행 중..."
+	@echo "사용법: make scrape URL='https://...' MODELS='갤럭시S25,아이폰17'"
+	@if [ -z "$(URL)" ] || [ -z "$(MODELS)" ]; then \
+		echo "❌ URL과 MODELS 파라미터가 필요합니다."; \
+		echo "예시: make scrape URL='https://hi-phone.kr/...' MODELS='갤럭시S25,아이폰17'"; \
+		exit 1; \
+	fi
+	uv run python scrape_phones.py --list-url "$(URL)" --models "$(MODELS)"
+
+scrape-from-config:
+	@echo "🚀 설정 파일로 스크래핑 실행 중..."
+	@if [ -z "$(CONFIG)" ]; then \
+		echo "❌ CONFIG 파라미터가 필요합니다."; \
+		echo "예시: make scrape-from-config CONFIG=scrape_config.json"; \
+		exit 1; \
+	fi
+	uv run python scrape_phones.py --config "$(CONFIG)"
+
+# 예제: 하이폰 갤럭시S25 + 아이폰17
+scrape-example:
+	@echo "🧪 예제 스크래핑 실행 중..."
+	uv run python scrape_phones.py \
+		--list-url "https://hi-phone.kr/index.php?channel=list&cate=103001000000" \
+		--models "갤럭시S25,아이폰17" \
+		--site-name "하이폰_삼성"
+
 # 정리
 clean:
 	@echo "🧹 캐시 및 임시 파일 정리 중..."
