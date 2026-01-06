@@ -27,7 +27,7 @@ TEST_URLS = {
 
 HEADLESS = False
 
-test_name_and_url = ("딜리버리폰_갤럭시S25", TEST_URLS["딜리버리폰_갤럭시S25"])
+test_name_and_url = ("하이폰_아이폰17", TEST_URLS["하이폰_아이폰17"])
 
 # ============================================================================
 # 공통 설정
@@ -328,11 +328,14 @@ async def test_step6_convert_to_schema(site_name: str, test_url: str):
         step1_result = await analyzer._step1_extract_basic_info(page, test_url)
         step2_result = await analyzer._step2_analyze_option_ui(page)
         step3_result = await analyzer._step3_extract_option_values(page, step2_result)
-        step4_result = await analyzer._step4_generate_combinations(step3_result)
+        
+        # structure 추출
+        structure = step2_result.get("structure", {})
+        step4_result = await analyzer._step4_generate_combinations(step3_result, structure)
         
         # 첫 번째 조합만 테스트
         sample_combinations = [step4_result[0]]
-        step5_result = await analyzer._step5_extract_policies(page, sample_combinations, step1_result)
+        step5_result = await analyzer._step5_extract_policies(page, sample_combinations, step1_result, structure)
         
         print(f"\n[입력] Step 5 결과: {len(step5_result)}개")
         

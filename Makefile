@@ -46,6 +46,12 @@ help:
 	@echo "  make test-integration-multi     - 다중 사이트 통합 테스트 (2개 사이트) 🚀"
 	@echo "  make test-integration-all       - 전체 사이트 통합 테스트 (모든 사이트) 🌐"
 	@echo ""
+	@echo "  === 스크래핑 명령어 ==="
+	@echo "  make scrape-simple SITES='하이폰' MODELS='갤럭시S25' - 간단 스크래핑 (사이트+기종만) 🎯"
+	@echo "  make scrape-simple-config CONFIG=simple_config.json - 설정 파일로 간단 스크래핑 📄"
+	@echo "  make scrape URL='...' MODELS='...' - 직접 URL 지정 스크래핑 🔗"
+	@echo "  make scrape-batch CONFIG=batch_config.json - 배치 스크래핑 (여러 사이트) 📦"
+	@echo ""
 	@echo "  make debug-ddingphone     - 띵폰 페이지 디버깅"
 	@echo "  make clean                - 캐시 및 임시 파일 정리"
 
@@ -155,6 +161,44 @@ scrape-example:
 		--list-url "https://hi-phone.kr/index.php?channel=list&cate=103001000000" \
 		--models "갤럭시S25,아이폰17" \
 		--site-name "하이폰_삼성"
+
+# 배치 스크래핑 (여러 사이트)
+scrape-batch:
+	@echo "🚀 배치 스크래핑 실행 중..."
+	@if [ -z "$(CONFIG)" ]; then \
+		echo "❌ CONFIG 파라미터가 필요합니다."; \
+		echo "예시: make scrape-batch CONFIG=scrape_batch_config.json"; \
+		exit 1; \
+	fi
+	uv run python scrape_phones.py --batch-config "$(CONFIG)"
+
+scrape-batch-example:
+	@echo "🧪 배치 스크래핑 예제 실행 중..."
+	uv run python scrape_phones.py --batch-config scrape_batch_config.example.json
+
+# 간단한 스크래핑 (사이트명 + 기종명만)
+scrape-simple:
+	@echo "🚀 간단 스크래핑 실행 중..."
+	@echo "사용법: make scrape-simple SITES='하이폰,딜리버리폰' MODELS='갤럭시S25,아이폰17'"
+	@if [ -z "$(SITES)" ] || [ -z "$(MODELS)" ]; then \
+		echo "❌ SITES와 MODELS 파라미터가 필요합니다."; \
+		echo "예시: make scrape-simple SITES='하이폰' MODELS='갤럭시S25'"; \
+		exit 1; \
+	fi
+	uv run python scrape_simple.py --sites "$(SITES)" --models "$(MODELS)"
+
+scrape-simple-config:
+	@echo "🚀 설정 파일로 간단 스크래핑 실행 중..."
+	@if [ -z "$(CONFIG)" ]; then \
+		echo "❌ CONFIG 파라미터가 필요합니다."; \
+		echo "예시: make scrape-simple-config CONFIG=simple_config.json"; \
+		exit 1; \
+	fi
+	uv run python scrape_simple.py --config "$(CONFIG)"
+
+scrape-simple-example:
+	@echo "🧪 간단 스크래핑 예제 실행 중..."
+	uv run python scrape_simple.py --sites "하이폰" --models "갤럭시S25"
 
 # 정리
 clean:

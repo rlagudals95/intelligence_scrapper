@@ -63,7 +63,46 @@ python scrape_phones.py \
 python scrape_phones.py --config my_scrape.json
 ```
 
-#### 방법 3: Makefile 사용
+#### 방법 3: 배치 스크래핑 (여러 사이트)
+
+1. 배치 설정 파일 생성 (`batch_scrape.json`):
+
+```json
+{
+  "sites": [
+    {
+      "list_url": "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
+      "models": ["갤럭시S25", "아이폰17"],
+      "site_name": "하이폰_삼성"
+    },
+    {
+      "list_url": "https://www.deliveryphone.co.kr/phone/list/2",
+      "models": ["갤럭시S25"],
+      "site_name": "딜리버리폰_삼성"
+    },
+    {
+      "list_url": "https://hi-phone.kr/index.php?channel=list&cate=103002000000",
+      "models": ["아이폰17"],
+      "site_name": "하이폰_아이폰"
+    }
+  ]
+}
+```
+
+2. 실행:
+
+```bash
+# 직접 실행
+uv run python scrape_phones.py --batch-config batch_scrape.json
+
+# Makefile 사용
+make scrape-batch CONFIG=batch_scrape.json
+
+# 예제 실행
+make scrape-batch-example
+```
+
+#### 방법 4: Makefile 사용
 
 ```bash
 # URL과 모델명 지정
@@ -74,6 +113,9 @@ make scrape-from-config CONFIG=my_scrape.json
 
 # 예제 실행 (하이폰)
 make scrape-example
+
+# 배치 스크래핑
+make scrape-batch CONFIG=batch_scrape.json
 ```
 
 ## 📋 지원 사이트

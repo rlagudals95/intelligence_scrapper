@@ -1,0 +1,20 @@
+{
+  "sites": [
+    {
+      "list_url": "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
+      "models": ["갤럭시S25", "아이폰17"],
+      "site_name": "하이폰_삼성"
+    },
+    {
+      "list_url": "https://www.deliveryphone.co.kr/phone/list/2",
+      "models": ["갤럭시S25"],
+      "site_name": "딜리버리폰_삼성"
+    },
+    {
+      "list_url": "https://hi-phone.kr/index.php?channel=list&cate=103002000000",
+      "models": ["아이폰17"],
+      "site_name": "하이폰_아이폰"
+    }
+  ]
+}
+

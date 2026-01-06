@@ -277,28 +277,39 @@ async def scrape_phones(
             print("📤 슬랙 알림 전송 중...")
             slack = SlackNotifier()
             
-            # 개별 제품 결과
+            # 개별 제품 정책 상세 알림
+            scraping_results = []
             for result in results:
                 if result['success']:
-                    await slack.send_scraping_result(
-                        site_name=f"{site_name} - {result['product_name']}",
-                        success=True,
-                        product_count=1,
-                        policy_count=result['policy_count'],
-                        duration_seconds=result['duration']
-                    )
+                    # 각 제품의 정책을 슬랙으로 전송
+                    for product in result['data'].products:
+                        # CSV 파일 생성
+                        csv_path = slack.save_policies_to_csv(
+                            policies=product.policies,
+                            output_dir=output_dir,
+                            product_name=result['product_name'],
+                            site_name=site_name
+                        )
+                        
+                        # 슬랙으로 전송 (CSV 경로 포함)
+                        # 상대 경로로 변환 (이미 상대 경로이므로 그대로 사용)
+                        csv_relative_path = str(csv_path)
+                        
+                        await slack.send_policy_summary(
+                            site_name=site_name,
+                            product_name=result['product_name'],
+                            policies=product.policies,
+                            product_url=result['url'],
+                            csv_file_path=csv_relative_path
+                        )
+                    scraping_results.append(result['data'])
             
-            # 전체 요약
-            await slack.send_integration_summary(
-                results=[{
-                    'site_name': f"{site_name} - {r['product_name']}",
-                    'success': r['success'],
-                    'product_count': 1,
-                    'policy_count': r.get('policy_count', 0)
-                } for r in results],
-                total_duration=total_duration,
-                llm_stats=stats
-            )
+            # 전체 요약 (비즈니스 친화적)
+            if scraping_results:
+                await slack.send_integration_summary(
+                    scraping_results=scraping_results,
+                    site_names=[site_name] * len(scraping_results)
+                )
             
             print("   ✅ 슬랙 알림 전송 완료")
         
@@ -334,17 +345,100 @@ async def scrape_phones(
         }
 
 
+async def scrape_batch(
+    batch_config_path: str,
+    headless: bool = True,
+    send_slack: bool = True
+) -> List[Dict[str, Any]]:
+    """
+    여러 사이트를 배치로 스크래핑
+    
+    Args:
+        batch_config_path: 배치 설정 파일 경로
+        headless: 헤드리스 모드 여부
+        send_slack: 슬랙 전송 여부
+        
+    Returns:
+        각 사이트별 결과 리스트
+    """
+    with open(batch_config_path, 'r', encoding='utf-8') as f:
+        batch_config = json.load(f)
+    
+    sites = batch_config.get('sites', [])
+    
+    if not sites:
+        print("⚠️  배치 설정 파일에 사이트가 없습니다.")
+        return []
+    
+    print("\n" + "="*70)
+    print(f"🚀 배치 스크래핑 시작: {len(sites)}개 사이트")
+    print("="*70 + "\n")
+    
+    results = []
+    
+    for idx, site_config in enumerate(sites, 1):
+        print(f"\n{'='*70}")
+        print(f"[{idx}/{len(sites)}] {site_config.get('site_name', 'Unknown')}")
+        print(f"{'='*70}\n")
+        
+        result = await scrape_phones(
+            list_url=site_config['list_url'],
+            target_models=site_config.get('models', []),
+            site_name=site_config.get('site_name'),
+            headless=headless,
+            send_slack=send_slack
+        )
+        
+        results.append(result)
+        
+        # 사이트 간 딜레이 (서버 부하 방지)
+        if idx < len(sites):
+            print(f"\n⏳ 다음 사이트로 이동하기 전 대기 중... (3초)")
+            await asyncio.sleep(3)
+    
+    # 전체 요약
+    print("\n" + "="*70)
+    print("📊 배치 스크래핑 전체 결과")
+    print("="*70)
+    
+    success_count = sum(1 for r in results if r.get('success'))
+    total_products = sum(r.get('product_count', 0) for r in results)
+    total_policies = sum(r.get('total_policies', 0) for r in results)
+    
+    print(f"성공: {success_count}/{len(sites)} 사이트")
+    print(f"총 제품: {total_products}개")
+    print(f"총 정책: {total_policies:,}개")
+    
+    for result in results:
+        status = "✅" if result.get('success') else "❌"
+        print(f"{status} {result.get('site_name', 'Unknown')}: {result.get('total_policies', 0)}개 정책")
+    
+    print("="*70 + "\n")
+    
+    return results
+
+
 async def main():
     """메인 함수"""
     parser = argparse.ArgumentParser(description="휴대폰 정책 스크래핑")
     parser.add_argument("--list-url", help="리스트 페이지 URL")
     parser.add_argument("--models", help="찾을 모델명 (쉼표로 구분, 예: '갤럭시S25,아이폰17')")
-    parser.add_argument("--config", help="설정 파일 경로 (JSON)")
+    parser.add_argument("--config", help="단일 사이트 설정 파일 경로 (JSON)")
+    parser.add_argument("--batch-config", help="배치 스크래핑 설정 파일 경로 (JSON)")
     parser.add_argument("--site-name", help="사이트 이름 (선택)")
     parser.add_argument("--no-headless", action="store_true", help="브라우저 표시")
     parser.add_argument("--no-slack", action="store_true", help="슬랙 알림 비활성화")
     
     args = parser.parse_args()
+    
+    # 배치 모드
+    if args.batch_config:
+        await scrape_batch(
+            batch_config_path=args.batch_config,
+            headless=not args.no_headless,
+            send_slack=not args.no_slack
+        )
+        return
     
     # 설정 파일 사용
     if args.config:

@@ -1712,12 +1712,18 @@ JSON만 출력하세요.
                 f"{carrier}_{join_type.value}_{combo.get('storage')}_{combo.get('plan')}".encode()
             ).hexdigest()[:16]
             
+            # 요금제 가격 추출
+            plan_price = combo.get("plan_price", "0")
+            if isinstance(plan_price, str):
+                plan_price = int(plan_price) if plan_price.isdigit() else 0
+            
             policy = Policy(
                 policy_id=policy_id,
                 carrier=carrier,
                 mno_join_type=join_type,
                 mobile_plan=MobilePlan(
                     name=combo.get("plan") or "Unknown",
+                    monthly_fee=plan_price
                 ),
                 discount_type=DiscountType.PUBLIC_SUBSIDY,  # 기본값: 공시지원금
                 pricing=PricingDetails(

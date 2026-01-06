@@ -1,0 +1,414 @@
+{
+  "하이폰_삼성": {
+    "url": "https://hi-phone.kr/index.php?channel=list&cate=103001000000",
+    "count": 8,
+    "products": [
+      {
+        "name": "갤럭시 폴드7",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10378"
+      },
+      {
+        "name": "갤럭시 S25",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337"
+      },
+      {
+        "name": "갤럭시 S25플러스",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10336"
+      },
+      {
+        "name": "갤럭시 S25 Edge",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10289"
+      },
+      {
+        "name": "갤럭시 S25울트라",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10335"
+      },
+      {
+        "name": "갤럭시 S24Ultra",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10203"
+      },
+      {
+        "name": "갤럭시 플립7",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10379"
+      },
+      {
+        "name": "키즈폰 무너폰2",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10280"
+      }
+    ]
+  },
+  "하이폰_아이폰": {
+    "url": "https://hi-phone.kr/index.php?channel=list&cate=103002000000",
+    "count": 7,
+    "products": [
+      {
+        "name": "아이폰 17",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10381"
+      },
+      {
+        "name": "아이폰 17 PRO",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10382"
+      },
+      {
+        "name": "아이폰 AIR",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10383"
+      },
+      {
+        "name": "아이폰16PRO",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10251"
+      },
+      {
+        "name": "아이폰 15",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10083"
+      },
+      {
+        "name": "아이폰16",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10249"
+      },
+      {
+        "name": "아이폰 16E",
+        "url": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10346"
+      }
+    ]
+  },
+  "딜리버리폰_삼성": {
+    "url": "https://www.deliveryphone.co.kr/phone/list/2",
+    "count": 8,
+    "products": [
+      {
+        "name": "갤럭시 Z플립7 ⭐142만 할인 + 워치8⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/144"
+      },
+      {
+        "name": "갤럭시 Z폴드7 ⭐142만 할인 + 워치8⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/145"
+      },
+      {
+        "name": "⭐갤럭시S25⭐0원-종료임박",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/136"
+      },
+      {
+        "name": "S25+ ⭐142만 할인 + 워치8⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/137"
+      },
+      {
+        "name": "S25 Ultra ⭐152만 할인 + 워치8⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/138"
+      },
+      {
+        "name": "S25 엣지 ⭐137만 할인 + 워치8⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/143"
+      },
+      {
+        "name": "갤럭시 Z플립6 ⭐142만 할인 + 워치7⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/130"
+      },
+      {
+        "name": "갤럭시 Z폴드6 ⭐132만 할인 + 워치7⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/131"
+      }
+    ]
+  },
+  "딜리버리폰_아이폰": {
+    "url": "https://www.deliveryphone.co.kr/phone/list/3",
+    "count": 8,
+    "products": [
+      {
+        "name": "아이폰17 ⭐미친할인⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/146"
+      },
+      {
+        "name": "아이폰17 에어 ⭐미친할인⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/147"
+      },
+      {
+        "name": "아이폰17 프로 ⭐미친할인⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/148"
+      },
+      {
+        "name": "아이폰17 프로맥스 ⭐미친할인⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/149"
+      },
+      {
+        "name": "아이폰16 ⭐오늘끝딜⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/132"
+      },
+      {
+        "name": "아이폰16 플러스 ⭐142만 할인⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/133"
+      },
+      {
+        "name": "아이폰16 프로 ⭐152만 할인⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/134"
+      },
+      {
+        "name": "아이폰15 프로 ⭐154만 할인⭐",
+        "url": "https://www.deliveryphone.co.kr/phone/detail/125"
+      }
+    ]
+  },
+  "성지폰_삼성": {
+    "url": "https://sungjiphone.com/phone/list/2",
+    "count": 8,
+    "products": [
+      {
+        "name": "[BIG 세일] 갤럭시S25 엣지",
+        "url": "https://sungjiphone.com/phone/detail/177"
+      },
+      {
+        "name": "[추천] 갤럭시S25+",
+        "url": "https://sungjiphone.com/phone/detail/166"
+      },
+      {
+        "name": "[베스트] 갤럭시S25 Ultra",
+        "url": "https://sungjiphone.com/phone/detail/167"
+      },
+      {
+        "name": "[가성비] 갤럭시 퀀텀5ㅣA55",
+        "url": "https://sungjiphone.com/phone/detail/146"
+      },
+      {
+        "name": "[재고 OK] 갤럭시 Z폴드6",
+        "url": "https://sungjiphone.com/phone/detail/142"
+      },
+      {
+        "name": "S25 + 워치8, 그냥 완성",
+        "url": "https://sungjiphone.com/phone/detail/165"
+      },
+      {
+        "name": "[재고 OK] 갤럭시 Z플립6",
+        "url": "https://sungjiphone.com/phone/detail/141"
+      },
+      {
+        "name": "갤럭시S24 FE",
+        "url": "https://sungjiphone.com/phone/detail/162"
+      }
+    ]
+  },
+  "성지폰_아이폰": {
+    "url": "https://sungjiphone.com/phone/list/3",
+    "count": 8,
+    "products": [
+      {
+        "name": "[기기값 0원] 아이폰16e",
+        "url": "https://sungjiphone.com/phone/detail/172"
+      },
+      {
+        "name": "아이폰16 프로맥스",
+        "url": "https://sungjiphone.com/phone/detail/151"
+      },
+      {
+        "name": "[추천] 아이폰16프로",
+        "url": "https://sungjiphone.com/phone/detail/149"
+      },
+      {
+        "name": "[더불어 혜택+] 아이폰16",
+        "url": "https://sungjiphone.com/phone/detail/147"
+      },
+      {
+        "name": "[마지막] 아이폰16플러스",
+        "url": "https://sungjiphone.com/phone/detail/148"
+      },
+      {
+        "name": "아이폰15ProMax",
+        "url": "https://sungjiphone.com/phone/detail/126"
+      },
+      {
+        "name": "[기기값 0원] 아이폰15",
+        "url": "https://sungjiphone.com/phone/detail/123"
+      },
+      {
+        "name": "[인기상품] 아이폰15프로",
+        "url": "https://sungjiphone.com/phone/detail/125"
+      }
+    ]
+  },
+  "폰슐랭_삼성": {
+    "url": "https://phonechelin.shop/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+    "count": 0,
+    "products": []
+  },
+  "폰슐랭_아이폰": {
+    "url": "https://phonechelin.shop/mshop/list?sst=c&cid=APPLE",
+    "count": 0,
+    "products": []
+  },
+  "엘지티샵_삼성": {
+    "url": "https://lgtshop.co.kr/mshop/list?sst=c&cid=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90",
+    "count": 0,
+    "products": []
+  },
+  "엘지티샵_아이폰": {
+    "url": "https://lgtshop.co.kr/mshop/list?sst=c&cid=APPLE",
+    "count": 0,
+    "products": []
+  },
+  "투게더몰_삼성": {
+    "url": "https://uplustogethermall.com/section/samsung",
+    "count": 22,
+    "products": [
+      {
+        "name": "갤럭시 S25",
+        "url": "https://uplustogethermall.com/mshop/view/67?tid=LGU&oid=기기변경&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 Z Flip7",
+        "url": "https://uplustogethermall.com/mshop/view/80?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시Z폴드7",
+        "url": "https://uplustogethermall.com/mshop/view/79?tid=LGU&oid=기기변경&sales=1&code=L1594100804"
+      },
+      {
+        "name": "USIM 유심 단독",
+        "url": "https://uplustogethermall.com/mshop/view/72?tid=LGU&oid=번호이동&sales=2&code=L1594100804"
+      },
+      {
+        "name": "갤럭시S25울트라",
+        "url": "https://uplustogethermall.com/mshop/view/65?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시S25플러스",
+        "url": "https://uplustogethermall.com/mshop/view/66?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 S25",
+        "url": "https://uplustogethermall.com/mshop/view/67?tid=LGU&oid=기기변경&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 Z Flip7",
+        "url": "https://uplustogethermall.com/mshop/view/80?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시Z폴드7",
+        "url": "https://uplustogethermall.com/mshop/view/79?tid=LGU&oid=기기변경&sales=1&code=L1594100804"
+      },
+      {
+        "name": "USIM 유심 단독",
+        "url": "https://uplustogethermall.com/mshop/view/72?tid=LGU&oid=번호이동&sales=2&code=L1594100804"
+      },
+      {
+        "name": "갤럭시S25울트라",
+        "url": "https://uplustogethermall.com/mshop/view/65?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시S25플러스",
+        "url": "https://uplustogethermall.com/mshop/view/66?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 S25",
+        "url": "https://uplustogethermall.com/mshop/view/67?tid=LGU&oid=기기변경&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 Z Flip7",
+        "url": "https://uplustogethermall.com/mshop/view/80?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 Z Fold7",
+        "url": "https://uplustogethermall.com/mshop/view/81?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 Z Flip7",
+        "url": "https://uplustogethermall.com/mshop/view/80?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 S25 Ultra",
+        "url": "https://uplustogethermall.com/mshop/view/58?tid=LGU&oid=기기변경&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 S25",
+        "url": "https://uplustogethermall.com/mshop/view/60?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 Z Flip6",
+        "url": "https://uplustogethermall.com/mshop/view/76?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 Z Fold6",
+        "url": "https://uplustogethermall.com/mshop/view/77?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "갤럭시 S25 EdGE",
+        "url": "https://uplustogethermall.com/mshop/view/74?tid=LGU&oid=기기변경&sales=1&code=L1594100804"
+      },
+      {
+        "name": "USIM 유심 단독",
+        "url": "https://uplustogethermall.com/mshop/view/72?tid=LGU&oid=번호이동&sales=2&code=L1594100804"
+      }
+    ]
+  },
+  "투게더몰_아이폰": {
+    "url": "https://uplustogethermall.com/section/apple",
+    "count": 17,
+    "products": [
+      {
+        "name": "아이폰16프로맥스",
+        "url": "https://uplustogethermall.com/mshop/view/68?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "아이폰16프로",
+        "url": "https://uplustogethermall.com/mshop/view/69?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "아이폰16",
+        "url": "https://uplustogethermall.com/mshop/view/61?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "USIM 유심 단독",
+        "url": "https://uplustogethermall.com/mshop/view/72?tid=LGU&oid=번호이동&sales=2&code=L1594100804"
+      },
+      {
+        "name": "아이폰16프로맥스",
+        "url": "https://uplustogethermall.com/mshop/view/68?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "아이폰16프로",
+        "url": "https://uplustogethermall.com/mshop/view/69?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "아이폰16",
+        "url": "https://uplustogethermall.com/mshop/view/61?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "USIM 유심 단독",
+        "url": "https://uplustogethermall.com/mshop/view/72?tid=LGU&oid=번호이동&sales=2&code=L1594100804"
+      },
+      {
+        "name": "아이폰16프로맥스",
+        "url": "https://uplustogethermall.com/mshop/view/68?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "아이폰16프로",
+        "url": "https://uplustogethermall.com/mshop/view/69?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "아이폰16",
+        "url": "https://uplustogethermall.com/mshop/view/61?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "USIM 유심 단독",
+        "url": "https://uplustogethermall.com/mshop/view/72?tid=LGU&oid=번호이동&sales=2&code=L1594100804"
+      },
+      {
+        "name": "아이폰16 프로 맥스",
+        "url": "https://uplustogethermall.com/mshop/view/45?tid=LGU&oid=기기변경&sales=1&code=L1594100804"
+      },
+      {
+        "name": "아이폰16 프로",
+        "url": "https://uplustogethermall.com/mshop/view/43?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "아이폰16",
+        "url": "https://uplustogethermall.com/mshop/view/42?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "iPhone 16e",
+        "url": "https://uplustogethermall.com/mshop/view/75?tid=LGU&oid=번호이동&sales=1&code=L1594100804"
+      },
+      {
+        "name": "USIM 유심 단독",
+        "url": "https://uplustogethermall.com/mshop/view/72?tid=LGU&oid=번호이동&sales=2&code=L1594100804"
+      }
+    ]
+  }
+}
