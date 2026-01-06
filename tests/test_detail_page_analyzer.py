@@ -17,14 +17,17 @@ from src.utils.detail_page_analyzer import DetailPageAnalyzer
 # 테스트 URL
 # ============================================================================
 TEST_URLS = {
-    "띵폰_갤럭시S25": "https://ddingphone.com/view/116?tid=KT&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=K1596089921",
-    "띵폰_아이폰17": "https://ddingphone.com/view/143?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1738389813",
-    "하이폰_갤럭시S25": "https://hi-phone.kr/index.php?channel=view&cate=103001000000&uid=10337",
+    # "띵폰_갤럭시S25": "https://ddingphone.com/view/143?code=S1738560449",
+    # "띵폰_아이폰17": "https://ddingphone.com/view/143?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1738389813",
+    "폰슐랭_아이폰17": "https://phonechelin.shop/mshop/view/74?tid=LGU&oid=%EB%B2%88%ED%98%B8%EC%9D%B4%EB%8F%99&sales=1&code=L1594100686",
+    "하이폰_갤럭시S25": "https://hi-phone.kr/shop/item.php?it_id=1736904092",
     "하이폰_아이폰17": "https://hi-phone.kr/index.php?channel=view&cate=103002000000&uid=10381",
+    "딜리버리폰_갤럭시S25": "https://www.deliveryphone.co.kr/phone/detail/136/0000412381"
 }
 
+HEADLESS = False
 
-test_name_and_url = ("하이폰_갤럭시S25", TEST_URLS["하이폰_갤럭시S25"])
+test_name_and_url = ("딜리버리폰_갤럭시S25", TEST_URLS["딜리버리폰_갤럭시S25"])
 
 # ============================================================================
 # 공통 설정
@@ -63,7 +66,7 @@ async def test_step1_extract_basic_info(site_name: str, test_url: str):
     llm_client = get_llm_client()
     analyzer = DetailPageAnalyzer(llm_client)
     
-    config = SiteConfig(target_url=test_url, headless=False, timeout=60000)
+    config = SiteConfig(target_url=test_url, headless=HEADLESS, timeout=60000)
     
     async with BrowserManager(config) as browser_manager:
         page = await browser_manager.get_page()
@@ -103,7 +106,7 @@ async def test_step2_analyze_option_ui(site_name: str, test_url: str):
     llm_client = get_llm_client()
     analyzer = DetailPageAnalyzer(llm_client)
     
-    config = SiteConfig(target_url=test_url, headless=False, timeout=60000)
+    config = SiteConfig(target_url=test_url, headless=HEADLESS, timeout=60000)
     
     async with BrowserManager(config) as browser_manager:
         page = await browser_manager.get_page()
@@ -161,7 +164,7 @@ async def test_step3_extract_option_values(site_name: str, test_url: str):
     llm_client = get_llm_client()
     analyzer = DetailPageAnalyzer(llm_client)
     
-    config = SiteConfig(target_url=test_url, headless=False, timeout=60000)
+    config = SiteConfig(target_url=test_url, headless=HEADLESS, timeout=60000)
     
     async with BrowserManager(config) as browser_manager:
         page = await browser_manager.get_page()
@@ -204,7 +207,7 @@ async def test_step4_generate_combinations(site_name: str, test_url: str):
     llm_client = get_llm_client()
     analyzer = DetailPageAnalyzer(llm_client)
     
-    config = SiteConfig(target_url=test_url, headless=False, timeout=60000)
+    config = SiteConfig(target_url=test_url, headless=HEADLESS, timeout=60000)
     
     async with BrowserManager(config) as browser_manager:
         page = await browser_manager.get_page()
@@ -255,7 +258,7 @@ async def test_step5_extract_policies_sample(site_name: str, test_url: str):
     llm_client = get_llm_client()
     analyzer = DetailPageAnalyzer(llm_client)
     
-    config = SiteConfig(target_url=test_url, headless=False, timeout=60000)
+    config = SiteConfig(target_url=test_url, headless=HEADLESS, timeout=60000)
     
     async with BrowserManager(config) as browser_manager:
         page = await browser_manager.get_page()
@@ -314,7 +317,7 @@ async def test_step6_convert_to_schema(site_name: str, test_url: str):
     llm_client = get_llm_client()
     analyzer = DetailPageAnalyzer(llm_client)
     
-    config = SiteConfig(target_url=test_url, headless=False, timeout=60000)
+    config = SiteConfig(target_url=test_url, headless=HEADLESS, timeout=60000)
     
     async with BrowserManager(config) as browser_manager:
         page = await browser_manager.get_page()
@@ -386,7 +389,7 @@ async def test_detail_page_analyzer_full(site_name: str, test_url: str):
     llm_client = get_llm_client()
     analyzer = DetailPageAnalyzer(llm_client)
     
-    config = SiteConfig(target_url=test_url, headless=False, timeout=60000)
+    config = SiteConfig(target_url=test_url, headless=HEADLESS, timeout=60000)
     
     async with BrowserManager(config) as browser_manager:
         page = await browser_manager.get_page()

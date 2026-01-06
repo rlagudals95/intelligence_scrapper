@@ -468,104 +468,540 @@ class DetailPageAnalyzer:
         
         return json_str
     
-    async def _extract_plan_list_with_llm(self, page: Page, list_container_selector: str = None) -> List[Dict[str, str]]:
+    async def _analyze_button_event_handler(self, page: Page, button_selector: str) -> Dict[str, Any]:
+        """버튼의 이벤트 핸들러를 분석하여 어떤 동작을 하는지 추측"""
+        
+        analysis = await page.evaluate("""
+            (selector) => {
+                const button = document.querySelector(selector);
+                if (!button) return { found: false };
+                
+                // 1. onclick 속성 확인
+                const onclickAttr = button.getAttribute('onclick');
+                
+                // 2. 함수 소스 코드 추출 (onclick 또는 inline event)
+                let handlerSource = onclickAttr || '';
+                
+                // 3. data 속성 확인
+                const dataAttrs = {};
+                for (const attr of button.attributes) {
+                    if (attr.name.startsWith('data-')) {
+                        dataAttrs[attr.name] = attr.value;
+                    }
+                }
+                
+                // 4. 핸들러 분석
+                const analysis = {
+                    found: true,
+                    onclick: onclickAttr,
+                    handlerSource: handlerSource,
+                    dataAttrs: dataAttrs,
+                    // AJAX 호출 감지
+                    hasAjax: /ajax|fetch|XMLHttpRequest|\\$\\.post|\\$\\.get|\\$\\.ajax/i.test(handlerSource),
+                    // DOM 조작 감지
+                    hasShow: /show|display|visible|toggle|fadeIn|slideDown|addClass|removeClass/i.test(handlerSource),
+                    // 특정 요소 타겟팅 감지
+                    targets: []
+                };
+                
+                // 타겟 요소 ID/클래스 추출
+                const idMatches = handlerSource.match(/#([a-zA-Z_][a-zA-Z0-9_-]*)/g);
+                const classMatches = handlerSource.match(/\\.([a-zA-Z_][a-zA-Z0-9_-]*)/g);
+                
+                if (idMatches) analysis.targets.push(...idMatches);
+                if (classMatches) analysis.targets.push(...classMatches);
+                
+                return analysis;
+            }
+        """, button_selector)
+        
+        return analysis
+    
+    async def _click_and_detect_changes(self, page: Page, button_selector: str) -> Dict[str, Any]:
+        """버튼 클릭 후 DOM 변화를 감지하여 새로 나타난 요소 찾기"""
+        
+        # MutationObserver 설정
+        await page.evaluate("""
+            () => {
+                window._mutationLog = [];
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'attributes' && 
+                            (mutation.attributeName === 'style' || 
+                             mutation.attributeName === 'class')) {
+                            const el = mutation.target;
+                            const style = window.getComputedStyle(el);
+                            if (style.display !== 'none' && style.visibility !== 'hidden') {
+                                const html = el.outerHTML || '';
+                                const priceCount = (html.match(/\\d{2,3},?\\d{3}\\s*원/g) || []).length;
+                                if (priceCount >= 3) {
+                                    window._mutationLog.push({
+                                        type: 'shown',
+                                        selector: el.className || el.id || el.tagName,
+                                        html: html.substring(0, 2000),
+                                        priceCount: priceCount
+                                    });
+                                }
+                            }
+                        } else if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                            mutation.addedNodes.forEach((node) => {
+                                if (node.nodeType === 1) {
+                                    const html = node.outerHTML || '';
+                                    const priceCount = (html.match(/\\d{2,3},?\\d{3}\\s*원/g) || []).length;
+                                    if (priceCount >= 3) {
+                                        window._mutationLog.push({
+                                            type: 'added',
+                                            selector: node.className || node.id || node.tagName,
+                                            html: html.substring(0, 2000),
+                                            priceCount: priceCount
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    });
+                });
+                observer.observe(document.body, {
+                    attributes: true,
+                    childList: true,
+                    subtree: true,
+                    attributeOldValue: true
+                });
+            }
+        """)
+        
+        # 버튼 클릭
+        try:
+            await page.click(button_selector)
+            await asyncio.sleep(1.5)
+        except Exception as e:
+            print(f"    ⚠️  버튼 클릭 실패: {e}")
+            return {'method': 'click_failed'}
+        
+        # 변화 로그 가져오기
+        mutations = await page.evaluate("() => window._mutationLog || []")
+        
+        # 가장 많은 가격 정보를 가진 변화 찾기
+        best_mutation = None
+        max_prices = 0
+        
+        for mutation in mutations:
+            price_count = mutation.get('priceCount', 0)
+            if price_count > max_prices:
+                max_prices = price_count
+                best_mutation = mutation
+        
+        if best_mutation:
+            print(f"    ✅ DOM 변화 감지: {best_mutation['selector']} ({max_prices}개 가격)")
+            return {
+                'method': 'mutation_detected',
+                'selector': best_mutation['selector'],
+                'type': best_mutation['type'],
+                'html': best_mutation['html'],
+                'priceCount': max_prices
+            }
+        
+        return {'method': 'no_mutation'}
+    
+    async def _monitor_ajax_and_click(self, page: Page, button_selector: str) -> List[Dict]:
+        """버튼 클릭 후 발생하는 AJAX 요청 모니터링"""
+        
+        captured_responses = []
+        
+        async def handle_response(response):
+            # JSON 응답만 캡처
+            content_type = response.headers.get('content-type', '').lower()
+            if 'json' in content_type or 'javascript' in content_type:
+                try:
+                    text = await response.text()
+                    # JSON 파싱 시도
+                    try:
+                        data = json.loads(text)
+                        captured_responses.append({
+                            'url': response.url,
+                            'status': response.status,
+                            'data': data,
+                            'text': text[:2000]
+                        })
+                    except:
+                        # JSON이 아니면 텍스트로 저장
+                        if '원' in text:
+                            captured_responses.append({
+                                'url': response.url,
+                                'status': response.status,
+                                'text': text[:5000]
+                            })
+                except Exception as e:
+                    pass
+        
+        page.on('response', handle_response)
+        
+        # 버튼 클릭
+        try:
+            await page.click(button_selector)
+            await asyncio.sleep(2)
+        except Exception as e:
+            print(f"    ⚠️  버튼 클릭 실패: {e}")
+        
+        page.remove_listener('response', handle_response)
+        
+        print(f"    📡 캡처된 응답: {len(captured_responses)}개")
+        
+        # 응답에서 요금제 찾기
+        for resp in captured_responses:
+            if 'data' in resp:
+                data = resp['data']
+                # 응답 데이터에서 요금제 리스트 찾기
+                if isinstance(data, dict):
+                    for key in ['list', 'plans', 'items', 'data', 'result', 'rows']:
+                        if key in data and isinstance(data[key], list) and len(data[key]) > 0:
+                            print(f"    ✅ AJAX 응답에서 데이터 발견: {key} ({len(data[key])}개)")
+                            return data[key]
+            elif 'text' in resp:
+                # HTML이나 JavaScript 응답에 가격 정보가 있으면
+                text = resp['text']
+                price_count = text.count('원')
+                if price_count >= 5:
+                    print(f"    ✅ AJAX 응답에서 가격 정보 발견: {price_count}개")
+                    return [{'html': text}]
+        
+        return []
+    
+    async def _extract_plans_smart(self, page: Page, open_button_selector: str) -> List[Dict[str, str]]:
+        """
+        통합 전략: 이벤트 분석 + DOM 변화 + AJAX 모니터링 + LLM
+        """
+        print("    [스마트 요금제 추출 시작]")
+        
+        if not open_button_selector:
+            print("    ⚠️  open_button_selector가 없음")
+            return []
+        
+        try:
+            # 1단계: 이벤트 핸들러 분석
+            print(f"    📋 1단계: 이벤트 핸들러 분석")
+            handler_info = await self._analyze_button_event_handler(page, open_button_selector)
+            
+            if not handler_info or not handler_info.get('found'):
+                print(f"    ⚠️  버튼을 찾지 못함: {open_button_selector}, 폴백 사용")
+                # 폴백
+                try:
+                    await page.click(open_button_selector)
+                    await asyncio.sleep(1.5)
+                except:
+                    pass
+                return await self._extract_plan_list_with_llm(page)
+            
+            onclick_text = handler_info.get('onclick', 'None')
+            print(f"    ├─ onclick: {onclick_text[:50] if onclick_text else 'None'}...")
+            print(f"    ├─ AJAX: {handler_info.get('hasAjax', False)}")
+            print(f"    ├─ DOM조작: {handler_info.get('hasShow', False)}")
+            print(f"    └─ 타겟: {handler_info.get('targets', [])[:3]}")
+        
+            # 2단계: AJAX 요청이 있으면 모니터링
+            if handler_info.get('hasAjax'):
+                print(f"    🌐 2단계: AJAX 모니터링")
+                ajax_data = await self._monitor_ajax_and_click(page, open_button_selector)
+                if ajax_data:
+                    # AJAX 데이터를 LLM으로 파싱
+                    if isinstance(ajax_data[0], dict) and 'html' in ajax_data[0]:
+                        html_content = ajax_data[0]['html']
+                        return await self._extract_with_llm_from_html(html_content)
+                    else:
+                        # JSON 데이터 직접 파싱
+                        return await self._parse_ajax_data(ajax_data)
+            
+            # 3단계: DOM 조작이 있으면 MutationObserver
+            if handler_info.get('hasShow'):
+                print(f"    🔄 3단계: DOM 변화 감지")
+                mutation_result = await self._click_and_detect_changes(page, open_button_selector)
+                
+                if mutation_result.get('html'):
+                    # 변화된 HTML을 LLM으로 추출
+                    return await self._extract_with_llm_from_html(mutation_result['html'])
+            
+            # 4단계: 타겟 요소가 명시되어 있으면 직접 추출
+            if handler_info.get('targets'):
+                print(f"    🎯 4단계: 타겟 요소 직접 추출")
+                for target in handler_info['targets'][:5]:  # 최대 5개만
+                    try:
+                        # onclick="show('#myModal')" 같은 경우
+                        target_html = await page.evaluate(
+                            f"() => document.querySelector('{target}')?.outerHTML"
+                        )
+                        if target_html and '원' in target_html:
+                            price_count = target_html.count('원')
+                            if price_count >= 5:
+                                print(f"    ✅ 타겟 요소에서 가격 발견: {target} ({price_count}개)")
+                                return await self._extract_with_llm_from_html(target_html)
+                    except Exception as e:
+                        continue
+            
+            # 5단계: 폴백 - 기존 방식 (단순 클릭 후 전체 body)
+            print(f"    🔙 5단계: 폴백 - 전체 페이지 분석")
+            try:
+                await page.click(open_button_selector)
+                await asyncio.sleep(1.5)
+            except:
+                pass
+            
+            return await self._extract_plan_list_with_llm(page)
+        
+        except Exception as e:
+            print(f"    ⚠️  스마트 추출 실패: {e}")
+            import traceback
+            traceback.print_exc()
+            # 최종 폴백
+            try:
+                await page.click(open_button_selector)
+                await asyncio.sleep(1.5)
+            except:
+                pass
+            return await self._extract_plan_list_with_llm(page)
+    
+    async def _parse_ajax_data(self, ajax_data: List[Dict]) -> List[Dict[str, str]]:
+        """AJAX JSON 데이터에서 요금제 추출"""
+        plans = []
+        
+        for item in ajax_data:
+            # 요금제 이름과 가격 찾기
+            name = None
+            price = None
+            
+            # 일반적인 키 패턴
+            name_keys = ['name', 'plan_name', 'title', 'bill_name', 'planName']
+            price_keys = ['price', 'monthly_price', 'bill_price', 'fee', 'monthlyFee']
+            
+            for key in name_keys:
+                if key in item:
+                    name = item[key]
+                    break
+            
+            for key in price_keys:
+                if key in item:
+                    price = str(item[key]).replace(',', '')
+                    break
+            
+            if name and price:
+                try:
+                    price_int = int(price)
+                    if price_int >= 60000:
+                        plans.append({'name': name, 'price': str(price_int)})
+                except:
+                    pass
+        
+        print(f"    ✅ AJAX 데이터에서 {len(plans)}개 요금제 파싱")
+        return plans
+    
+    async def _extract_with_llm_from_html(self, html: str) -> List[Dict[str, str]]:
+        """HTML 조각에서 LLM으로 요금제 추출"""
+        print(f"    🤖 LLM으로 HTML 분석 중... ({len(html)}자)")
+        
+        # HTML 크기 제한
+        html = html[:200000]
+        
+        prompt = f"""
+다음 HTML에서 **모든 휴대폰 요금제**를 추출하세요.
+
+# HTML
+{html}
+
+# 규칙
+1. 요금제 이름 + 가격이 있는 항목만
+2. 60,000원 이상만
+3. 부가 혜택(무제한, 넷플릭스 등) 제외
+
+# 응답 (JSON 배열만)
+[
+  {{"name": "5G 심플 30GB", "price": 61000}}
+]
+"""
+        
+        try:
+            response = await self.llm.complete(prompt, max_tokens=8000)
+            response_text = response.strip()
+            
+            # JSON 파싱
+            if "```" in response_text:
+                lines = response_text.split("\n")
+                json_lines = []
+                in_code_block = False
+                for line in lines:
+                    if line.strip().startswith("```"):
+                        in_code_block = not in_code_block
+                        continue
+                    if in_code_block or (not line.strip().startswith("```")):
+                        json_lines.append(line)
+                response_text = "\n".join(json_lines)
+            
+            start_idx = response_text.find("[")
+            end_idx = response_text.rfind("]") + 1
+            if start_idx != -1 and end_idx > start_idx:
+                response_text = response_text[start_idx:end_idx]
+            
+            plans = json.loads(response_text)
+            
+            # 가격 필터링 및 정규화
+            valid_plans = []
+            for p in plans:
+                price = p.get("price")
+                name = p.get("name", "")
+                
+                if isinstance(price, str):
+                    price = int(price.replace(",", "")) if price.replace(",", "").isdigit() else 0
+                elif isinstance(price, (int, float)):
+                    price = int(price)
+                else:
+                    price = 0
+                
+                if price >= 60000:
+                    valid_plans.append({"name": name, "price": str(price)})
+            
+            print(f"    ✅ LLM이 {len(valid_plans)}개 요금제 추출")
+            return valid_plans
+            
+        except Exception as e:
+            print(f"    ⚠️  LLM 추출 실패: {e}")
+            return []
+    
+    async def _extract_plan_list_with_llm(self, page: Page) -> List[Dict[str, str]]:
         """
         LLM을 이용해 요금제 리스트 추출
         
-        모달/드롭다운 HTML을 LLM에게 전달해서 실제 요금제만 정확히 추출
+        클릭 후 새로 나타난 요소의 HTML만 LLM에게 전달
         """
         print("    [LLM 기반 요금제 추출 시작]")
         
         try:
-            # 현재 보이는 모달/드롭다운/리스트의 HTML 추출
-            modal_html = await page.evaluate("""
-                (containerSelector) => {
-                    // 1. 컨테이너 선택자가 있으면 사용
-                    if (containerSelector) {
-                        const container = document.querySelector(containerSelector);
-                        if (container) {
-                            const style = window.getComputedStyle(container);
-                            if (style.display !== 'none' && style.visibility !== 'hidden') {
-                                return container.outerHTML;
-                            }
-                        }
-                    }
+            # 클릭 후 모달/드롭다운 HTML 직접 추출
+            extraction_result = await page.evaluate("""
+                () => {
+                    console.log('[요금제 추출] 시작');
                     
-                    // 2. 보이는 모달/드롭다운 찾기
-                    const candidates = document.querySelectorAll(
-                        '.modal, [class*="modal"], [class*="Modal"], ' +
-                        '.layer, [class*="layer"], [class*="Layer"], ' +
-                        '.popup, [class*="popup"], [class*="Popup"], ' +
-                        '.dropdown, [class*="dropdown"], [class*="Dropdown"]'
-                    );
+                    // 전체 요소 중에서 가격 정보가 가장 많은 요소 찾기
+                    let bestElement = null;
+                    let maxPrices = 0;
+                    let bestInfo = '';
                     
-                    for (const el of candidates) {
+                    // 모든 요소를 순회
+                    const allElements = document.querySelectorAll('*');
+                    
+                    for (const el of allElements) {
                         const style = window.getComputedStyle(el);
-                        if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
-                            // 가격 정보가 포함된 요소 우선
-                            if (el.innerHTML.includes('원') || el.querySelector('[data-billprice], [data-price]')) {
-                                return el.outerHTML;
+                        
+                        // 보이는 요소만 체크
+                        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+                            continue;
+                        }
+                        
+                        const html = el.innerHTML || '';
+                        // "원" 패턴 카운트
+                        const priceMatches = html.match(/\\d{2,3},?\\d{3}\\s*원|월\\s*\\d{2,3},?\\d{3}\\s*원/g);
+                        const priceCount = priceMatches ? priceMatches.length : 0;
+                        
+                        // 가격이 5개 이상이고, 자식 요소가 많은 (리스트 형태) 요소 우선
+                        if (priceCount >= 5) {
+                            const children = el.querySelectorAll('[class*="item"], [class*="list"], li, div');
+                            const childrenCount = children.length;
+                            
+                            // 가격 수 + 자식 수로 점수 계산
+                            const score = priceCount + (childrenCount * 0.1);
+                            const prevScore = maxPrices + (bestElement ? bestElement.querySelectorAll('[class*="item"], [class*="list"], li, div').length * 0.1 : 0);
+                            
+                            if (score > prevScore) {
+                                maxPrices = priceCount;
+                                bestElement = el;
+                                const className = el.className || el.id || el.tagName;
+                                bestInfo = `${className} (${childrenCount}개 자식)`;
+                                console.log(`[후보] ${bestInfo}: ${priceCount}개 가격`);
                             }
                         }
                     }
                     
-                    // 3. 가격 정보가 있는 리스트 찾기
-                    const lists = document.querySelectorAll('ul, ol, [class*="list"], [class*="List"]');
-                    for (const list of lists) {
-                        const style = window.getComputedStyle(list);
-                        if (style.display !== 'none' && style.visibility !== 'hidden') {
-                            if (list.innerHTML.includes('원') || list.querySelector('[data-billprice], [data-price]')) {
-                                return list.outerHTML;
-                            }
-                        }
+                    if (bestElement && maxPrices >= 5) {
+                        console.log(`[최종 선택] ${bestInfo}: ${maxPrices}개 가격 정보`);
+                        return {
+                            html: bestElement.outerHTML,
+                            method: 'price_density',
+                            priceCount: maxPrices,
+                            info: bestInfo
+                        };
                     }
                     
-                    return null;
+                    // 찾지 못했으면 전체 body 반환
+                    console.log('[폴백] body 전체 사용');
+                    return {
+                        html: document.body.innerHTML,
+                        method: 'body_fallback',
+                        priceCount: 0,
+                        info: 'body'
+                    };
                 }
-            """, list_container_selector)
+            """)
             
-            if not modal_html:
-                print("    ⚠️  모달/드롭다운 HTML을 찾지 못함")
+            newly_visible_html = extraction_result.get("html", "")
+            extraction_method = extraction_result.get("method", "unknown")
+            price_count = extraction_result.get("priceCount", 0)
+            element_info = extraction_result.get("info", "")
+            
+            print(f"    🔍 추출 방법: {extraction_method}")
+            print(f"    📊 가격 정보: {price_count}개")
+            print(f"    🎯 요소: {element_info}")
+            
+            if not newly_visible_html:
+                print("    ⚠️  HTML을 찾지 못함")
                 return []
             
-            # HTML 크기 제한 (50KB)
-            modal_html = modal_html[:50000]
-            print(f"    📄 모달 HTML 크기: {len(modal_html)}자")
+            # HTML 크기 제한 확대 (200KB)
+            newly_visible_html = newly_visible_html[:200000]
+            print(f"    📄 추출된 HTML 크기: {len(newly_visible_html)}자")
             
-            # LLM에게 요금제 추출 요청
+            # LLM에게 요금제 추출 요청 (프롬프트 강화)
             prompt = f"""
-다음 HTML은 휴대폰 요금제 선택 모달/드롭다운입니다.
-이 HTML에서 **실제 선택 가능한 요금제만** 추출하세요.
+# 임무
+다음 HTML에서 **모든 휴대폰 요금제**를 빠짐없이 추출하세요.
 
 # HTML
-{modal_html}
+{newly_visible_html}
 
-# 추출 규칙 (매우 중요!)
-1. **실제 요금제만 추출**: "무제한", "10GB+최대 1Mbps", "완전 무제한" 같은 부가정보/혜택은 제외
-2. **가격 필수**: 가격이 있는 항목만 추출
-3. **요금제명**: 실제 요금제 이름만 추출 (예: "5G 심플 30GB", "5G 베이직")
-4. 60000원 이상의 요금제만 추출
+# 중요 지침
+1. **완전성**: HTML에 있는 **모든** 요금제를 추출하세요 (보통 10~15개)
+2. **요금제 식별**:
+   - "5G" 또는 "LTE"로 시작하는 이름
+   - "월 XX,XXX원" 또는 "XX,XXX원" 형태의 가격
+   - 예: "5G 심플 30GB", "5G 초이스 베이직", "5G 프리미어 플러스"
+3. **제외 항목**:
+   - 부가 혜택만 있는 항목 ("무제한", "넷플릭스", "10GB+1Mbps")
+4. **필터**:
+   - 60,000원 이상만
+   - 가격은 숫자만 (쉼표 제거)
 
-# 가격 추출 우선순위
-1. data-billprice, data-price 속성값 (예: data-billprice="61000" → 61000)
-2. "월 XX,XXX원" 패턴의 텍스트
-3. "XXXXX원" 패턴
+# 추출 방법
+HTML을 꼼꼼히 스캔하여:
+- 반복되는 패턴 찾기
+- 각 패턴에서 요금제 이름과 가격 추출
+- 리스트 끝까지 모두 추출
 
-# 응답 형식 (JSON 배열만 출력)
+# 응답 (JSON 배열만, **최소 10개 이상** 추출)
 [
-  {{"name": "5G 심플 30GB", "price": 61000}},
-  {{"name": "5G 베이직", "price": 80000}}
+  {{"name": "5G 초이스 스페셜", "price": 110000}},
+  {{"name": "5G 스페셜", "price": 100000}},
+  {{"name": "5G 초이스 베이직", "price": 90000}},
+  {{"name": "5G 베이직", "price": 80000}},
+  {{"name": "5G 심플 110GB", "price": 69000}},
+  {{"name": "5G 심플 90GB", "price": 67000}},
+  {{"name": "5G 심플 70GB", "price": 65000}},
+  {{"name": "5G 심플 50GB", "price": 63000}},
+  {{"name": "5G 심플 30GB", "price": 61000}}
 ]
 
-**주의사항:**
-- "무제한", "완전 무제한", "10GB+최대 1Mbps", "넷플릭스" 같은 부가 혜택/정보는 절대 포함하지 마세요
-- 가격이 없는 항목은 제외하세요
-- data-billprice 같은 속성에서 가격을 추출할 때는 숫자만 추출하세요
-- JSON 배열만 출력하세요, 다른 텍스트 없이
+**지금 JSON 배열을 출력하세요. 모든 요금제를 포함해야 합니다.**
 """
             
-            response = await self.llm.complete(prompt, max_tokens=4000)
+            response = await self.llm.complete(prompt, max_tokens=8000)
             response_text = response.strip()
+            
+            print(f"    📝 LLM 응답 길이: {len(response_text)}자")
             
             # JSON 파싱
             # 코드 블록 제거
@@ -782,204 +1218,11 @@ class DetailPageAnalyzer:
             try:
                 print(f"    [요금제 추출 시작]")
                 
-                # 선택자 먼저 가져오기
-                item_selector = plan_info.get("item_selector")
-                name_selector = plan_info.get("name_selector", "")
-                price_attr = plan_info.get("price_attribute")
-                
                 # 드롭다운/다이얼로그 열기
                 open_btn = plan_info.get("open_button_selector")
-                list_container = plan_info.get("list_container_selector", "")
                 
-                # open_button_selector를 클릭하고 나타나는 요소를 확인하여 list_container_selector 검증/보정
-                if open_btn:
-                    try:
-                        btn_element = await page.query_selector(open_btn)
-                        if btn_element:
-                            # 클릭 전 상태 저장
-                            before_html = await page.content()
-                            
-                            # 버튼 클릭
-                            await btn_element.click()
-                            await asyncio.sleep(1.0)  # 모달/드롭다운 열림 대기
-                            
-                            # 클릭 후 나타나는 모달/드롭다운 찾기
-                            detected_container = await page.evaluate("""
-                                () => {
-                                    // 새로 나타난 모달/팝업 찾기
-                                    const modals = document.querySelectorAll('.modal, .popup, [class*="Modal"], [class*="modal"], [class*="layer"], [class*="Layer"]');
-                                    for (const modal of modals) {
-                                        // display: none이 아니고, visible한 요소
-                                        const style = window.getComputedStyle(modal);
-                                        if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
-                                            // 내부에 리스트가 있는지 확인
-                                            const list = modal.querySelector('ul, ol, [class*="list"], [class*="List"]');
-                                            if (list) {
-                                                return modal.className || modal.id || modal.tagName;
-                                            }
-                                        }
-                                    }
-                                    
-                                    // 모달 내부의 리스트 컨테이너 직접 찾기
-                                    const listContainers = document.querySelectorAll('[class*="list"], [class*="List"], ul, ol');
-                                    for (const container of listContainers) {
-                                        const style = window.getComputedStyle(container);
-                                        if (style.display !== 'none' && style.visibility !== 'hidden') {
-                                            // 부모가 모달/팝업인지 확인
-                                            let parent = container.parentElement;
-                                            while (parent) {
-                                                const parentClass = parent.className || '';
-                                                if (parentClass.includes('modal') || parentClass.includes('Modal') || 
-                                                    parentClass.includes('popup') || parentClass.includes('Popup') ||
-                                                    parentClass.includes('layer') || parentClass.includes('Layer')) {
-                                                    return container.className || container.id || container.tagName;
-                                                }
-                                                parent = parent.parentElement;
-                                            }
-                                        }
-                                    }
-                                    
-                                    return null;
-                                }
-                            """)
-                            
-                            if detected_container:
-                                # 실제로 나타난 컨테이너의 선택자 추출
-                                actual_container_selector = await page.evaluate("""
-                                    (containerClassOrId) => {
-                                        // 클래스명으로 찾기
-                                        if (containerClassOrId.includes(' ')) {
-                                            const parts = containerClassOrId.split(' ').filter(p => p);
-                                            if (parts.length > 0) {
-                                                return '.' + parts[0];
-                                            }
-                                        }
-                                        // ID로 찾기
-                                        const elem = document.getElementById(containerClassOrId);
-                                        if (elem) {
-                                            return '#' + containerClassOrId;
-                                        }
-                                        // 클래스명으로 찾기
-                                        const elemByClass = document.querySelector('.' + containerClassOrId);
-                                        if (elemByClass) {
-                                            return '.' + containerClassOrId;
-                                        }
-                                        return null;
-                                    }
-                                """, detected_container)
-                                
-                                if actual_container_selector:
-                                    print(f"    ✅ 실제 나타난 컨테이너 감지: {actual_container_selector}")
-                                    # LLM이 추출한 선택자와 다르면 업데이트
-                                    if list_container != actual_container_selector:
-                                        print(f"    🔄 list_container_selector 업데이트: {list_container} → {actual_container_selector}")
-                                        list_container = actual_container_selector
-                                        plan_info["list_container_selector"] = actual_container_selector
-                                        
-                    except Exception as e:
-                        print(f"    ⚠️  컨테이너 자동 감지 실패: {e}, LLM 추론 선택자 사용")
-                
-                if open_btn:
-                    # Playwright로 버튼 클릭 (더 확실함)
-                    try:
-                        btn_element = await page.query_selector(open_btn)
-                        if btn_element:
-                            # 드롭다운 열기 전 항목 개수 확인
-                            selector_for_check = item_selector if item_selector else ".bill-basic"
-                            before_count = await page.evaluate("""
-                                (selector) => {
-                                    const items = document.querySelectorAll(selector);
-                                    return items.length;
-                                }
-                            """, selector_for_check)
-                            
-                            await btn_element.click()
-                            
-                            # 드롭다운이 열릴 때까지 대기 (최대 3초)
-                            max_wait = 3.0
-                            wait_interval = 0.2
-                            waited = 0.0
-                            after_count = before_count
-                            
-                            while waited < max_wait:
-                                await asyncio.sleep(wait_interval)
-                                waited += wait_interval
-                                
-                                after_count = await page.evaluate("""
-                                    (selector) => {
-                                        const items = document.querySelectorAll(selector);
-                                        return items.length;
-                                    }
-                                """, selector_for_check)
-                                
-                                # 항목이 증가하면 성공
-                                if after_count > before_count:
-                                    break
-                            
-                            await asyncio.sleep(0.5)  # 추가 안정화 대기
-                            
-                            print(f"    ✅ 요금제 드롭다운 열기 버튼 클릭 (항목: {before_count} → {after_count}개, 대기: {waited:.1f}초)")
-                        else:
-                            print(f"    ⚠️  요금제 드롭다운 버튼을 찾지 못함")
-                    except Exception as e:
-                        print(f"    ⚠️  드롭다운 열기 실패: {e}, 계속 진행...")
-                
-                # 컨테이너가 있으면 스크롤하여 모든 항목 로드
-                scroll_container = list_container
-                
-                if scroll_container:
-                    try:
-                        # 선택자로 컨테이너 찾기
-                        if isinstance(scroll_container, str):
-                            container = await page.query_selector(scroll_container)
-                        else:
-                            container = scroll_container
-                        
-                        if container:
-                            # 스크롤하여 모든 항목 로드
-                            scroll_result = await container.evaluate("""
-                                (container) => {
-                                    let lastHeight = 0;
-                                    let currentHeight = container.scrollHeight;
-                                    let scrollAttempts = 0;
-                                    
-                                    // 최대 15번 스크롤 시도
-                                    while (scrollAttempts < 15 && currentHeight > lastHeight) {
-                                        container.scrollTop = container.scrollHeight;
-                                        
-                                        // 대기
-                                        const start = Date.now();
-                                        while (Date.now() - start < 300) {}
-                                        
-                                        lastHeight = currentHeight;
-                                        currentHeight = container.scrollHeight;
-                                        scrollAttempts++;
-                                    }
-                                    
-                                    // 맨 위로 스크롤
-                                    container.scrollTop = 0;
-                                    
-                                    return {
-                                        scrollAttempts: scrollAttempts
-                                    };
-                                }
-                            """)
-                            
-                            await asyncio.sleep(0.5)
-                            print(f"    ✅ 요금제 리스트 스크롤 완료 (시도: {scroll_result.get('scrollAttempts', 0)}회)")
-                        else:
-                            print(f"    ⚠️  스크롤 컨테이너를 찾지 못함")
-                    except Exception as e:
-                        print(f"    ⚠️  스크롤 실패: {e}, 계속 진행...")
-                else:
-                    print(f"    ⚠️  스크롤할 컨테이너가 없음")
-                
-                # 요금제 목록 추출 (LLM 기반)
-                # 추가 대기 (동적 로딩 완료 대기)
-                await asyncio.sleep(0.5)
-                
-                # LLM 기반 요금제 추출 시도
-                plans = await self._extract_plan_list_with_llm(page, list_container)
+                # 스마트 요금제 추출: 이벤트 분석 + DOM 변화 + AJAX 모니터링
+                plans = await self._extract_plans_smart(page, open_btn)
                 
                 if plans:
                     options["plan"] = plans
