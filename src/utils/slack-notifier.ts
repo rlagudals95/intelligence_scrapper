@@ -2,7 +2,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Phase3ScrapingResult, Policy } from '../models/phase3-schemas.js';
+import { ScrapingResult, Policy, codeToCarrier } from '../models/phase3-schemas.js';
 import { getLogger } from './logger.js';
 
 const logger = getLogger('SlackNotifier');
@@ -34,7 +34,7 @@ export class SlackNotifier {
   }
 
   /**
-   * Save policies to CSV file
+   * Save policies to CSV file (Python 호환 필드명)
    */
   savePoliciesToCsv(policies: Policy[], siteName: string, productName: string): string {
     const csvDir = path.join(projectRoot, 'output', 'scraping', 'csv');
@@ -58,22 +58,22 @@ export class SlackNotifier {
       '출고가',
       '공시지원금',
       '추가할인',
-      '최종가',
+      '할부원금',
       '월할부금',
     ].join(',');
 
     const rows = policies.map((p) =>
       [
-        p.carrier,
-        p.joinType,
-        p.discountType,
-        `"${p.plan.name}"`,
-        p.plan.monthlyFee,
-        p.pricing.retailPrice,
-        p.pricing.publicSubsidy || 0,
-        p.pricing.additionalDiscount || 0,
-        p.pricing.finalPrice,
-        p.pricing.monthlyInstallment || 0,
+        codeToCarrier(p.carrier), // "1" -> "SKT"
+        p.mno_join_type,
+        p.discount_type,
+        `"${p.mobile_plan.name}"`,
+        p.mobile_plan.monthly_fee,
+        p.pricing.mno_retail_price || 0,
+        p.pricing.public_subsidy || 0,
+        p.pricing.discount || 0,
+        p.pricing.sku_installment_fee || 0,
+        p.pricing.monthly_payment || 0,
       ].join(',')
     );
 
@@ -87,7 +87,7 @@ export class SlackNotifier {
   /**
    * Save scraping result to JSON file
    */
-  saveResultToJson(result: Phase3ScrapingResult, siteName: string): string {
+  saveResultToJson(result: ScrapingResult, siteName: string): string {
     const jsonDir = path.join(projectRoot, 'output', 'scraping');
     if (!fs.existsSync(jsonDir)) {
       fs.mkdirSync(jsonDir, { recursive: true });
@@ -107,18 +107,21 @@ export class SlackNotifier {
    * Notify scraping completion
    */
   async notifyScrapingComplete(
-    result: Phase3ScrapingResult,
+    result: ScrapingResult,
     csvPaths: string[]
   ): Promise<void> {
-    const totalPolicies = result.products.reduce((sum, p) => sum + p.policies.length, 0);
+    const totalPolicies = result.results.reduce(
+      (sum, r) => sum + r.products.reduce((s, p) => s + p.policies.length, 0),
+      0
+    );
 
     const message = [
       '📱 *스크래핑 완료!*',
       '',
-      `🏪 사이트: ${result.source.siteName}`,
-      `📦 제품 수: ${result.products.length}`,
+      `🏪 사이트: ${result.site_name}`,
+      `📦 제품 수: ${result.results.length}`,
       `📋 총 정책 수: ${totalPolicies}`,
-      `⏰ 시간: ${result.capturedAt}`,
+      `⏰ 시간: ${result.scraped_at}`,
       '',
       `📁 CSV 파일: ${csvPaths.length}개 생성`,
     ].join('\n');

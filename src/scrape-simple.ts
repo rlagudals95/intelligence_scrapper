@@ -3,6 +3,7 @@
 import 'dotenv/config';
 import { Command } from 'commander';
 import { PhoneScraperService } from './services/phone-scraper-service.js';
+import { ProductResult, Product } from './models/phase3-schemas.js';
 import { getLogger } from './utils/logger.js';
 
 const logger = getLogger('scrape-simple');
@@ -102,13 +103,18 @@ async function main() {
   try {
     const result = await service.run();
 
-    const totalPolicies = result.products.reduce((sum, p) => sum + p.policies.length, 0);
+    const totalPolicies = result.results.reduce(
+      (sum: number, r: ProductResult) =>
+        sum + r.products.reduce((s: number, p: Product) => s + p.policies.length, 0),
+      0
+    );
 
     console.log('\n' + '='.repeat(70));
     console.log('✅ 스크래핑 완료!');
     console.log('='.repeat(70));
-    console.log(`제품 수: ${result.products.length}`);
+    console.log(`제품 수: ${result.results.length}`);
     console.log(`총 정책 수: ${totalPolicies}`);
+    console.log(`소요시간: ${result.total_duration.toFixed(2)}초`);
     console.log('='.repeat(70));
 
     process.exit(0);

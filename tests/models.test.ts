@@ -53,9 +53,9 @@ describe('parsePrice', () => {
   });
 
   it('should handle invalid input', () => {
-    expect(parsePrice(null)).toBe(0);
-    expect(parsePrice(undefined)).toBe(0);
-    expect(parsePrice('')).toBe(0);
+    expect(parsePrice(null)).toBeNull();
+    expect(parsePrice(undefined)).toBeNull();
+    expect(parsePrice('')).toBeNull();
   });
 
   it('should handle number input', () => {
@@ -65,21 +65,21 @@ describe('parsePrice', () => {
 
 describe('parseStorage', () => {
   it('should parse storage strings', () => {
-    expect(parseStorage('128GB')).toBe('STORAGE_128GB');
-    expect(parseStorage('256GB')).toBe('STORAGE_256GB');
-    expect(parseStorage('512GB')).toBe('STORAGE_512GB');
-    expect(parseStorage('1TB')).toBe('STORAGE_1TB');
+    expect(parseStorage('128GB')).toBe('128GB');
+    expect(parseStorage('256GB')).toBe('256GB');
+    expect(parseStorage('512GB')).toBe('512GB');
+    expect(parseStorage('1TB')).toBe('1TB');
   });
 
   it('should handle case insensitivity', () => {
-    expect(parseStorage('128gb')).toBe('STORAGE_128GB');
-    expect(parseStorage('1tb')).toBe('STORAGE_1TB');
+    expect(parseStorage('128gb')).toBe('128GB');
+    expect(parseStorage('1tb')).toBe('1TB');
   });
 
-  it('should return undefined for invalid input', () => {
-    expect(parseStorage(null)).toBeUndefined();
-    expect(parseStorage('')).toBeUndefined();
-    expect(parseStorage('invalid')).toBeUndefined();
+  it('should return null for invalid input', () => {
+    expect(parseStorage(null)).toBeNull();
+    expect(parseStorage('')).toBeNull();
+    expect(parseStorage('invalid')).toBeNull();
   });
 });
 
@@ -103,24 +103,30 @@ describe('normalizeCarrier', () => {
 });
 
 describe('PolicySchema', () => {
-  it('should parse valid policy', () => {
+  it('should parse valid policy with Python-compatible format', () => {
     const policy = PolicySchema.parse({
-      carrier: 'SKT',
-      joinType: '번호이동',
-      discountType: '공시지원금',
-      plan: {
+      policy_id: 'abc123def4567890',
+      carrier: '1', // SKT carrier code
+      mno_join_type: '번호이동',
+      discount_type: '공시지원금',
+      mobile_plan: {
         name: '5G 프리미어',
-        monthlyFee: 89000,
+        monthly_fee: 89000,
       },
       pricing: {
-        retailPrice: 1500000,
-        finalPrice: 1000000,
+        mno_retail_price: 1500000,
+        public_subsidy: 300000,
+        discount: 50000,
+        sku_installment_fee: 1150000,
+        monthly_payment: 47916,
       },
-      hash: 'abc123',
     });
 
-    expect(policy.carrier).toBe('SKT');
-    expect(policy.joinType).toBe('번호이동');
-    expect(policy.plan.name).toBe('5G 프리미어');
+    expect(policy.carrier).toBe('1');
+    expect(policy.mno_join_type).toBe('번호이동');
+    expect(policy.mobile_plan.name).toBe('5G 프리미어');
+    expect(policy.mobile_plan.monthly_fee).toBe(89000);
+    expect(policy.pricing.mno_retail_price).toBe(1500000);
+    expect(policy.pricing.public_subsidy).toBe(300000);
   });
 });

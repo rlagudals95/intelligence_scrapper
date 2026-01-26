@@ -1,19 +1,18 @@
-import crypto from 'crypto';
 import { Page } from 'playwright';
 import { LLMClient } from '../core/llm-client.js';
 import { getLogger } from './logger.js';
 import {
-  Phase3ScrapingResult,
-  Phase3Product,
+  ScrapingResult,
+  ProductResult,
+  Product,
   Policy,
-  MobilePlan,
-  PricingDetails,
-  SourceInfo,
   JoinTypeEnum,
   DiscountTypeEnum,
   parseStorage,
   parsePrice,
-  normalizeCarrier,
+  carrierToCode,
+  generateProductId,
+  generatePolicyId,
 } from '../models/phase3-schemas.js';
 import {
   SCREEN_PAGE_STRUCTURE_SYSTEM,
@@ -82,7 +81,7 @@ interface ExtractedPricing {
   plan_monthly_fee?: number | null;
 }
 
-interface PolicyResult {
+interface PolicyResultInternal {
   success: boolean;
   combo: Combination;
   pricing?: ExtractedPricing;
@@ -98,13 +97,14 @@ export class DetailPageAnalyzer {
   }
 
   /**
-   * Analyze detail page and extract all policies
+   * Analyze detail page and extract all policies (Python 호환 출력)
    */
   async analyzeDetailPage(
     page: Page,
     url: string,
     siteName: string = 'Unknown'
-  ): Promise<Phase3ScrapingResult> {
+  ): Promise<ProductResult> {
+    const startTime = Date.now();
     logger.info({ url, siteName }, 'Starting detail page analysis');
 
     // Step 1: Extract basic info
@@ -134,23 +134,29 @@ export class DetailPageAnalyzer {
     );
     logger.info(
       {
-        success: policyResults.filter((r) => r.success).length,
-        failed: policyResults.filter((r) => !r.success).length,
+        success: policyResults.filter((r: PolicyResultInternal) => r.success).length,
+        failed: policyResults.filter((r: PolicyResultInternal) => !r.success).length,
       },
       'Step 5 complete: Policies extracted'
     );
 
-    // Step 6: Convert to schema
-    const result = this.step6ConvertToSchema(policyResults, url, siteName, basicInfo);
+    // Step 6: Convert to schema (Python 호환)
+    const products = this.step6ConvertToSchema(policyResults, siteName, basicInfo);
+    const duration = (Date.now() - startTime) / 1000;
+    const policyCount = products.reduce((sum: number, p: Product) => sum + p.policies.length, 0);
+
     logger.info(
-      {
-        products: result.products.length,
-        policies: result.products.reduce((sum, p) => sum + p.policies.length, 0),
-      },
+      { products: products.length, policies: policyCount, duration },
       'Step 6 complete: Converted to schema'
     );
 
-    return result;
+    return {
+      product_name: basicInfo.product_name,
+      url,
+      policy_count: policyCount,
+      duration,
+      products,
+    };
   }
 
   /**
@@ -465,8 +471,8 @@ ${html.slice(0, 50000)}
     combinations: Combination[],
     _basicInfo: { product_name: string },
     structure: PageStructure
-  ): Promise<PolicyResult[]> {
-    const results: PolicyResult[] = [];
+  ): Promise<PolicyResultInternal[]> {
+    const results: PolicyResultInternal[] = [];
 
     for (let i = 0; i < combinations.length; i++) {
       const combo = combinations[i];
@@ -701,22 +707,17 @@ ${html.slice(0, 50000)}
   }
 
   /**
-   * Step 6: Convert results to Phase3ScrapingResult schema
+   * Step 6: Convert results to Product[] schema (Python 호환)
    */
   private step6ConvertToSchema(
-    results: PolicyResult[],
-    url: string,
+    results: PolicyResultInternal[],
     siteName: string,
     basicInfo: { product_name: string }
-  ): Phase3ScrapingResult {
+  ): Product[] {
     const successfulResults = results.filter((r) => r.success);
 
     if (successfulResults.length === 0) {
-      return {
-        products: [],
-        capturedAt: new Date().toISOString(),
-        source: { siteName, url },
-      };
+      return [];
     }
 
     // Group by storage
@@ -727,6 +728,7 @@ ${html.slice(0, 50000)}
       const pricing = result.pricing || {};
 
       const storage = combo.storage || '256GB';
+      const storageType = parseStorage(storage);
 
       if (!productsMap.has(storage)) {
         productsMap.set(storage, { storage, policies: [] });
@@ -738,47 +740,58 @@ ${html.slice(0, 50000)}
       if (joinTypeStr.includes('번호이동')) joinType = '번호이동';
       else if (joinTypeStr.includes('신규')) joinType = '신규가입';
 
-      // Normalize carrier
-      const carrier = normalizeCarrier(combo.carrier || 'SKT');
+      // Convert carrier to code
+      const carrierCode = carrierToCode(combo.carrier || 'SKT');
 
-      // Generate hash
-      const hashInput = `${carrier}_${joinType}_${storage}_${combo.plan || ''}`;
-      const hash = crypto.createHash('md5').update(hashInput).digest('hex').slice(0, 16);
+      // Generate policy ID
+      const policyId = generatePolicyId(
+        carrierCode,
+        joinType,
+        storageType,
+        combo.plan || 'Unknown'
+      );
 
-      // Create policy
+      // Create policy (Python 호환 snake_case)
       const policy: Policy = {
-        carrier,
-        joinType: JoinTypeEnum.parse(joinType),
-        discountType: DiscountTypeEnum.parse('공시지원금'),
-        plan: {
+        policy_id: policyId,
+        carrier: carrierCode,
+        mno_join_type: JoinTypeEnum.parse(joinType),
+        mobile_plan: {
           name: combo.plan || 'Unknown',
-          monthlyFee: parsePrice(combo.plan_price),
+          monthly_fee: parsePrice(combo.plan_price) || 0,
         },
-        storage: parseStorage(storage),
+        discount_type: DiscountTypeEnum.parse('공시지원금'),
         pricing: {
-          retailPrice: pricing.retail_price || 0,
-          publicSubsidy: pricing.public_subsidy ?? undefined,
-          additionalDiscount: pricing.additional_subsidy ?? undefined,
-          finalPrice: pricing.final_price || pricing.installment_principal || 0,
-          monthlyInstallment: pricing.monthly_payment ?? undefined,
+          mno_retail_price: pricing.retail_price || null,
+          public_subsidy: pricing.public_subsidy || null,
+          discount: pricing.additional_subsidy || null,
+          sku_installment_fee: pricing.installment_principal || null,
+          monthly_payment: pricing.monthly_payment || null,
         },
-        hash,
+        addons: [],
+        policy_text: null,
       };
 
       productsMap.get(storage)!.policies.push(policy);
     }
 
-    // Convert to products
-    const products: Phase3Product[] = Array.from(productsMap.values()).map((data) => ({
-      name: basicInfo.product_name,
-      policies: data.policies,
-    }));
+    // Convert to products (Python 호환)
+    const products: Product[] = Array.from(productsMap.entries()).map(([storage, data]) => {
+      const storageType = parseStorage(storage);
+      const skuCode = `${basicInfo.product_name} - ${siteName}`;
+      const productId = generateProductId(skuCode, storageType);
 
-    return {
-      products,
-      capturedAt: new Date().toISOString(),
-      source: { siteName, url },
-    };
+      return {
+        product_id: productId,
+        sku_code: skuCode,
+        sku_storage: storageType,
+        policies: data.policies,
+        product_name: null,
+        product_color: null,
+      };
+    });
+
+    return products;
   }
 
   /**

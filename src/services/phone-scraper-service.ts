@@ -6,7 +6,7 @@ import { ListingCrawler } from '../crawlers/listing.js';
 import { DetailPageAnalyzer } from '../utils/detail-page-analyzer.js';
 import { SlackNotifier } from '../utils/slack-notifier.js';
 import { PhoneListingItem } from '../models/schemas.js';
-import { Phase3ScrapingResult, Phase3Product } from '../models/phase3-schemas.js';
+import { ScrapingResult, ProductResult, Product } from '../models/phase3-schemas.js';
 import { getLogger } from '../utils/logger.js';
 import { randomDelay } from '../utils/delay.js';
 
@@ -50,9 +50,10 @@ export class PhoneScraperService {
   }
 
   /**
-   * Run the complete scraping pipeline
+   * Run the complete scraping pipeline (Python 호환 출력)
    */
-  async run(): Promise<Phase3ScrapingResult> {
+  async run(): Promise<ScrapingResult> {
+    const startTime = Date.now();
     logger.info({ siteName: this.options.siteName, url: this.options.listingUrl }, 'Starting scrape');
 
     try {
@@ -81,7 +82,7 @@ export class PhoneScraperService {
 
       // Phase 2: Analyze each detail page
       logger.info('Phase 2: Analyzing detail pages...');
-      const allProducts: Phase3Product[] = [];
+      const allResults: ProductResult[] = [];
       const csvPaths: string[] = [];
 
       for (let i = 0; i < products.length; i++) {
@@ -99,15 +100,15 @@ export class PhoneScraperService {
           await this.browser.goto(product.detailUrl);
           await randomDelay(1, 2);
 
-          // Analyze detail page
+          // Analyze detail page (returns ProductResult)
           const result = await this.detailAnalyzer.analyzeDetailPage(
             this.browser.getPage(),
             product.detailUrl,
             this.options.siteName
           );
 
-          // Add products
-          allProducts.push(...result.products);
+          // Add to results
+          allResults.push(result);
 
           // Mark as visited
           this.stateManager.markUrlVisited(product.detailUrl);
@@ -118,7 +119,7 @@ export class PhoneScraperService {
               const csvPath = this.slackNotifier.savePoliciesToCsv(
                 p.policies,
                 this.options.siteName,
-                p.name
+                p.sku_code
               );
               csvPaths.push(csvPath);
             }
@@ -133,14 +134,16 @@ export class PhoneScraperService {
         }
       }
 
-      // Create final result
-      const finalResult: Phase3ScrapingResult = {
-        products: allProducts,
-        capturedAt: new Date().toISOString(),
-        source: {
-          siteName: this.options.siteName,
-          url: this.options.listingUrl,
-        },
+      const totalDuration = (Date.now() - startTime) / 1000;
+
+      // Create final result (Python 호환 형식)
+      const finalResult: ScrapingResult = {
+        site_name: this.options.siteName,
+        list_url: this.options.listingUrl,
+        target_models: this.options.targetModels || [],
+        scraped_at: new Date().toISOString(),
+        total_duration: totalDuration,
+        results: allResults,
       };
 
       // Save JSON result
@@ -154,11 +157,18 @@ export class PhoneScraperService {
         await this.slackNotifier.notifyScrapingComplete(finalResult, csvPaths);
       }
 
+      const totalPolicies = allResults.reduce(
+        (sum: number, r: ProductResult) =>
+          sum + r.products.reduce((s: number, p: Product) => s + p.policies.length, 0),
+        0
+      );
+
       logger.info(
         {
-          products: allProducts.length,
-          policies: allProducts.reduce((sum, p) => sum + p.policies.length, 0),
+          products: allResults.length,
+          policies: totalPolicies,
           csvFiles: csvPaths.length,
+          duration: totalDuration,
         },
         'Scraping complete'
       );

@@ -1,122 +1,166 @@
 import { z } from 'zod';
+import { createHash } from 'crypto';
 
-// Storage type enum
-export const StorageTypeEnum = z.enum([
-  'STORAGE_128GB',
-  'STORAGE_256GB',
-  'STORAGE_512GB',
-  'STORAGE_1TB',
-  'STORAGE_2TB',
-]);
+// ============================================================================
+// Enums (Python 호환)
+// ============================================================================
 
+export const StorageTypeEnum = z.enum(['128GB', '256GB', '512GB', '1TB', '2TB']);
 export type StorageType = z.infer<typeof StorageTypeEnum>;
 
-// Join type enum
 export const JoinTypeEnum = z.enum(['기기변경', '번호이동', '신규가입']);
-
 export type JoinType = z.infer<typeof JoinTypeEnum>;
 
-// Discount type enum
 export const DiscountTypeEnum = z.enum(['공시지원금', '선택약정']);
-
 export type DiscountType = z.infer<typeof DiscountTypeEnum>;
 
-// Mobile plan schema
+// Carrier codes (Python uses "1", "2", "3")
+export const CarrierCodeMap: Record<string, string> = {
+  '1': 'SKT',
+  '2': 'KT',
+  '3': 'LGU+',
+  SKT: '1',
+  KT: '2',
+  'LGU+': '3',
+  LGU: '3',
+};
+
+// ============================================================================
+// Core Schemas (Python snake_case 호환)
+// ============================================================================
+
 export const MobilePlanSchema = z.object({
   name: z.string(),
-  monthlyFee: z.number(),
+  monthly_fee: z.number(),
 });
-
 export type MobilePlan = z.infer<typeof MobilePlanSchema>;
 
-// Pricing details schema
 export const PricingDetailsSchema = z.object({
-  retailPrice: z.number(),
-  publicSubsidy: z.number().optional(),
-  additionalDiscount: z.number().optional(),
-  contractDiscount: z.number().optional(),
-  finalPrice: z.number(),
-  monthlyInstallment: z.number().optional(),
-  installmentMonths: z.number().optional(),
+  mno_retail_price: z.number().nullable().optional(),
+  public_subsidy: z.number().nullable().optional(),
+  discount: z.number().nullable().optional(), // 추가지원금
+  sku_installment_fee: z.number().nullable().optional(), // 할부원금
+  monthly_payment: z.number().nullable().optional(),
 });
-
 export type PricingDetails = z.infer<typeof PricingDetailsSchema>;
 
-// Addon schema
 export const AddonSchema = z.object({
   name: z.string(),
-  price: z.number().optional(),
-  description: z.string().optional(),
+  price: z.number(),
+  keep_months: z.number().nullable().optional(),
 });
-
 export type Addon = z.infer<typeof AddonSchema>;
 
-// Policy schema
 export const PolicySchema = z.object({
-  carrier: z.string(),
-  joinType: JoinTypeEnum,
-  discountType: DiscountTypeEnum,
-  plan: MobilePlanSchema,
-  storage: StorageTypeEnum.optional(),
-  color: z.string().optional(),
+  policy_id: z.string(),
+  carrier: z.string(), // "1", "2", "3" 코드
+  mno_join_type: JoinTypeEnum,
+  mobile_plan: MobilePlanSchema,
+  discount_type: DiscountTypeEnum,
   pricing: PricingDetailsSchema,
-  policyText: z.string().optional(),
-  addons: z.array(AddonSchema).optional(),
-  hash: z.string(),
+  addons: z.array(AddonSchema).default([]),
+  policy_text: z.string().nullable().optional(),
 });
-
 export type Policy = z.infer<typeof PolicySchema>;
 
-// Phase 3 Product schema
-export const Phase3ProductSchema = z.object({
-  name: z.string(),
-  manufacturer: z.string().optional(),
-  modelCode: z.string().optional(),
-  sku: z.string().optional(),
-  policies: z.array(PolicySchema),
+export const ProductSchema = z.object({
+  product_id: z.string(),
+  sku_code: z.string(),
+  sku_storage: StorageTypeEnum.nullable().optional(),
+  policies: z.array(PolicySchema).default([]),
+  product_name: z.string().nullable().optional(),
+  product_color: z.string().nullable().optional(),
 });
+export type Product = z.infer<typeof ProductSchema>;
 
-export type Phase3Product = z.infer<typeof Phase3ProductSchema>;
+// ============================================================================
+// Result Schemas
+// ============================================================================
 
-// Source info schema
-export const SourceInfoSchema = z.object({
-  siteName: z.string(),
-  url: z.string().url(),
+// 개별 상품 결과 (상세 페이지 단위)
+export const ProductResultSchema = z.object({
+  product_name: z.string(),
+  url: z.string(),
+  policy_count: z.number(),
+  duration: z.number(),
+  products: z.array(ProductSchema),
 });
+export type ProductResult = z.infer<typeof ProductResultSchema>;
 
-export type SourceInfo = z.infer<typeof SourceInfoSchema>;
-
-// Phase 3 Scraping result schema
-export const Phase3ScrapingResultSchema = z.object({
-  products: z.array(Phase3ProductSchema),
-  capturedAt: z.string(),
-  source: SourceInfoSchema,
+// 최종 스크래핑 결과 (Python 출력 형식)
+export const ScrapingResultSchema = z.object({
+  site_name: z.string(),
+  list_url: z.string(),
+  target_models: z.array(z.string()),
+  scraped_at: z.string(),
+  total_duration: z.number(),
+  results: z.array(ProductResultSchema),
 });
+export type ScrapingResult = z.infer<typeof ScrapingResultSchema>;
 
-export type Phase3ScrapingResult = z.infer<typeof Phase3ScrapingResultSchema>;
+// ============================================================================
+// ID Generation (MD5 Hash - Python 호환)
+// ============================================================================
 
-// Utility functions
-export function parsePrice(priceStr: string | number | undefined | null): number {
-  if (priceStr === undefined || priceStr === null) return 0;
-  if (typeof priceStr === 'number') return priceStr;
-
-  const cleaned = priceStr.replace(/[^\d]/g, '');
-  const parsed = parseInt(cleaned, 10);
-  return isNaN(parsed) ? 0 : parsed;
+/**
+ * Generate product ID (MD5 hash, 16 chars)
+ * Python: hashlib.md5(f"{sku_code}|{storage}").hexdigest()[:16]
+ */
+export function generateProductId(skuCode: string, storage: string | null): string {
+  const input = `${skuCode}|${storage || ''}`;
+  return createHash('md5').update(input).digest('hex').slice(0, 16);
 }
 
-export function parseStorage(storageStr: string | undefined | null): StorageType | undefined {
-  if (!storageStr) return undefined;
+/**
+ * Generate policy ID (MD5 hash, 16 chars)
+ * Python: hashlib.md5(f"{carrier}|{join_type}|{storage}|{plan_name}").hexdigest()[:16]
+ */
+export function generatePolicyId(
+  carrier: string,
+  joinType: string,
+  storage: string | null,
+  planName: string
+): string {
+  const input = `${carrier}|${joinType}|${storage || ''}|${planName}`;
+  return createHash('md5').update(input).digest('hex').slice(0, 16);
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+export function parsePrice(priceStr: string | number | undefined | null): number | null {
+  if (priceStr === undefined || priceStr === null) return null;
+  if (typeof priceStr === 'number') return priceStr;
+
+  const cleaned = priceStr.replace(/[^\d-]/g, '');
+  const parsed = parseInt(cleaned, 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
+export function parseStorage(storageStr: string | undefined | null): StorageType | null {
+  if (!storageStr) return null;
 
   const normalized = storageStr.toUpperCase().replace(/\s/g, '');
 
-  if (normalized.includes('128')) return 'STORAGE_128GB';
-  if (normalized.includes('256')) return 'STORAGE_256GB';
-  if (normalized.includes('512')) return 'STORAGE_512GB';
-  if (normalized.includes('1TB') || normalized.includes('1024')) return 'STORAGE_1TB';
-  if (normalized.includes('2TB') || normalized.includes('2048')) return 'STORAGE_2TB';
+  // Extract number
+  const match = normalized.match(/(\d+)/);
+  if (!match) return null;
 
-  return undefined;
+  let sizeGB = parseInt(match[1], 10);
+
+  // Handle TB
+  if (normalized.includes('TB') || normalized.includes('T')) {
+    sizeGB = sizeGB * 1024;
+  }
+
+  if (sizeGB <= 128) return '128GB';
+  if (sizeGB <= 256) return '256GB';
+  if (sizeGB <= 512) return '512GB';
+  if (sizeGB <= 1024) return '1TB';
+  if (sizeGB <= 2048) return '2TB';
+
+  return null;
 }
 
 export function normalizeCarrier(carrier: string): string {
@@ -134,4 +178,66 @@ export function normalizeCarrier(carrier: string): string {
     return 'LGU+';
 
   return carrier;
+}
+
+export function carrierToCode(carrier: string): string {
+  const normalized = normalizeCarrier(carrier);
+  return CarrierCodeMap[normalized] || carrier;
+}
+
+export function codeToCarrier(code: string): string {
+  return CarrierCodeMap[code] || code;
+}
+
+// ============================================================================
+// Builder Functions
+// ============================================================================
+
+export function createPolicy(params: {
+  carrier: string;
+  joinType: JoinType;
+  storage: StorageType | null;
+  plan: MobilePlan;
+  discountType: DiscountType;
+  pricing: PricingDetails;
+  addons?: Addon[];
+  policyText?: string | null;
+}): Policy {
+  const carrierCode = carrierToCode(params.carrier);
+  const policyId = generatePolicyId(
+    carrierCode,
+    params.joinType,
+    params.storage,
+    params.plan.name
+  );
+
+  return {
+    policy_id: policyId,
+    carrier: carrierCode,
+    mno_join_type: params.joinType,
+    mobile_plan: params.plan,
+    discount_type: params.discountType,
+    pricing: params.pricing,
+    addons: params.addons || [],
+    policy_text: params.policyText || null,
+  };
+}
+
+export function createProduct(params: {
+  skuCode: string;
+  storage: StorageType | null;
+  policies: Policy[];
+  productName?: string | null;
+  productColor?: string | null;
+}): Product {
+  const productId = generateProductId(params.skuCode, params.storage);
+
+  return {
+    product_id: productId,
+    sku_code: params.skuCode,
+    sku_storage: params.storage,
+    policies: params.policies,
+    product_name: params.productName || null,
+    product_color: params.productColor || null,
+  };
 }
