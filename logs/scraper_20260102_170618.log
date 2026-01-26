@@ -1,8 +1,0 @@
-"\u001b[2m2026-01-02T08:06:19.764091Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1mLLM Client \ucd08\uae30\ud654                \u001b[0m \u001b[36mmodel\u001b[0m=\u001b[35mgemini-2.5-flash\u001b[0m \u001b[36mprovider\u001b[0m=\u001b[35mgemini\u001b[0m"
-"\u001b[2m2026-01-02T08:06:19.764188Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1mDetailPageAnalyzer \ucd08\uae30\ud654        \u001b[0m"
-"\u001b[2m2026-01-02T08:06:19.764222Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m\ube0c\ub77c\uc6b0\uc800 \uc2dc\uc791                       \u001b[0m"
-"\u001b[2m2026-01-02T08:06:21.357968Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m\ube0c\ub77c\uc6b0\uc800 \uc2dc\uc791 \uc644\ub8cc                    \u001b[0m"
-"\u001b[2m2026-01-02T08:06:45.840770Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1mLLM \uc694\uccad \uc644\ub8cc                     \u001b[0m \u001b[36mprovider\u001b[0m=\u001b[35mgemini\u001b[0m \u001b[36mrequest_count\u001b[0m=\u001b[35m1\u001b[0m \u001b[36mresponse_length\u001b[0m=\u001b[35m424\u001b[0m"
-"\u001b[2m2026-01-02T08:06:45.841637Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m   \u2705 \uc120\ud0dd\uc790 \ucd94\ucd9c \uc644\ub8cc                \u001b[0m"
-"\u001b[2m2026-01-02T08:06:45.847482Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m\ube0c\ub77c\uc6b0\uc800 \uc885\ub8cc                       \u001b[0m"
-"\u001b[2m2026-01-02T08:06:46.148728Z\u001b[0m [\u001b[32m\u001b[1minfo     \u001b[0m] \u001b[1m\ube0c\ub77c\uc6b0\uc800 \uc885\ub8cc \uc644\ub8cc                    \u001b[0m"

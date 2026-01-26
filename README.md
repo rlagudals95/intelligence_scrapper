@@ -1,185 +1,155 @@
-# Phone Scraper V2
+# Phone Scraper V2 - TypeScript Version
 
-웹 자동화 기반 휴대폰 기종/요금제 데이터 수집 에이전트
+LLM 기반 지능형 휴대폰 정책 스크래퍼의 TypeScript 버전입니다.
 
-## 🎯 프로젝트 개요
+## 요구사항
 
-리스팅 페이지에서 상세 URL을 **100% 전수** 수집하고, 각 상세페이지에서 옵션 카탈로그를 **100% 수집**하며, 가격/정책에 영향을 주는 옵션 조합을 가지치기를 통해 효율적으로 순회하여 구조화된 JSON으로 출력합니다.
+- Node.js 20+
+- npm 또는 pnpm
 
-## 📋 기술 스택
-
-- **언어**: Python 3.11+
-- **패키지 관리**: uv
-- **웹 자동화**: Playwright (Chromium)
-- **데이터 검증**: Pydantic
-- **로깅**: structlog
-- **재시도**: tenacity
-
-## 🚀 설치 및 실행
-
-### 1. 프로젝트 클론 및 의존성 설치
+## 설치
 
 ```bash
-cd phone_scrapper_v2
-
-# uv로 의존성 설치 (가상환경 자동 생성)
-uv sync
+# 의존성 설치
+npm install
 
 # Playwright 브라우저 설치
-uv run playwright install chromium
+npx playwright install chromium
 ```
 
-### 2. 실행
+## 환경 변수 설정
+
+`.env.example`을 `.env`로 복사하고 API 키를 설정하세요:
 
 ```bash
-# 메인 스크립트 실행 (Phase 2 이후 구현)
-uv run python -m src.agent
+cp .env.example .env
 ```
 
-## 📂 프로젝트 구조
+필수 환경 변수:
+- `OPENAI_API_KEY` 또는 `ANTHROPIC_API_KEY` 또는 `GEMINI_API_KEY` (최소 하나)
+- `SLACK_WEBHOOK_URL` (선택사항)
+
+## 사용법
+
+### 간단 모드 (추천)
+
+```bash
+# 삼성 갤럭시 스크래핑
+npm run scrape:simple -- -s 하이폰 -m "갤럭시S25"
+
+# 아이폰 스크래핑
+npm run scrape:simple -- -s 딜리버리폰 -m "아이폰17"
+
+# 브라우저 표시
+npm run scrape:simple -- -s 하이폰 -m "갤럭시S25" --no-headless
+```
+
+지원 사이트:
+- 하이폰
+- 딜리버리폰
+- 성지폰
+- 폰슐랭
+- 엘지티샵
+- 투게더몰
+- 띵폰
+
+### 상세 모드
+
+```bash
+# URL 직접 지정
+npm run scrape -- -u "https://hi-phone.kr/..." -m "갤럭시S25,아이폰17" -s 하이폰
+
+# 최대 제품 수 제한
+npm run scrape -- -u "https://..." -m "갤럭시S25" --max 5
+
+# Slack 알림 비활성화
+npm run scrape -- -u "https://..." --no-slack
+```
+
+## 프로젝트 구조
 
 ```
-phone_scrapper_v2/
+ts-version/
 ├── src/
-│   ├── models/
-│   │   └── schemas.py          # Pydantic 데이터 모델
-│   ├── core/
-│   │   ├── config.py           # 설정 관리
-│   │   ├── browser.py          # 브라우저 관리
-│   │   └── state.py            # 상태 관리 (중복 방지)
-│   ├── crawlers/               # 크롤러 (Phase 2+ 구현 예정)
-│   │   ├── listing.py          # 리스팅 크롤러
-│   │   ├── catalog.py          # 옵션 카탈로그 추출
-│   │   ├── traverser.py        # 옵션 순회 엔진
-│   │   └── pricing.py          # 가격 파싱
-│   ├── utils/
-│   │   ├── logger.py           # 로깅 설정
-│   │   └── delay.py            # 랜덤 딜레이
-│   └── agent.py                # 메인 오케스트레이터 (Phase 6 구현 예정)
-├── tests/                      # 테스트
-├── output/                     # JSON 결과 저장
-├── logs/                       # 로그 파일
-└── checkpoints/                # 중간 저장
-
+│   ├── core/           # 핵심 인프라
+│   │   ├── config.ts   # 설정 관리
+│   │   ├── browser.ts  # Playwright 브라우저 관리
+│   │   ├── llm-client.ts # LLM API 클라이언트
+│   │   └── state.ts    # 상태 관리
+│   ├── models/         # Zod 스키마
+│   ├── crawlers/       # 크롤러
+│   ├── services/       # 서비스
+│   └── utils/          # 유틸리티
+├── output/             # 결과물 (JSON, CSV)
+├── logs/               # 로그 파일
+└── checkpoints/        # 체크포인트
 ```
 
-## ✅ 구현 현황
+## 스크립트
 
-### Phase 0: 프로젝트 초기화 ✅
-- [x] uv 프로젝트 초기화
-- [x] 의존성 설치
-- [x] Pydantic 스키마 정의
+```bash
+# 빌드
+npm run build
 
-### Phase 1: 핵심 인프라 ✅
-- [x] Configuration 관리 (`core/config.py`)
-- [x] Browser Manager (`core/browser.py`)
-- [x] State Manager (`core/state.py`)
-- [x] Logger 설정 (`utils/logger.py`)
+# 개발 모드
+npm run dev
 
-### Phase 2: LLM 통합 ✅
-- [x] LLM Client (`core/llm_client.py`) - OpenAI/Anthropic 지원
-- [x] Page Analyzer (`utils/list_page_analyzer.py`) - LLM 기반 페이지 분석
-- [x] Prompt Templates (`utils/prompts.py`) - 리스팅/옵션/가격 분석
-- [x] 테스트 작성 및 통과
+# 타입 체크
+npm run typecheck
 
-### Phase 3: LLM 기반 리스팅 크롤러 🔜
-- [ ] ListingCrawler LLM 통합
-- [ ] 동적 셀렉터 추출
-- [ ] 페이지네이션 자동 감지
+# 린트
+npm run lint
 
-### Phase 4: LLM 기반 옵션 카탈로그 🔜
-- [ ] OptionsCatalogExtractor LLM 통합
-- [ ] 자동 옵션 UI 식별
-- [ ] 옵션 의미 파악 및 정규화
+# 포맷
+npm run format
 
-### Phase 5: 옵션 순회 엔진 🔜
-- [ ] VariantTraverser 구현
-- [ ] 가지치기 로직
-- [ ] PricingExtractor LLM 통합
+# 테스트
+npm run test
+```
 
-### Phase 6: 출력 및 저장 🔜
-- [ ] ResultSerializer 구현
-- [ ] JSON 출력
+## 기술 스택
 
-### Phase 7: 메인 오케스트레이터 🔜
-- [ ] PhoneScraperAgent 구현
-- [ ] 에러 복구 로직
+- **언어**: TypeScript 5.x
+- **런타임**: Node.js 20+
+- **웹 자동화**: Playwright
+- **스키마 검증**: Zod
+- **LLM**: OpenAI, Anthropic, Google Gemini
+- **로깅**: Pino
+- **HTTP**: Axios
 
-### Phase 8: 테스트 및 검증 🔜
-- [ ] 단위 테스트
-- [ ] 통합 테스트
+## 출력 형식
 
-## 🔧 핵심 컴포넌트
-
-### SiteConfig
-사이트별 스크래핑 설정 관리
-- 대상 URL, 딜레이, 타임아웃, 가지치기 임계값 등
-
-### BrowserManager
-Playwright 브라우저 관리
-- 브라우저 초기화/종료
-- 페이지 이동, 스크롤, 대기 등
-
-### StateManager
-중복 방지 및 방문 추적
-- detail_url 방문 여부
-- 옵션 조합 상태 해시 추적
-
-### Logger
-구조화된 로깅 (structlog)
-- 파일 + 콘솔 동시 출력
-- JSON 형식 로그
-
-## 📄 출력 형식
-
+### JSON
 ```json
 {
   "products": [
     {
-      "detail_url": "https://...",
-      "product_name": "갤럭시 S24",
-      "options_catalog": {
-        "carriers": ["SKT", "KT", "LGU+"],
-        "plans": [...],
-        "storages": [...],
-        "colors": [...]
-      },
-      "variants": [
+      "name": "갤럭시 S25",
+      "policies": [
         {
-          "selected_options": {...},
-          "pricing": {...},
-          "policy_text": "..."
+          "carrier": "SKT",
+          "joinType": "번호이동",
+          "plan": { "name": "5G 프리미어", "monthlyFee": 89000 },
+          "pricing": {
+            "retailPrice": 1500000,
+            "publicSubsidy": 500000,
+            "finalPrice": 1000000
+          }
         }
       ]
     }
   ],
-  "metadata": {
-    "scraped_at": "2025-12-27T10:30:00Z",
-    "total_products": 50,
-    "total_variants": 823
-  }
+  "capturedAt": "2025-01-26T...",
+  "source": { "siteName": "하이폰", "url": "..." }
 }
 ```
 
-## 📌 핵심 원칙
+### CSV
+```
+통신사,가입유형,할인유형,요금제명,월요금,출고가,공시지원금,추가할인,최종가,월할부금
+SKT,번호이동,공시지원금,5G 프리미어,89000,1500000,500000,0,1000000,41666
+```
 
-✅ **100% 전수 수집**
-- 리스팅 페이지의 모든 detail_url
-- 상세페이지의 모든 옵션 카탈로그
+## 라이선스
 
-⚠️ **부분 전수 (가지치기)**
-- 가격/정책 영향 있는 옵션 조합만 순회
-- 연속 N회 변화 없으면 중단
-
-🚫 **중복 방지**
-- detail_url + 옵션 상태 해시 추적
-
-## 📖 참고 문서
-
-- [PRD.md](./PRD.md) - 요구사항 정의서
-- [PLAN.md](./PLAN.md) - 상세 구현 계획
-
-## 📝 라이선스
-
-내부 사용 전용
-
+MIT
