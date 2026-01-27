@@ -19,6 +19,7 @@ export interface ScraperOptions {
   headless?: boolean;
   noSlack?: boolean;
   maxProducts?: number;
+  parallelCount?: number;  // 병렬 처리 개수 (기본: 3)
 }
 
 export class PhoneScraperService {
@@ -80,57 +81,83 @@ export class PhoneScraperService {
         logger.info({ count: products.length }, 'Limited products');
       }
 
-      // Phase 2: Analyze each detail page
-      logger.info('Phase 2: Analyzing detail pages...');
+      // Phase 2: Analyze detail pages (병렬 처리)
+      const parallelCount = this.options.parallelCount ?? 3;
+      logger.info({ parallelCount }, 'Phase 2: Analyzing detail pages with parallel processing...');
       const allResults: ProductResult[] = [];
       const csvPaths: string[] = [];
 
-      for (let i = 0; i < products.length; i++) {
-        const product = products[i];
-        logger.info({ index: i + 1, total: products.length, name: product.modelName }, 'Processing product');
+      // Filter out already visited URLs
+      const pendingProducts = products.filter(p => !this.stateManager.isUrlVisited(p.detailUrl));
+      logger.info({ pending: pendingProducts.length, skipped: products.length - pendingProducts.length }, 'Filtered pending products');
 
-        // Skip if already visited
-        if (this.stateManager.isUrlVisited(product.detailUrl)) {
-          logger.info({ url: product.detailUrl }, 'Skipping visited URL');
-          continue;
-        }
+      // Process in parallel batches
+      for (let batchStart = 0; batchStart < pendingProducts.length; batchStart += parallelCount) {
+        const batch = pendingProducts.slice(batchStart, batchStart + parallelCount);
+        logger.info({
+          batch: Math.floor(batchStart / parallelCount) + 1,
+          totalBatches: Math.ceil(pendingProducts.length / parallelCount),
+          products: batch.map(p => p.modelName)
+        }, 'Processing batch');
+
+        // Create extra pages for parallel processing (reuse main page for first item)
+        const extraPages = batch.length > 1 ? await this.browser.createExtraPages(batch.length - 1) : [];
+        const pages = [this.browser.getPage(), ...extraPages];
 
         try {
-          // Navigate to detail page
-          await this.browser.goto(product.detailUrl);
+          // Navigate all pages in parallel
+          await Promise.all(batch.map(async (product, idx) => {
+            const page = pages[idx];
+            if (idx === 0) {
+              await this.browser.goto(product.detailUrl);
+            } else {
+              await this.browser.gotoWithPage(page, product.detailUrl);
+            }
+          }));
+
           await randomDelay(1, 2);
 
-          // Analyze detail page (returns ProductResult)
-          const result = await this.detailAnalyzer.analyzeDetailPage(
-            this.browser.getPage(),
-            product.detailUrl,
-            this.options.siteName
-          );
-
-          // Add to results
-          allResults.push(result);
-
-          // Mark as visited
-          this.stateManager.markUrlVisited(product.detailUrl);
-
-          // Save CSV for each product
-          for (const p of result.products) {
-            if (p.policies.length > 0) {
-              const csvPath = this.slackNotifier.savePoliciesToCsv(
-                p.policies,
-                this.options.siteName,
-                p.sku_code
+          // Analyze all pages in parallel
+          const batchResults = await Promise.all(batch.map(async (product, idx) => {
+            const page = pages[idx];
+            try {
+              const result = await this.detailAnalyzer.analyzeDetailPage(
+                page,
+                product.detailUrl,
+                this.options.siteName
               );
-              csvPaths.push(csvPath);
+              return { success: true, product, result };
+            } catch (error) {
+              logger.error({ url: product.detailUrl, error }, 'Failed to analyze detail page');
+              return { success: false, product, error };
+            }
+          }));
+
+          // Process results
+          for (const batchResult of batchResults) {
+            if (batchResult.success && batchResult.result) {
+              allResults.push(batchResult.result);
+              this.stateManager.markUrlVisited(batchResult.product.detailUrl);
+
+              // Save CSV for each product
+              for (const p of batchResult.result.products) {
+                if (p.policies.length > 0) {
+                  const csvPath = this.slackNotifier.savePoliciesToCsv(
+                    p.policies,
+                    this.options.siteName,
+                    p.sku_code
+                  );
+                  csvPaths.push(csvPath);
+                }
+              }
             }
           }
 
-          // Save state periodically
-          if ((i + 1) % this.config.checkpointInterval === 0) {
-            this.stateManager.save();
-          }
-        } catch (error) {
-          logger.error({ url: product.detailUrl, error }, 'Failed to analyze detail page');
+          // Save state after each batch
+          this.stateManager.save();
+        } finally {
+          // Clean up extra pages
+          await this.browser.closeExtraPages();
         }
       }
 

@@ -91,9 +91,32 @@ interface PolicyResultInternal {
 export class DetailPageAnalyzer {
   private llm: LLMClient;
 
+  // Step 2 캐싱: 사이트별 PageStructure 저장
+  private structureCache: Map<string, PageStructure> = new Map();
+
   constructor(llmClient: LLMClient) {
     this.llm = llmClient;
     logger.info('DetailPageAnalyzer initialized');
+  }
+
+  /**
+   * 사이트 도메인에서 캐시 키 추출
+   */
+  private getSiteCacheKey(url: string): string {
+    try {
+      const parsed = new URL(url);
+      return parsed.hostname.replace(/^www\./, '');
+    } catch {
+      return url;
+    }
+  }
+
+  /**
+   * 캐시 초기화 (새 스크래핑 세션 시작 시)
+   */
+  clearCache(): void {
+    this.structureCache.clear();
+    logger.info('Structure cache cleared');
   }
 
   /**
@@ -111,8 +134,8 @@ export class DetailPageAnalyzer {
     const basicInfo = await this.step1ExtractBasicInfo(page, url);
     logger.info({ productName: basicInfo.product_name }, 'Step 1 complete: Basic info extracted');
 
-    // Step 2: Analyze option UI and extract selectors
-    const step2Result = await this.step2AnalyzeOptionUI(page);
+    // Step 2: Analyze option UI and extract selectors (캐싱 적용)
+    const step2Result = await this.step2AnalyzeOptionUI(page, url);
     logger.info(
       { optionTypes: Object.keys(step2Result.options) },
       'Step 2 complete: Option UI analyzed'
@@ -186,19 +209,34 @@ export class DetailPageAnalyzer {
   }
 
   /**
-   * Step 2: Analyze option UI using LLM
+   * Step 2: Analyze option UI using LLM (캐싱 적용)
    */
   private async step2AnalyzeOptionUI(
-    page: Page
+    page: Page,
+    url: string
   ): Promise<{ structure: PageStructure; options: OptionValues }> {
     try {
-      const html = await page.content();
-      const cleanedHtml = this.cleanHtml(html);
+      const cacheKey = this.getSiteCacheKey(url);
+      let structure: PageStructure;
 
-      // Step 2A: Extract selectors using LLM
-      const structure = await this.step2aExtractSelectors(cleanedHtml);
+      // 캐시에서 구조 확인
+      const cachedStructure = this.structureCache.get(cacheKey);
+      if (cachedStructure) {
+        logger.info({ cacheKey }, 'Using cached page structure (Step 2 캐시 히트)');
+        structure = cachedStructure;
+      } else {
+        // 캐시 미스: LLM으로 분석
+        logger.info({ cacheKey }, 'Cache miss - analyzing page structure with LLM');
+        const html = await page.content();
+        const cleanedHtml = this.cleanHtml(html);
+        structure = await this.step2aExtractSelectors(cleanedHtml);
 
-      // Step 2B: Extract option values using selectors
+        // 캐시에 저장
+        this.structureCache.set(cacheKey, structure);
+        logger.info({ cacheKey }, 'Page structure cached');
+      }
+
+      // Step 2B: Extract option values using selectors (항상 실행 - 옵션 값은 제품마다 다름)
       const options = await this.step2bExtractOptionValues(page, structure);
 
       return { structure, options };
@@ -261,6 +299,10 @@ export class DetailPageAnalyzer {
   ): Promise<OptionValues> {
     const options: OptionValues = {};
 
+    // 먼저 숨겨진 드롭다운/팝업 펼치기
+    await this.expandAllDropdowns(page);
+    await fixedDelay(0.5);
+
     // Extract storage values
     if (structure.options.storage?.selector) {
       const values = await this.extractValuesWithSelector(
@@ -297,11 +339,22 @@ export class DetailPageAnalyzer {
       }
     }
 
-    // Extract plans (requires opening dropdown/modal)
-    if (structure.options.plan?.open_button_selector) {
-      const plans = await this.extractPlansWithLLM(page, structure.options.plan);
-      if (plans.length > 0) {
-        options.plan = plans;
+    // Extract plans - always try, even without open_button_selector
+    // 요금제는 매우 중요한 정보이므로 항상 추출 시도
+    const planInfo = structure.options.plan || {};
+    const plans = await this.extractPlansWithLLM(page, planInfo);
+    if (plans.length > 0) {
+      options.plan = plans;
+      logger.info({ planCount: plans.length }, 'Plans extracted successfully');
+    } else {
+      // Fallback: 현재 페이지에서 직접 요금제 추출 시도
+      logger.info('No plans found with planInfo, trying direct extraction');
+      const fallbackPlans = await this.extractPlansDirectlyFromPage(page);
+      if (fallbackPlans.length > 0) {
+        options.plan = fallbackPlans;
+        logger.info({ planCount: fallbackPlans.length }, 'Plans extracted via fallback');
+      } else {
+        logger.warn('Failed to extract plans - policies will have Unknown plan');
       }
     }
 
@@ -334,6 +387,129 @@ export class DetailPageAnalyzer {
       return values;
     } catch (error) {
       logger.warn({ selector, error }, 'Failed to extract values');
+      return [];
+    }
+  }
+
+  /**
+   * 숨겨진 드롭다운/팝업 펼치기 (이전 프로젝트 패턴 적용)
+   */
+  private async expandAllDropdowns(page: Page): Promise<void> {
+    try {
+      // 1. 화살표 아이콘 클릭 (▼, ▲, >, <, 등)
+      const arrowButtons = await page.$$('i[class*="caret"], i[class*="arrow"], i[class*="xi-"], button[class*="expand"], span[class*="arrow"]');
+      for (const btn of arrowButtons.slice(0, 5)) {
+        try {
+          await btn.click();
+          await fixedDelay(0.5);
+        } catch {}
+      }
+
+      // 2. "요금제" 관련 요소 클릭
+      const planKeywords = ['요금제', '요금 선택', '요금제 선택', '요금제 변경'];
+      for (const keyword of planKeywords) {
+        try {
+          const elements = await page.$$(`text=${keyword}`);
+          if (elements.length > 0) {
+            await elements[0].click();
+            await fixedDelay(0.5);
+          }
+        } catch {}
+      }
+
+      // 3. "더보기", "전체보기" 등 클릭
+      const expandTexts = ['더보기', '전체보기', '펼치기', '모두보기'];
+      for (const text of expandTexts) {
+        try {
+          await page.click(`text=${text}`, { timeout: 1000 });
+          await fixedDelay(0.5);
+        } catch {}
+      }
+
+      logger.debug('Expanded all dropdowns');
+    } catch (error) {
+      logger.debug({ error }, 'expandAllDropdowns: some dropdowns may not exist');
+    }
+  }
+
+  /**
+   * 페이지 전체에서 직접 요금제 추출 (fallback)
+   * 이전 프로젝트의 findAllOptions 패턴 적용
+   */
+  private async extractPlansDirectlyFromPage(
+    page: Page
+  ): Promise<Array<{ name: string; price: string }>> {
+    try {
+      // 먼저 드롭다운 펼치기
+      await this.expandAllDropdowns(page);
+      await fixedDelay(1);
+
+      // HTML + 텍스트 모두 가져오기
+      const pageHtml = await page.evaluate(() => document.body.innerHTML);
+      const pageText = await page.evaluate(() => document.body.innerText);
+
+      // 상세한 프롬프트로 요금제 추출
+      const prompt = `
+이 페이지에서 **모든 휴대폰 요금제**를 찾으세요.
+드롭다운이나 숨겨진 요소에 있는 요금제도 모두 찾아야 합니다!
+
+# HTML (첫 60,000자)
+${pageHtml.slice(0, 60000)}
+
+# 페이지 텍스트 (첫 20,000자)
+${pageText.slice(0, 20000)}
+
+# 요금제 찾는 방법
+1. "plan_list_item", "plan_list_title" 클래스 안의 텍스트
+2. "월 XX,XXX원" 형식 근처의 요금제명
+3. "5G", "LTE", "프리미어", "시그니처", "초이스", "무제한" 등 키워드
+4. 통신사 요금제 패턴: "5G 프리미어 슈퍼", "5G 시그니처", "LTE 프리미어", "5GX 프리미엄" 등
+
+# 규칙
+1. 요금제 이름 + 월 요금이 있는 항목만
+2. 월 60,000원 이상인 요금제만
+3. 부가서비스(넷플릭스, 유튜브 프리미엄 등)는 제외
+
+# 응답 형식 (JSON 배열만)
+[
+  {"name": "5G 프리미어 슈퍼", "price": "110000"},
+  {"name": "5G 프리미어 플러스", "price": "89000"},
+  {"name": "5G 시그니처", "price": "109000"}
+]
+
+**반드시 실제 페이지에 있는 요금제만 반환하세요. 예시를 그대로 반환하지 마세요!**
+`;
+
+      const response = await this.llm.complete(
+        '당신은 휴대폰 요금제 추출 전문가입니다. 페이지에서 모든 통신 요금제를 찾아야 합니다.',
+        prompt
+      );
+
+      const plans = this.parseJsonResponse(response.content) as Array<{
+        name: string;
+        price: string | number;
+      }>;
+
+      if (!Array.isArray(plans)) {
+        logger.warn('extractPlansDirectlyFromPage: Invalid response format');
+        return [];
+      }
+
+      const filteredPlans = plans
+        .filter((p) => {
+          if (!p.name || !p.price) return false;
+          const price = typeof p.price === 'string' ? parseInt(p.price.replace(/,/g, '')) : p.price;
+          return price >= 60000;
+        })
+        .map((p) => ({
+          name: p.name,
+          price: String(typeof p.price === 'string' ? p.price.replace(/,/g, '') : p.price),
+        }));
+
+      logger.info({ count: filteredPlans.length }, 'extractPlansDirectlyFromPage: Plans found');
+      return filteredPlans;
+    } catch (error) {
+      logger.error({ error }, 'extractPlansDirectlyFromPage failed');
       return [];
     }
   }
@@ -431,9 +607,16 @@ ${html.slice(0, 50000)}
   ): Combination[] {
     const combinations: Combination[] = [];
 
-    const storages = options.storage || ['256GB'];
-    const carriers = options.carrier || ['SKT', 'KT', 'LGU+'];
-    const joinTypes = options.join_type || ['번호이동', '기기변경'];
+    // Use defaults if options are empty or undefined
+    const storages = options.storage && options.storage.length > 0
+      ? options.storage
+      : ['256GB'];
+    const carriers = options.carrier && options.carrier.length > 0
+      ? options.carrier
+      : ['SKT', 'KT', 'LGU+'];
+    const joinTypes = options.join_type && options.join_type.length > 0
+      ? options.join_type
+      : ['번호이동', '기기변경', '신규가입'];  // 신규가입 추가
     const plans = options.plan || [];
 
     for (const storage of storages) {
@@ -464,7 +647,8 @@ ${html.slice(0, 50000)}
   }
 
   /**
-   * Step 5: Extract policies for each combination
+   * Step 5: Extract policies for each combination (배치 처리 최적화)
+   * 모든 조합을 한 번의 LLM 호출로 추출
    */
   private async step5ExtractPolicies(
     page: Page,
@@ -472,35 +656,161 @@ ${html.slice(0, 50000)}
     _basicInfo: { product_name: string },
     structure: PageStructure
   ): Promise<PolicyResultInternal[]> {
+    // 배치 처리: 페이지 HTML 한 번 가져와서 모든 조합 한번에 추출
+    logger.debug({ count: combinations.length }, 'Extracting all combinations in batch');
+
+    try {
+      // 먼저 현재 페이지 HTML 가져오기
+      const html = await page.content();
+      const cleanedHtml = this.cleanHtml(html);
+
+      // 배치로 모든 조합의 가격 추출
+      const batchResults = await this.extractPricingBatch(cleanedHtml, combinations);
+
+      // 결과 매핑
+      const results: PolicyResultInternal[] = combinations.map((combo, index) => {
+        const pricing = batchResults[index];
+        if (pricing) {
+          return { success: true, combo, pricing };
+        } else {
+          return { success: false, combo, error: 'No pricing found' };
+        }
+      });
+
+      return results;
+    } catch (error) {
+      logger.error({ error }, 'Batch extraction failed, falling back to sequential');
+      // Fallback to sequential processing
+      return this.step5ExtractPoliciesSequential(page, combinations, structure);
+    }
+  }
+
+  /**
+   * Step 5 Sequential fallback (배치 실패 시)
+   */
+  private async step5ExtractPoliciesSequential(
+    page: Page,
+    combinations: Combination[],
+    structure: PageStructure
+  ): Promise<PolicyResultInternal[]> {
     const results: PolicyResultInternal[] = [];
 
     for (let i = 0; i < combinations.length; i++) {
       const combo = combinations[i];
-      logger.debug({ index: i + 1, total: combinations.length, combo }, 'Processing combination');
+      logger.debug({ index: i + 1, total: combinations.length, combo }, 'Processing combination (sequential)');
 
       try {
-        // Select options
         await this.selectOptions(page, combo, structure);
-
-        // Extract pricing
         const pricing = await this.extractPricing(page, structure);
-
-        results.push({
-          success: true,
-          combo,
-          pricing,
-        });
+        results.push({ success: true, combo, pricing });
       } catch (error) {
         logger.warn({ combo, error }, 'Failed to process combination');
-        results.push({
-          success: false,
-          combo,
-          error: String(error),
-        });
+        results.push({ success: false, combo, error: String(error) });
       }
     }
 
     return results;
+  }
+
+  /**
+   * 배치로 모든 조합의 가격 추출 (단일 LLM 호출)
+   */
+  private async extractPricingBatch(
+    html: string,
+    combinations: Combination[]
+  ): Promise<(ExtractedPricing | null)[]> {
+    const comboList = combinations.map((c, i) => ({
+      index: i,
+      storage: c.storage || '256GB',
+      carrier: c.carrier || 'SKT',
+      join_type: c.join_type || '기기변경',
+      plan: c.plan || 'Unknown',
+      plan_price: c.plan_price,
+    }));
+
+    const prompt = `
+다음 휴대폰 상세 페이지 HTML에서 **모든 조합의 가격 정보**를 추출하세요.
+
+# HTML (첫 50,000자)
+${html.slice(0, 50000)}
+
+# 추출할 조합 목록
+${JSON.stringify(comboList, null, 2)}
+
+# 규칙
+1. 각 조합에 대해 해당하는 가격 정보 추출
+2. 휴대폰 가격은 보통 100,000원 이상임
+3. 같은 용량/통신사/가입유형에서 요금제만 다른 경우, 할부원금과 월 납부금만 다를 수 있음
+4. 찾을 수 없는 필드는 null로 설정
+
+# 가격 필드 설명
+- retail_price: 출고가/기기가격 (예: 1,980,000원)
+- public_subsidy: 공시지원금 (예: 400,000원)
+- additional_subsidy: 추가지원금/할인 (예: 150,000원)
+- installment_principal: 할부원금 (출고가 - 지원금)
+- monthly_payment: 월 할부금/월 납부액
+
+# 응답 형식 (JSON 배열, 조합 순서대로)
+[
+  {
+    "index": 0,
+    "retail_price": 1980000,
+    "public_subsidy": 400000,
+    "additional_subsidy": 150000,
+    "installment_principal": 1430000,
+    "monthly_payment": 63314
+  },
+  {
+    "index": 1,
+    "retail_price": 1980000,
+    "public_subsidy": 400000,
+    "additional_subsidy": 150000,
+    "installment_principal": 1430000,
+    "monthly_payment": 63314
+  }
+]
+
+**반드시 ${combinations.length}개의 결과를 반환하세요. JSON 배열만 출력하세요.**
+`;
+
+    try {
+      const response = await this.llm.complete(
+        '당신은 휴대폰 가격 정보 추출 전문가입니다. HTML에서 정확한 가격을 추출해야 합니다.',
+        prompt
+      );
+
+      const parsed = this.parseJsonResponse(response.content) as Array<{
+        index: number;
+        retail_price?: number | null;
+        public_subsidy?: number | null;
+        additional_subsidy?: number | null;
+        installment_principal?: number | null;
+        monthly_payment?: number | null;
+      }>;
+
+      if (!Array.isArray(parsed)) {
+        logger.warn('Batch extraction returned non-array');
+        return combinations.map(() => null);
+      }
+
+      // index 기반으로 매핑
+      const resultMap = new Map(parsed.map(p => [p.index, p]));
+
+      return combinations.map((_, i) => {
+        const p = resultMap.get(i);
+        if (!p) return null;
+        return {
+          retail_price: p.retail_price ?? null,
+          public_subsidy: p.public_subsidy ?? null,
+          additional_subsidy: p.additional_subsidy ?? null,
+          installment_principal: p.installment_principal ?? null,
+          monthly_payment: p.monthly_payment ?? null,
+        };
+      });
+    } catch (error) {
+      logger.error({ error }, 'extractPricingBatch failed');
+      return combinations.map(() => null);
+    }
   }
 
   /**
@@ -677,12 +987,21 @@ ${html.slice(0, 50000)}
         if (!elem) return null;
 
         const text = elem.textContent || '';
+        // Look for price patterns (Korean won format: 1,234,000원 or just 1234000)
         const match = text.match(/[\d,]+/);
         if (match) {
           return parseInt(match[0].replace(/,/g, ''));
         }
         return null;
       }, selector);
+
+      // Validate: phone prices should be at least 100,000 won
+      // Invalid prices (like ranking numbers "25") are filtered out
+      if (value !== null && value < 100000) {
+        logger.debug({ selector, value }, 'Price too low, likely invalid extraction');
+        return null;
+      }
+
       return value;
     } catch {
       return null;
@@ -708,6 +1027,7 @@ ${html.slice(0, 50000)}
 
   /**
    * Step 6: Convert results to Product[] schema (Python 호환)
+   * PRD 필터링 적용: 할인유형=공시지원금만, 요금제>=6만원
    */
   private step6ConvertToSchema(
     results: PolicyResultInternal[],
@@ -726,6 +1046,13 @@ ${html.slice(0, 50000)}
     for (const result of successfulResults) {
       const combo = result.combo;
       const pricing = result.pricing || {};
+
+      // PRD 필터: 요금제 6만원 이상만 (안전장치)
+      const monthlyFee = parsePrice(combo.plan_price) || 0;
+      if (monthlyFee < 60000) {
+        logger.debug({ combo, monthlyFee }, 'Skipping policy: monthly_fee < 60000');
+        continue;
+      }
 
       const storage = combo.storage || '256GB';
       const storageType = parseStorage(storage);
@@ -752,13 +1079,14 @@ ${html.slice(0, 50000)}
       );
 
       // Create policy (Python 호환 snake_case)
+      // PRD: 할인유형 = 공시지원금만
       const policy: Policy = {
         policy_id: policyId,
         carrier: carrierCode,
         mno_join_type: JoinTypeEnum.parse(joinType),
         mobile_plan: {
           name: combo.plan || 'Unknown',
-          monthly_fee: parsePrice(combo.plan_price) || 0,
+          monthly_fee: monthlyFee,
         },
         discount_type: DiscountTypeEnum.parse('공시지원금'),
         pricing: {

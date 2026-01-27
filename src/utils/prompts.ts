@@ -254,7 +254,9 @@ export const SCREEN_PAGE_STRUCTURE_PROMPT = `
 **색상 (color)**: 색상 선택 UI
 **통신사 (carrier)**: SKT, KT, LG U+ 등
 **가입유형 (join_type)**: "번호이동", "기기변경", "신규가입"
-**요금제 (plan)**: 요금제 선택 드롭다운이나 버튼
+**요금제 (plan)**: 요금제 선택 드롭다운, 모달 열기 버튼, 또는 요금제 리스트
+  - 요금제 선택 버튼을 클릭하면 모달/팝업이 열리는 경우가 많음
+  - "요금제 선택", "요금제 변경", "요금 선택" 등의 텍스트가 있는 버튼 찾기
 
 ## 가격 표시 영역
 
@@ -271,7 +273,12 @@ export const SCREEN_PAGE_STRUCTURE_PROMPT = `
     "storage": { "type": "button", "selector": ".actual-storage-class" },
     "color": { "type": "button", "selector": ".actual-color-class" },
     "carrier": { "type": "button", "selector": ".actual-carrier-class" },
-    "join_type": { "type": "button", "selector": ".actual-jointype-class" }
+    "join_type": { "type": "button", "selector": ".actual-jointype-class" },
+    "plan": {
+      "open_button_selector": ".plan-select-btn 또는 요금제 팝업을 여는 버튼 셀렉터",
+      "list_container_selector": ".plan-list 또는 요금제 리스트 컨테이너",
+      "item_selector": ".plan-item 또는 각 요금제 항목"
+    }
   },
   "pricing": {
     "retail_price_selector": ".actual-retail-class",
@@ -281,6 +288,11 @@ export const SCREEN_PAGE_STRUCTURE_PROMPT = `
     "monthly_payment_selector": ".actual-monthly-class"
   }
 }
+
+🚨 중요: 요금제(plan) 정보는 매우 중요합니다!
+- 요금제 선택 UI가 있으면 반드시 open_button_selector를 찾아야 합니다
+- 보통 "요금제" 텍스트가 있는 버튼이나 드롭다운을 찾으세요
+- 요금제 팝업/모달이 없고 바로 리스트가 보이면 list_container_selector만 제공
 
 **JSON만 출력하세요. 예시 값을 그대로 반환하지 마세요!**
 `;
