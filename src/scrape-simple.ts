@@ -58,7 +58,10 @@ program
   .description('Simple interface for phone scraping')
   .version('0.1.0')
   .requiredOption('-s, --site <site>', `Site name (${Object.keys(SITE_URLS).join(', ')})`)
-  .requiredOption('-m, --models <models>', 'Target models (comma-separated)')
+  .option('-m, --models <models>', 'Target models (comma-separated)')
+  .option('-a, --all', 'Scrape all models without filtering (ignores --models)')
+  .option('--samsung', 'Target Samsung phones (default)', true)
+  .option('--apple', 'Target Apple phones')
   .option('--headless', 'Run in headless mode', true)
   .option('--no-headless', 'Run with browser visible')
   .option('--no-slack', 'Disable Slack notifications')
@@ -68,7 +71,6 @@ const options = program.opts();
 
 async function main() {
   const siteName = options.site;
-  const models = options.models.split(',').map((m: string) => m.trim());
 
   // Validate site
   if (!SITE_URLS[siteName]) {
@@ -77,8 +79,27 @@ async function main() {
     process.exit(1);
   }
 
+  // --all 옵션이 있으면 모델 필터링 비활성화, 아니면 --models 필수
+  let models: string[] | undefined;
+  if (options.all) {
+    models = undefined;
+  } else if (options.models) {
+    models = options.models.split(',').map((m: string) => m.trim());
+  } else {
+    console.error('❌ --models 또는 --all 옵션이 필요합니다');
+    console.error('예: --models "갤럭시 S25" 또는 --all');
+    process.exit(1);
+  }
+
   // Detect phone type
-  const phoneType = detectPhoneType(models);
+  let phoneType: 'samsung' | 'apple';
+  if (options.apple) {
+    phoneType = 'apple';
+  } else if (models) {
+    phoneType = detectPhoneType(models);
+  } else {
+    phoneType = 'samsung';
+  }
   const listingUrl = SITE_URLS[siteName][phoneType];
 
   console.log('\n' + '='.repeat(70));
@@ -86,7 +107,7 @@ async function main() {
   console.log('='.repeat(70));
   console.log(`사이트: ${siteName}`);
   console.log(`타입: ${phoneType === 'samsung' ? '삼성' : '애플'}`);
-  console.log(`모델: ${models.join(', ')}`);
+  console.log(`모델: ${models ? models.join(', ') : '전체 (필터링 없음)'}`);
   console.log(`URL: ${listingUrl}`);
   console.log('='.repeat(70) + '\n');
 
@@ -114,7 +135,7 @@ async function main() {
     console.log('='.repeat(70));
     console.log(`제품 수: ${result.results.length}`);
     console.log(`총 정책 수: ${totalPolicies}`);
-    console.log(`소요시간: ${result.total_duration.toFixed(2)}초`);
+    console.log(`소요시간: ${result.totalDuration.toFixed(2)}초`);
     console.log('='.repeat(70));
 
     process.exit(0);

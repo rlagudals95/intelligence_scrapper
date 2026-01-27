@@ -102,11 +102,13 @@ program
   .description('Test scraping across multiple sites')
   .version('0.1.0')
   .option('-m, --models <models>', 'Target models (comma-separated)', '갤럭시 S25')
+  .option('-a, --all', 'Scrape all models without filtering (ignores --models)')
   .option('-s, --sites <sites>', 'Specific sites to test (comma-separated, default: all)')
   .option('--headless', 'Run in headless mode', true)
   .option('--no-headless', 'Run with browser visible')
   .option('--samsung-only', 'Only test Samsung phones')
   .option('--apple-only', 'Only test Apple phones')
+  .option('-f, --force', 'Force re-scrape by clearing visited URLs state')
   .parse(process.argv);
 
 const options = program.opts();
@@ -114,7 +116,7 @@ const options = program.opts();
 async function scrapeSite(
   siteName: string,
   listingUrl: string,
-  models: string[],
+  models: string[] | undefined,
   phoneType: 'samsung' | 'apple',
   headless: boolean
 ): Promise<SiteResult> {
@@ -168,8 +170,29 @@ async function scrapeSite(
 }
 
 async function main() {
-  const models = options.models.split(',').map((m: string) => m.trim());
-  const phoneType = detectPhoneType(models);
+  // --all 옵션이 있으면 모델 필터링 비활성화
+  const models: string[] | undefined = options.all
+    ? undefined
+    : options.models.split(',').map((m: string) => m.trim());
+
+  // 폰 타입 결정: --all 모드에서는 --samsung-only나 --apple-only로 지정, 기본값 samsung
+  let phoneType: 'samsung' | 'apple';
+  if (options.appleOnly) {
+    phoneType = 'apple';
+  } else if (options.samsungOnly || options.all) {
+    phoneType = 'samsung';
+  } else {
+    phoneType = detectPhoneType(models || []);
+  }
+
+  // Force mode: clear visited URLs state
+  if (options.force) {
+    const statePath = path.join(projectRoot, 'checkpoints', 'state.json');
+    if (fs.existsSync(statePath)) {
+      fs.unlinkSync(statePath);
+      console.log('🔄 State cleared (--force mode)');
+    }
+  }
 
   // Determine which sites to test
   let sitesToTest = Object.keys(SITE_URLS);
@@ -192,7 +215,7 @@ async function main() {
   console.log('\n' + '═'.repeat(60));
   console.log('🧪 멀티 사이트 테스트 시작');
   console.log('═'.repeat(60));
-  console.log(`모델: ${models.join(', ')}`);
+  console.log(`모델: ${models ? models.join(', ') : '전체 (필터링 없음)'}`);
   console.log(`타입: ${phoneType === 'samsung' ? '삼성' : '애플'}`);
   console.log(`사이트: ${sitesToTest.join(', ')}`);
   console.log(`출력 폴더: ${outputDir}`);
@@ -232,7 +255,7 @@ async function main() {
 
   const summary: TestSummary = {
     timestamp,
-    models,
+    models: models || ['전체'],
     phoneType,
     totalSites: results.length,
     successCount: successResults.length,

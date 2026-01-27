@@ -54,12 +54,12 @@ async function main() {
     console.log('\n' + '='.repeat(70));
     console.log('📱 스크래핑 완료!');
     console.log('='.repeat(70));
-    console.log(`사이트: ${result.site_name}`);
-    console.log(`URL: ${result.list_url}`);
+    console.log(`사이트: ${result.siteName}`);
+    console.log(`URL: ${result.listUrl}`);
     console.log(`제품 수: ${result.results.length}`);
     console.log(`총 정책 수: ${totalPolicies}`);
-    console.log(`시간: ${result.scraped_at}`);
-    console.log(`소요시간: ${result.total_duration.toFixed(2)}초`);
+    console.log(`시간: ${result.scrapedAt}`);
+    console.log(`소요시간: ${result.totalDuration.toFixed(2)}초`);
     console.log('='.repeat(70));
 
     const tokenUsage = service.getTokenUsage();

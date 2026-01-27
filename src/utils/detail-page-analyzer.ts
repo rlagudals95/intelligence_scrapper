@@ -6,11 +6,12 @@ import {
   ProductResult,
   Product,
   Policy,
-  JoinTypeEnum,
-  DiscountTypeEnum,
+  JoinType,
   parseStorage,
   parsePrice,
-  carrierToCode,
+  normalizeCarrier,
+  normalizeJoinType,
+  normalizeSkuCode,
   generateProductId,
   generatePolicyId,
 } from '../models/phase3-schemas.js';
@@ -42,8 +43,9 @@ interface PlanUIInfo {
 interface PageStructure {
   options: {
     storage?: OptionUIInfo;
-    carrier?: OptionUIInfo;
-    join_type?: OptionUIInfo;
+    carrier?: OptionUIInfo;  // 패턴 A: 통신사, 패턴 B: to-be 통신사 (이동할 통신사)
+    as_is_carrier?: OptionUIInfo;  // 패턴 B: 현재 통신사
+    join_type?: OptionUIInfo;  // 패턴 A에서만 사용
     plan?: PlanUIInfo;
   };
   pricing: {
@@ -53,19 +55,25 @@ interface PageStructure {
     installment_principal_selector?: string;
     monthly_payment_selector?: string;
   };
+  // 패턴 B 여부 (현재 통신사 → 이동할 통신사 방식)
+  isPatternB?: boolean;
 }
 
 interface OptionValues {
   storage?: string[];
-  carrier?: string[];
-  join_type?: string[];
+  carrier?: string[];  // 패턴 A: 통신사, 패턴 B: to-be 통신사 (이동할 통신사)
+  as_is_carrier?: string[];  // 패턴 B: 현재 통신사
+  join_type?: string[];  // 패턴 A에서만 사용
   plan?: Array<{ name: string; price: string }>;
+  // 패턴 B 여부
+  isPatternB?: boolean;
 }
 
 interface Combination {
   storage?: string;
-  carrier?: string;
-  join_type?: string;
+  carrier?: string;  // to-be 통신사 (이동할 통신사)
+  as_is_carrier?: string;  // 패턴 B: 현재 통신사
+  join_type?: string;  // 패턴 B에서는 as-is/to-be로 도출됨
   plan?: string;
   plan_price?: string;
 }
@@ -121,18 +129,20 @@ export class DetailPageAnalyzer {
 
   /**
    * Analyze detail page and extract all policies (Python 호환 출력)
+   * @param modelName - 리스팅 페이지에서 가져온 제품명 (skuCode 판별용)
    */
   async analyzeDetailPage(
     page: Page,
     url: string,
-    siteName: string = 'Unknown'
+    siteName: string = 'Unknown',
+    modelName?: string
   ): Promise<ProductResult> {
     const startTime = Date.now();
-    logger.info({ url, siteName }, 'Starting detail page analysis');
+    logger.info({ url, siteName, modelName }, 'Starting detail page analysis');
 
     // Step 1: Extract basic info
-    const basicInfo = await this.step1ExtractBasicInfo(page, url);
-    logger.info({ productName: basicInfo.product_name }, 'Step 1 complete: Basic info extracted');
+    const basicInfo = await this.step1ExtractBasicInfo(page, url, modelName);
+    logger.info({ productName: basicInfo.productName }, 'Step 1 complete: Basic info extracted');
 
     // Step 2: Analyze option UI and extract selectors (캐싱 적용)
     const step2Result = await this.step2AnalyzeOptionUI(page, url);
@@ -164,7 +174,7 @@ export class DetailPageAnalyzer {
     );
 
     // Step 6: Convert to schema (Python 호환)
-    const products = this.step6ConvertToSchema(policyResults, siteName, basicInfo);
+    const products = this.step6ConvertToSchema(policyResults, basicInfo);
     const duration = (Date.now() - startTime) / 1000;
     const policyCount = products.reduce((sum: number, p: Product) => sum + p.policies.length, 0);
 
@@ -174,9 +184,9 @@ export class DetailPageAnalyzer {
     );
 
     return {
-      product_name: basicInfo.product_name,
+      productName: basicInfo.productName,
       url,
-      policy_count: policyCount,
+      policyCount: policyCount,
       duration,
       products,
     };
@@ -184,26 +194,32 @@ export class DetailPageAnalyzer {
 
   /**
    * Step 1: Extract basic page info
+   * @param modelName - 리스팅 페이지에서 가져온 제품명 (우선 사용)
    */
   private async step1ExtractBasicInfo(
     page: Page,
-    url: string
-  ): Promise<{ product_name: string; current_url: string; page_title: string }> {
+    url: string,
+    modelName?: string
+  ): Promise<{ productName: string; currentUrl: string; pageTitle: string }> {
     try {
       const title = await page.title();
       const currentUrl = page.url();
 
+      // modelName이 있으면 우선 사용 (리스팅 페이지에서 가져온 정확한 제품명)
+      // 없으면 페이지 제목 사용
+      const productName = modelName || title.trim();
+
       return {
-        product_name: title.trim(),
-        current_url: currentUrl,
-        page_title: title,
+        productName: productName,
+        currentUrl: currentUrl,
+        pageTitle: title,
       };
     } catch (error) {
       logger.error({ error }, 'Step 1 failed');
       return {
-        product_name: 'Unknown',
-        current_url: url,
-        page_title: '',
+        productName: modelName || 'Unknown',
+        currentUrl: url,
+        pageTitle: '',
       };
     }
   }
@@ -250,32 +266,74 @@ export class DetailPageAnalyzer {
   }
 
   /**
-   * Clean HTML by removing scripts, styles, etc.
+   * Clean HTML by removing unnecessary elements while preserving structure for selector detection.
+   * 셀렉터 캐싱과 필수 요소 추출에 필요한 구조는 유지하면서 불필요한 요소만 제거
    */
   private cleanHtml(html: string): string {
     let cleaned = html;
 
-    // Remove scripts
+    // 1. 완전히 불필요한 태그 제거 (내용 포함)
+    // Script, style, noscript
     cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-    // Remove styles
     cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-    // Remove comments
+    cleaned = cleaned.replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '');
+
+    // SVG (대용량, LLM에 불필요)
+    cleaned = cleaned.replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, '');
+
+    // iframe, canvas, video, audio (미디어 요소)
+    cleaned = cleaned.replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '');
+    cleaned = cleaned.replace(/<iframe[^>]*\/>/gi, '');
+    cleaned = cleaned.replace(/<canvas[^>]*>[\s\S]*?<\/canvas>/gi, '');
+    cleaned = cleaned.replace(/<video[^>]*>[\s\S]*?<\/video>/gi, '');
+    cleaned = cleaned.replace(/<audio[^>]*>[\s\S]*?<\/audio>/gi, '');
+
+    // HTML 주석
     cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
-    // Remove header, footer, nav
+
+    // 2. head 영역 전체 제거 (meta, link, title 등 포함)
+    cleaned = cleaned.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+
+    // 3. 네비게이션/레이아웃 요소 (가격 정보와 무관)
     cleaned = cleaned.replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '');
     cleaned = cleaned.replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '');
     cleaned = cleaned.replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '');
-    // Normalize whitespace
-    cleaned = cleaned.replace(/\s+/g, ' ');
+    cleaned = cleaned.replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '');
 
-    // Extract body content
+    // 4. 빈 태그나 자체 닫힘 태그 정리
+    cleaned = cleaned.replace(/<(meta|link|br|hr|img|input)[^>]*\/?>/gi, (match, tag) => {
+      // img, input은 유지 (폼 요소, 이미지 정보 필요할 수 있음)
+      if (tag.toLowerCase() === 'img' || tag.toLowerCase() === 'input') {
+        return match;
+      }
+      return '';
+    });
+
+    // 5. 불필요한 속성 제거 (태그 구조는 유지)
+    // data-* 속성 제거 (대부분 긴 JSON이나 base64)
+    cleaned = cleaned.replace(/\s+data-[a-z-]+="[^"]*"/gi, '');
+    // style 인라인 속성 제거
+    cleaned = cleaned.replace(/\s+style="[^"]*"/gi, '');
+    // onclick 등 이벤트 핸들러 제거
+    cleaned = cleaned.replace(/\s+on[a-z]+="[^"]*"/gi, '');
+
+    // 6. Base64 이미지 제거 (src="data:image/..." -> src="[base64]")
+    cleaned = cleaned.replace(/src="data:image\/[^"]+"/gi, 'src="[base64]"');
+
+    // 7. 공백 정규화
+    cleaned = cleaned.replace(/\s+/g, ' ');
+    cleaned = cleaned.replace(/>\s+</g, '><');
+
+    // 8. body 내용만 추출
     const bodyMatch = cleaned.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
     if (bodyMatch) {
       cleaned = bodyMatch[1];
     }
 
-    // Limit size
-    return cleaned.slice(0, 100000);
+    // 9. 앞뒤 공백 제거
+    cleaned = cleaned.trim();
+
+    return cleaned;
   }
 
   /**
@@ -292,6 +350,7 @@ export class DetailPageAnalyzer {
 
   /**
    * Step 2B: Extract actual option values using selectors
+   * 패턴 B 감지 및 처리 포함
    */
   private async step2bExtractOptionValues(
     page: Page,
@@ -315,7 +374,7 @@ export class DetailPageAnalyzer {
       }
     }
 
-    // Extract carrier values
+    // Extract carrier values (to-be 통신사)
     if (structure.options.carrier?.selector) {
       const values = await this.extractValuesWithSelector(
         page,
@@ -327,8 +386,43 @@ export class DetailPageAnalyzer {
       }
     }
 
-    // Extract join_type values
-    if (structure.options.join_type?.selector) {
+    // 패턴 B 감지: as_is_carrier 셀렉터가 있거나, 페이지에서 패턴 B UI 감지
+    let isPatternB = structure.isPatternB || false;
+
+    // Extract as_is_carrier values (패턴 B: 현재 통신사)
+    if (structure.options.as_is_carrier?.selector) {
+      const values = await this.extractValuesWithSelector(
+        page,
+        structure.options.as_is_carrier.selector,
+        structure.options.as_is_carrier.value_attribute
+      );
+      if (values.length > 0) {
+        options.as_is_carrier = values;
+        isPatternB = true;
+      }
+    }
+
+    // 패턴 B 자동 감지: 페이지 텍스트에서 "현재 통신사", "이동할 통신사" 패턴 확인
+    if (!isPatternB && !options.join_type) {
+      const patternBDetected = await this.detectPatternB(page);
+      if (patternBDetected) {
+        isPatternB = true;
+        logger.info('Pattern B detected: 현재 통신사 → 이동할 통신사 방식');
+
+        // 패턴 B인 경우 현재 통신사 목록 추출
+        if (!options.as_is_carrier) {
+          const asIsCarriers = await this.extractAsIsCarriers(page);
+          if (asIsCarriers.length > 0) {
+            options.as_is_carrier = asIsCarriers;
+          }
+        }
+      }
+    }
+
+    options.isPatternB = isPatternB;
+
+    // Extract join_type values (패턴 A에서만 사용)
+    if (!isPatternB && structure.options.join_type?.selector) {
       const values = await this.extractValuesWithSelector(
         page,
         structure.options.join_type.selector,
@@ -358,7 +452,86 @@ export class DetailPageAnalyzer {
       }
     }
 
+    logger.info({ isPatternB, hasAsIsCarrier: !!options.as_is_carrier?.length }, 'Pattern detection complete');
     return options;
+  }
+
+  /**
+   * 패턴 B 자동 감지: 페이지에서 "현재 통신사 → 이동할 통신사" UI 패턴 확인
+   */
+  private async detectPatternB(page: Page): Promise<boolean> {
+    try {
+      const detected = await page.evaluate(() => {
+        const text = document.body.innerText;
+        const html = document.body.innerHTML;
+
+        // 패턴 B 키워드 검색
+        const patternBKeywords = [
+          '현재 통신사',
+          '현재통신사',
+          '사용중인 통신사',
+          '기존 통신사',
+          '이동할 통신사',
+          '변경할 통신사',
+          '신규 통신사',
+        ];
+
+        for (const keyword of patternBKeywords) {
+          if (text.includes(keyword) || html.includes(keyword)) {
+            return true;
+          }
+        }
+
+        // "번호이동", "기기변경" 버튼이 없고, 통신사 선택이 두 세트 있는 경우
+        const joinTypeExists = text.includes('번호이동') && text.includes('기기변경');
+        const carrierSelectCount = (html.match(/SKT|KT|LGU/gi) || []).length;
+
+        // 통신사가 6번 이상 등장하고 번호이동/기기변경 버튼이 없으면 패턴 B 가능성
+        if (!joinTypeExists && carrierSelectCount >= 6) {
+          return true;
+        }
+
+        return false;
+      });
+
+      return detected;
+    } catch (error) {
+      logger.debug({ error }, 'Pattern B detection failed');
+      return false;
+    }
+  }
+
+  /**
+   * 패턴 B: 현재 통신사 목록 추출
+   */
+  private async extractAsIsCarriers(page: Page): Promise<string[]> {
+    try {
+      const carriers = await page.evaluate(() => {
+        const text = document.body.innerText;
+        const carriers: string[] = [];
+
+        // 통신사 목록 (MVNO/알뜰폰 포함)
+        const carrierNames = ['SKT', 'KT', 'LGU+', 'LGU', 'SK텔레콤', 'LG유플러스', 'MVNO', '알뜰폰', '알뜰'];
+
+        for (const carrier of carrierNames) {
+          if (text.includes(carrier)) {
+            // 정규화: SKT, KT, LGU, MVNO
+            if (carrier.includes('SK')) carriers.push('SKT');
+            else if (carrier === 'KT') carriers.push('KT');
+            else if (carrier.includes('LG')) carriers.push('LGU');
+            else if (carrier === 'MVNO' || carrier.includes('알뜰')) carriers.push('MVNO');
+          }
+        }
+
+        return [...new Set(carriers)];
+      });
+
+      // 기본 통신사 목록 반환 (MVNO 제외 - 대부분 사이트에서 MNO만 있음)
+      return carriers.length > 0 ? carriers : ['SKT', 'KT', 'LGU'];
+    } catch (error) {
+      logger.debug({ error }, 'Failed to extract as-is carriers');
+      return ['SKT', 'KT', 'LGU'];
+    }
   }
 
   /**
@@ -600,6 +773,8 @@ ${html.slice(0, 50000)}
 
   /**
    * Step 4: Generate option combinations
+   * 패턴 A: storage × carrier × join_type × plan
+   * 패턴 B: storage × as_is_carrier × to_be_carrier × plan (join_type는 도출)
    */
   private step4GenerateCombinations(
     options: OptionValues,
@@ -613,31 +788,80 @@ ${html.slice(0, 50000)}
       : ['256GB'];
     const carriers = options.carrier && options.carrier.length > 0
       ? options.carrier
-      : ['SKT', 'KT', 'LGU+'];
-    const joinTypes = options.join_type && options.join_type.length > 0
-      ? options.join_type
-      : ['번호이동', '기기변경', '신규가입'];  // 신규가입 추가
+      : ['SKT', 'KT', 'LGU'];
     const plans = options.plan || [];
 
-    for (const storage of storages) {
-      for (const carrier of carriers) {
-        for (const joinType of joinTypes) {
-          if (plans.length > 0) {
-            for (const plan of plans) {
+    // 패턴 B: 현재 통신사 → 이동할 통신사 방식
+    if (options.isPatternB) {
+      const asIsCarriers = options.as_is_carrier && options.as_is_carrier.length > 0
+        ? options.as_is_carrier
+        : ['SKT', 'KT', 'LGU'];
+
+      logger.info({ isPatternB: true, asIsCarriers, toBeCarriers: carriers }, 'Generating Pattern B combinations');
+
+      for (const storage of storages) {
+        for (const asIsCarrier of asIsCarriers) {
+          for (const toBeCarrier of carriers) {
+            // PRD: 패턴 B 변환 로직
+            // 현재 통신사 ≠ 이동할 통신사 → NUMBER_TRANSFER
+            // 현재 통신사 = 이동할 통신사 → DEVICE_CHANGE
+            const joinType: JoinType = this.normalizeCarrierName(asIsCarrier) === this.normalizeCarrierName(toBeCarrier)
+              ? 'DEVICE_CHANGE'
+              : 'NUMBER_TRANSFER';
+
+            if (plans.length > 0) {
+              for (const plan of plans) {
+                combinations.push({
+                  storage,
+                  carrier: toBeCarrier,  // to-be 통신사
+                  as_is_carrier: asIsCarrier,  // 현재 통신사
+                  join_type: joinType,
+                  plan: plan.name,
+                  plan_price: plan.price,
+                });
+              }
+            } else {
+              combinations.push({
+                storage,
+                carrier: toBeCarrier,
+                as_is_carrier: asIsCarrier,
+                join_type: joinType,
+              });
+            }
+          }
+        }
+      }
+    } else {
+      // 패턴 A: 직접 번호이동/기기변경 선택 방식
+      // PRD: 가입유형은 NUMBER_TRANSFER, DEVICE_CHANGE만 (신규가입 제외)
+      const joinTypes = options.join_type && options.join_type.length > 0
+        ? options.join_type
+            .filter(jt => !jt.includes('신규'))  // PRD: 신규가입 제외
+            .map(jt => normalizeJoinType(jt))  // 한글 → 영문 enum 변환
+        : ['NUMBER_TRANSFER', 'DEVICE_CHANGE'] as JoinType[];
+
+      logger.info({ isPatternB: false, joinTypes }, 'Generating Pattern A combinations');
+
+      for (const storage of storages) {
+        for (const carrier of carriers) {
+          for (const joinType of joinTypes) {
+            if (plans.length > 0) {
+              for (const plan of plans) {
+                combinations.push({
+                  storage,
+                  carrier,
+                  join_type: joinType,
+                  plan: plan.name,
+                  plan_price: plan.price,
+                });
+              }
+            } else {
               combinations.push({
                 storage,
                 carrier,
                 join_type: joinType,
-                plan: plan.name,
-                plan_price: plan.price,
               });
             }
-          } else {
-            combinations.push({
-              storage,
-              carrier,
-              join_type: joinType,
-            });
           }
         }
       }
@@ -647,13 +871,26 @@ ${html.slice(0, 50000)}
   }
 
   /**
+   * 통신사 이름 정규화 (비교용)
+   * 유효값: SKT, KT, LGU+, MVNO
+   */
+  private normalizeCarrierName(carrier: string): string {
+    const normalized = carrier.toUpperCase().replace(/\s/g, '');
+    if (normalized.includes('SKT') || normalized.includes('SK')) return 'SKT';
+    if (normalized.includes('KT')) return 'KT';
+    if (normalized.includes('LG') || normalized.includes('유플러스')) return 'LGU';
+    if (normalized.includes('MVNO') || normalized.includes('알뜰')) return 'MVNO';
+    return 'SKT'; // 기본값
+  }
+
+  /**
    * Step 5: Extract policies for each combination (배치 처리 최적화)
    * 모든 조합을 한 번의 LLM 호출로 추출
    */
   private async step5ExtractPolicies(
     page: Page,
     combinations: Combination[],
-    _basicInfo: { product_name: string },
+    _basicInfo: { productName: string },
     structure: PageStructure
   ): Promise<PolicyResultInternal[]> {
     // 배치 처리: 페이지 HTML 한 번 가져와서 모든 조합 한번에 추출
@@ -723,7 +960,7 @@ ${html.slice(0, 50000)}
       index: i,
       storage: c.storage || '256GB',
       carrier: c.carrier || 'SKT',
-      join_type: c.join_type || '기기변경',
+      join_type: c.join_type || 'DEVICE_CHANGE',
       plan: c.plan || 'Unknown',
       plan_price: c.plan_price,
     }));
@@ -1026,13 +1263,12 @@ ${JSON.stringify(comboList, null, 2)}
   }
 
   /**
-   * Step 6: Convert results to Product[] schema (Python 호환)
-   * PRD 필터링 적용: 할인유형=공시지원금만, 요금제>=6만원
+   * Step 6: Convert results to Product[] schema
+   * PRD 필터링 적용: 할인유형=PUBLIC_SUBSIDY만, 요금제>=6만원
    */
   private step6ConvertToSchema(
     results: PolicyResultInternal[],
-    siteName: string,
-    basicInfo: { product_name: string }
+    basicInfo: { productName: string }
   ): Product[] {
     const successfulResults = results.filter((r) => r.success);
 
@@ -1050,7 +1286,7 @@ ${JSON.stringify(comboList, null, 2)}
       // PRD 필터: 요금제 6만원 이상만 (안전장치)
       const monthlyFee = parsePrice(combo.plan_price) || 0;
       if (monthlyFee < 60000) {
-        logger.debug({ combo, monthlyFee }, 'Skipping policy: monthly_fee < 60000');
+        logger.debug({ combo, monthlyFee }, 'Skipping policy: monthlyFee < 60000');
         continue;
       }
 
@@ -1061,61 +1297,67 @@ ${JSON.stringify(comboList, null, 2)}
         productsMap.set(storage, { storage, policies: [] });
       }
 
-      // Determine join type
-      const joinTypeStr = combo.join_type || '기기변경';
-      let joinType: '번호이동' | '기기변경' | '신규가입' = '기기변경';
-      if (joinTypeStr.includes('번호이동')) joinType = '번호이동';
-      else if (joinTypeStr.includes('신규')) joinType = '신규가입';
+      // Determine join type (PRD: NUMBER_TRANSFER, DEVICE_CHANGE만 - 신규가입 제외)
+      const joinType: JoinType = combo.join_type
+        ? normalizeJoinType(combo.join_type)
+        : 'DEVICE_CHANGE';
 
-      // Convert carrier to code
-      const carrierCode = carrierToCode(combo.carrier || 'SKT');
+      // Normalize networkOperator (to-be 통신사)
+      const networkOperatorName = normalizeCarrier(combo.carrier || 'SKT');
+
+      // Normalize currentNetworkOperator (패턴 B: 현재 통신사)
+      const currentNetworkOperatorName = combo.as_is_carrier
+        ? normalizeCarrier(combo.as_is_carrier)
+        : null;
 
       // Generate policy ID
       const policyId = generatePolicyId(
-        carrierCode,
+        networkOperatorName,
         joinType,
         storageType,
         combo.plan || 'Unknown'
       );
 
-      // Create policy (Python 호환 snake_case)
-      // PRD: 할인유형 = 공시지원금만
+      // Create policy
+      // PRD: 할인유형 = PUBLIC_SUBSIDY만
+      // PRD: 패턴 B 사이트의 경우 currentNetworkOperator 필드 사용
       const policy: Policy = {
-        policy_id: policyId,
-        carrier: carrierCode,
-        mno_join_type: JoinTypeEnum.parse(joinType),
-        mobile_plan: {
+        policyId: policyId,
+        networkOperator: networkOperatorName, // to-be 통신사 (이동할 통신사)
+        currentNetworkOperator: currentNetworkOperatorName, // 패턴 B: 현재 통신사 (패턴 A에서는 null)
+        mnoJoinType: joinType,
+        mobilePlan: {
           name: combo.plan || 'Unknown',
-          monthly_fee: monthlyFee,
+          monthlyFee: monthlyFee,
         },
-        discount_type: DiscountTypeEnum.parse('공시지원금'),
+        discountType: 'PUBLIC_SUBSIDY',
         pricing: {
-          mno_retail_price: pricing.retail_price || null,
-          public_subsidy: pricing.public_subsidy || null,
+          mnoRetailPrice: pricing.retail_price || null,
+          publicSubsidy: pricing.public_subsidy || null,
           discount: pricing.additional_subsidy || null,
-          sku_installment_fee: pricing.installment_principal || null,
-          monthly_payment: pricing.monthly_payment || null,
+          skuInstallmentFee: pricing.installment_principal || null,
+          monthlyPayment: pricing.monthly_payment || null,
         },
         addons: [],
-        policy_text: null,
+        policyText: null,
       };
 
       productsMap.get(storage)!.policies.push(policy);
     }
 
-    // Convert to products (Python 호환)
+    // Convert to products
     const products: Product[] = Array.from(productsMap.entries()).map(([storage, data]) => {
       const storageType = parseStorage(storage);
-      const skuCode = `${basicInfo.product_name} - ${siteName}`;
+      const skuCode = normalizeSkuCode(basicInfo.productName);
       const productId = generateProductId(skuCode, storageType);
 
       return {
-        product_id: productId,
-        sku_code: skuCode,
-        sku_storage: storageType,
+        productId: productId,
+        skuCode: skuCode,
+        skuStorage: storageType,
         policies: data.policies,
-        product_name: null,
-        product_color: null,
+        productName: basicInfo.productName, // 원본 제품명 보존
+        productColor: null,
       };
     });
 

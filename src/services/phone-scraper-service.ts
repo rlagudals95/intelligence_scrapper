@@ -124,7 +124,8 @@ export class PhoneScraperService {
               const result = await this.detailAnalyzer.analyzeDetailPage(
                 page,
                 product.detailUrl,
-                this.options.siteName
+                this.options.siteName,
+                product.modelName  // 리스팅 페이지에서 가져온 제품명 전달
               );
               return { success: true, product, result };
             } catch (error) {
@@ -145,7 +146,7 @@ export class PhoneScraperService {
                   const csvPath = this.slackNotifier.savePoliciesToCsv(
                     p.policies,
                     this.options.siteName,
-                    p.sku_code
+                    p.skuCode
                   );
                   csvPaths.push(csvPath);
                 }
@@ -163,13 +164,13 @@ export class PhoneScraperService {
 
       const totalDuration = (Date.now() - startTime) / 1000;
 
-      // Create final result (Python 호환 형식)
+      // Create final result
       const finalResult: ScrapingResult = {
-        site_name: this.options.siteName,
-        list_url: this.options.listingUrl,
-        target_models: this.options.targetModels || [],
-        scraped_at: new Date().toISOString(),
-        total_duration: totalDuration,
+        siteName: this.options.siteName,
+        listUrl: this.options.listingUrl,
+        targetModels: this.options.targetModels || [],
+        scrapedAt: new Date().toISOString(),
+        totalDuration: totalDuration,
         results: allResults,
       };
 

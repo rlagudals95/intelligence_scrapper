@@ -2,7 +2,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { ScrapingResult, Policy, codeToCarrier } from '../models/phase3-schemas.js';
+import { ScrapingResult, Policy } from '../models/phase3-schemas.js';
 import { getLogger } from './logger.js';
 
 const logger = getLogger('SlackNotifier');
@@ -64,16 +64,16 @@ export class SlackNotifier {
 
     const rows = policies.map((p) =>
       [
-        codeToCarrier(p.carrier), // "1" -> "SKT"
-        p.mno_join_type,
-        p.discount_type,
-        `"${p.mobile_plan.name}"`,
-        p.mobile_plan.monthly_fee,
-        p.pricing.mno_retail_price || 0,
-        p.pricing.public_subsidy || 0,
+        p.networkOperator, // SKT, KT, LGU, MVNO
+        p.mnoJoinType,
+        p.discountType,
+        `"${p.mobilePlan.name}"`,
+        p.mobilePlan.monthlyFee,
+        p.pricing.mnoRetailPrice || 0,
+        p.pricing.publicSubsidy || 0,
         p.pricing.discount || 0,
-        p.pricing.sku_installment_fee || 0,
-        p.pricing.monthly_payment || 0,
+        p.pricing.skuInstallmentFee || 0,
+        p.pricing.monthlyPayment || 0,
       ].join(',')
     );
 
@@ -118,10 +118,10 @@ export class SlackNotifier {
     const message = [
       '📱 *스크래핑 완료!*',
       '',
-      `🏪 사이트: ${result.site_name}`,
+      `🏪 사이트: ${result.siteName}`,
       `📦 제품 수: ${result.results.length}`,
       `📋 총 정책 수: ${totalPolicies}`,
-      `⏰ 시간: ${result.scraped_at}`,
+      `⏰ 시간: ${result.scrapedAt}`,
       '',
       `📁 CSV 파일: ${csvPaths.length}개 생성`,
     ].join('\n');

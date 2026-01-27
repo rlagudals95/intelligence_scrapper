@@ -25,7 +25,10 @@ export {
   JoinType,
   DiscountTypeEnum,
   DiscountType,
-  CarrierCodeMap,
+  CarrierEnum,
+  Carrier,
+  SkuCodeEnum,
+  SkuCode,
   // Core schemas
   MobilePlanSchema,
   MobilePlan,
@@ -49,8 +52,9 @@ export {
   parsePrice,
   parseStorage,
   normalizeCarrier,
-  carrierToCode,
-  codeToCarrier,
+  normalizeDiscountType,
+  normalizeJoinType,
+  normalizeSkuCode,
   // Builders
   createPolicy,
   createProduct,
